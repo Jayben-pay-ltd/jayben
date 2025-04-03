@@ -25,9 +25,6 @@ void main() async {
   final PendingDynamicLinkData? initialLink =
       await FirebaseDynamicLinks.instance.getInitialLink();
 
-  // initializes the open AI instance
-  // OpenAI.apiKey = "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";
-
   // debugRepaintRainbowEnabled = true;
 
   runApp(
