@@ -1,0 +1,2 @@
+/Users/justo/Documents/Projects/jayben/android/app/.cxx/RelWithDebInfo/385u3m4v/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/justo/Documents/Projects/jayben/android/app/.cxx/RelWithDebInfo/385u3m4v/armeabi-v7a/CMakeFiles/rebuild_cache.dir

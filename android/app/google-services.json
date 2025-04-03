@@ -1,0 +1,116 @@
+{
+  "project_info": {
+    "project_number": "188049715261",
+    "project_id": "jayben-de41c",
+    "storage_bucket": "jayben-de41c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:188049715261:android:8bc7ddc652b1b221f67a54",
+        "android_client_info": {
+          "package_name": "com.app.jayben.agent"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "188049715261-ih0ruaovtttp4bjf0e73pumooddvh6s1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.app.jayben.agent",
+            "certificate_hash": "8a00f3bcfabe99c2b4d160d7100ecc462e81bd70"
+          }
+        },
+        {
+          "client_id": "188049715261-vjglob2f3bb9dba8g0e04bi5c3e97vlb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXCaxBSM96zteh0W00nt_7AgvJJN-_z80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "188049715261-vjglob2f3bb9dba8g0e04bi5c3e97vlb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "188049715261-9rlilg2f8dfh5enupf1j0jv2oun17c03.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.jayben.ios.app",
+                "app_store_id": "1626899274"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:188049715261:android:30a52603542b2894f67a54",
+        "android_client_info": {
+          "package_name": "com.jayben.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "188049715261-2g1eeu8vmtggofu517tm6uolvt20avpn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jayben.app",
+            "certificate_hash": "e7c3bbd8586c1017597e2d01ee3ec1073d9a2b75"
+          }
+        },
+        {
+          "client_id": "188049715261-fs5n7v4810fr3vq0fpn6h30rjd1d61a0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jayben.app",
+            "certificate_hash": "8a00f3bcfabe99c2b4d160d7100ecc462e81bd70"
+          }
+        },
+        {
+          "client_id": "188049715261-sg5n6t69nv72qqrvosh4gaga3pdtqlr7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.jayben.app",
+            "certificate_hash": "f95b154754c2c92d98c5a2e1d987f0fa8ed3f210"
+          }
+        },
+        {
+          "client_id": "188049715261-vjglob2f3bb9dba8g0e04bi5c3e97vlb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXCaxBSM96zteh0W00nt_7AgvJJN-_z80"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "188049715261-vjglob2f3bb9dba8g0e04bi5c3e97vlb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "188049715261-9rlilg2f8dfh5enupf1j0jv2oun17c03.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.jayben.ios.app",
+                "app_store_id": "1626899274"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
