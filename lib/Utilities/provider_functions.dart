@@ -1,7 +1,8 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_null_comparison, unnecessary_string_interpolations
 // import 'dart:html';
 
-import 'package:fast_contacts/fast_contacts.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:http/http.dart';
 import 'package:jayben/Home/elements/deposit_money/elements/card_payments_deposit_webview.dart';
 import 'package:jayben/Home/elements/withdraw_money/withdraw_money_confirmation_page.dart';
 import 'package:jayben/Home/elements/messages/elements/send_media_message.dart';
@@ -17,14 +18,11 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:jayben/Auth/elements/update_app_page.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:get_ip_address/get_ip_address.dart';
 import 'package:video_compress/video_compress.dart';
 import '../Auth/elements/six_digit_pin_page.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-import 'package:random_string/random_string.dart';
+import 'package:fast_contacts/fast_contacts.dart';
 import 'package:nfc_manager/platform_tags.dart';
 import 'package:video_player/video_player.dart';
 import 'package:country_data/country_data.dart';
@@ -33,7 +31,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:nfc_manager/nfc_manager.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:jayben/Home/home_page.dart';
-import 'package:encryptor/encryptor.dart';
 import "package:http/http.dart" as http;
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
@@ -2237,6 +2234,7 @@ class GiftProviderFunctions extends ChangeNotifier {
   // ========================
 }
 
+// converted to RLS
 class AirtimeProviderFunctions extends ChangeNotifier {
   String phone_number_string = box("PhoneNumber") == null
       ? ""
@@ -2341,13 +2339,13 @@ class AirtimeProviderFunctions extends ChangeNotifier {
     });
   }
 
-  Future<void> payWithWallet(BuildContext context) async {
-    if (isLoading) return;
+  Future<bool> payWithWallet(BuildContext context) async {
+    if (isLoading) return false;
 
     if (phone_number_string.length < 10) {
       showSnackBar(context, 'Enter a 10 digit phone number');
 
-      return;
+      return false;
     }
 
     if (phone_number_string[0] != "0" ||
@@ -2355,30 +2353,33 @@ class AirtimeProviderFunctions extends ChangeNotifier {
         ["5", "6", "7"].contains(phone_number_string[2]) == false) {
       showSnackBar(context, 'Enter a valid Zambian phone number');
 
-      return;
+      return false;
     }
 
     double amountToBuy = double.parse(amount_string.replaceAll('-', ''));
 
     String phoneNumber = phone_number_string.trim();
 
-    showSnackBar(context, "Airtime purchase is being processed. Please wait.",
-        color: Colors.grey[800]!);
+    showSnackBar(
+      context,
+      "Airtime purchase is being processed. Please wait.",
+      color: Colors.grey[800]!,
+    );
 
     // routes user back to the home page
     changePage(context, const HomePage(), type: "pr");
 
     // submits a request to purchase airtime
-    await buyAirtime(amountToBuy, phoneNumber);
+    return await buyAirtime(amountToBuy, phoneNumber);
   }
 
-  Future<void> payWithPoints(BuildContext context) async {
-    if (isLoading) return;
+  Future<bool> payWithPoints(BuildContext context) async {
+    if (isLoading) return false;
 
     if (phone_number_string.length < 10) {
       showSnackBar(context, 'Enter a 10 digit phone number');
 
-      return;
+      return false;
     }
 
     if (phone_number_string[0] != "0" ||
@@ -2386,7 +2387,7 @@ class AirtimeProviderFunctions extends ChangeNotifier {
         ["5", "6", "7"].contains(phone_number_string[2]) == false) {
       showSnackBar(context, 'Enter a valid Zambian phone number');
 
-      return;
+      return false;
     }
 
     String phoneNumber = phone_number_string.trim();
@@ -2400,103 +2401,37 @@ class AirtimeProviderFunctions extends ChangeNotifier {
     changePage(context, const HomePage(), type: "pr");
 
     // submits a request to purchase airtime
-    await buyAirtime(amountToBuy, phoneNumber);
+    return await buyAirtime(amountToBuy, phoneNumber);
   }
 
   // creates a reques to purchase airtime
-  Future<void> buyAirtime(double amountToBuy, String number) async {
-    var airtimeID = id.v4();
+  Future<bool> buyAirtime(
+    double amount_to_purchase,
+    String phone_number,
+  ) async {
+    FunctionResponse res = await callGeneralFunction("purchase_airtime", {
+      "amount": amount_to_purchase,
+      "phone_number": phone_number,
+      "currency": box("currency"),
+      "post_is_public": false,
+      "media_details": [
+        {
+          "media_caption": null,
+          "thumbnail_url": null,
+          "aspect_ratio": null,
+          "media_type": null,
+          "post_type": null,
+          "media_url": null
+        }
+      ],
+      "comment": null,
+    });
 
-    // await _fire
-    //     .collection("Users")
-    //     .doc(box("user_id"))
-    //     .collection("Airtime")
-    //     .doc(airtimeID)
-    //     .set({
-    //   "FullNames": "${box("FirstName")} ${box("LastName")}",
-    //   "PhoneNumber": '${box("CountryCode")}$number',
-    //   "DateCreated": Timestamp.now(),
-    //   "Currency": box("Currency"),
-    //   "UserID": box("user_id"),
-    //   "AirtimeID": airtimeID,
-    //   "Amount": amountToBuy,
-    //   "Status": "Pending",
-    //   "ErrorMessage": "",
-    // });
-  }
-
-  Future<List<dynamic>> checkIfAirtimeBought(airtimeID) async {
-    // var ds = await _fire
-    //     .collection("Users")
-    //     .doc(box("user_id"))
-    //     .collection("Airtime")
-    //     .doc(airtimeID)
-    //     .get();
-
-    // return [ds.get("Status"), ds.get("ErrorMessage")];
-
-    return [];
-  }
-
-  Future<void> recordTransaction(
-      airtimeID, amountBought, receiverPhoneNumber) async {
-    var tranxID = id.v4();
-
-    // await _fire
-    //     .collection("Users")
-    //     .doc(box("user_id"))
-    //     .update({"Balance": FieldValue.increment(-amountBought)});
-    // // updates the user's balance
-
-    // await _fire.collection("Transactions").doc(tranxID).set({
-    //   "DateCreated": Timestamp.now(),
-    //   "Amount": amountBought,
-    //   "UserID": box("user_id"),
-    //   "FullNames":
-    //       "${Hive.box('userInfo').get("FirstName")} ${Hive.box('userInfo').get("LastName")}",
-    //   "Status": "Completed",
-    //   "AttendedTo": false,
-    //   "Currency": Hive.box('userInfo').get("Currency"),
-    //   "Method": "Wallet",
-    //   "Txref": "",
-    //   "Comment": "",
-    //   "SentReceived": 'Sent',
-    //   "TransactionID": tranxID,
-    //   "TransactionType": "Airtime Purchase",
-    //   "PhoneNumber": 'To $receiverPhoneNumber'
-    // });
-  }
-
-  Future<void> recordPointsTransaction(
-      airtimeID, points, receiverPhoneNumber) async {
-    var tranxID = id.v4();
-
-    // await _fire
-    //     .collection("Users")
-    //     .doc(box("user_id"))
-    //     .update({"Points": FieldValue.increment(-points)});
-    // // updates the user's balance
-
-    // await _fire.collection("Transactions").doc(tranxID).set({
-    //   "DateCreated": Timestamp.now(),
-    //   "Amount": points,
-    //   "UserID": box("user_id"),
-    //   "FullNames":
-    //       "${Hive.box('userInfo').get("FirstName")} ${Hive.box('userInfo').get("LastName")}",
-    //   "Status": "Completed",
-    //   "AttendedTo": false,
-    //   "Currency": Hive.box('userInfo').get("Currency"),
-    //   "Method": "Points",
-    //   "Txref": "",
-    //   "TransactionID": tranxID,
-    //   "SentReceived": 'Sent',
-    //   "Comment": "",
-    //   "TransactionType": "Airtime Purchase",
-    //   "PhoneNumber": 'To $receiverPhoneNumber'
-    // });
+    return res.data.data.status == "success";
   }
 }
 
+// converted to RLS
 class WithdrawProviderFunctions extends ChangeNotifier {
   String phone_number_string = box("PhoneNumber") == null
       ? ""
@@ -2592,6 +2527,7 @@ class WithdrawProviderFunctions extends ChangeNotifier {
     });
   }
 
+  // makes sure the phone number that is entered is formatted
   Future<void> prepareWithdrawal(BuildContext context, Map map) async {
     if (isLoading) return;
 
@@ -2632,121 +2568,30 @@ class WithdrawProviderFunctions extends ChangeNotifier {
   }
 
   // submits a withdrawal request
-  Future<void> submitWithdrawal(Map paymentInfo) async {
+  Future<bool> submitWithdrawal(Map paymentInfo) async {
     double transaction_fee_amount =
         double.parse(paymentInfo['amountPlusFee'].toString()) -
             double.parse(paymentInfo['amountBeforeFee'].toString());
 
-    // calls the submit withdrawal API
-    var res = await http.post(
-      Uri.parse(
-          "https://us-central1-jayben-de41c.cloudfunctions.net/transactions/v2/withdraw/mobile_money"),
-      headers: {
-        "Content-type": "application/json",
+    // Submit withdrawal using general function
+    FunctionResponse res = await callGeneralFunction(
+      "submit_mobile_money_withdrawal",
+      {
+        "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
+        "amount_to_withdraw_plus_fee": paymentInfo['amountPlusFee'],
+        "transaction_fee_amount": transaction_fee_amount,
+        "transaction_fee_currency": box("Currency"),
+        "phone_number": paymentInfo['phoneNumber'],
+        "method": paymentInfo['paymentMethod'],
+        "reference": paymentInfo['reference'],
       },
-      body: json.encode(
-        {
-          "user_id": box("user_id"),
-          "country": box("Country"),
-          "currency": box("Currency"),
-          "reference": paymentInfo['reference'],
-          "method": paymentInfo['paymentMethod'],
-          "phone_number": paymentInfo['phoneNumber'],
-          "transaction_fee_currency": box("Currency"),
-          "full_names": "${box("FirstName")} ${box("LastName")}",
-          "amount_to_withdraw_plus_fee": paymentInfo['amountPlusFee'],
-          "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
-          "transaction_fee_percentage": box("WithdrawFeePercent").toString(),
-          "transaction_fee_amount": transaction_fee_amount,
-          "description": "To ${paymentInfo['phoneNumber']} "
-              "${paymentInfo['reference']}",
-        },
-      ),
     );
 
-    print(res.body);
-  }
-
-  Future<void> submitWithdrawalToBank(Map paymentInfo) async {
-    var tranxID = id.v4();
-
-    double wallet_bal_after_transaction =
-        double.parse(box("Balance").toString()) -
-            paymentInfo['amountBeforeFee'];
-
-    // creates withdrawal record
-    // debits user's account balance
-    // send a notification to user's phone
-    await Future.wait([
-      // supabase.from("transactions").insert({
-      //   "comment": "",
-      //   "is_public": false,
-      //   "number_of_views": 0,
-      //   "number_of_likes": 0,
-      //   "attended_to": false,
-      //   "status": "Pending",
-      //   "currency_symbol": "K",
-      //   "number_of_replies": 0,
-      //   "sent_received": "Sent",
-      //   "deposit_details": null,
-      //   "user_id": box("user_id"),
-      //   "transaction_id": tranxID,
-      //   "country": box("Country"),
-      //   "withdrawal_details": {
-      //     "bank_branch": "",
-      //     "bank_address": "",
-      //     "phone_number": "",
-      //     "bank_sort_code": "",
-      //     "bank_swift_code": "",
-      //     "bank_routing_number": "",
-      //     "bank_country": box("Country"),
-      //     "bank_name": paymentInfo['bankName'],
-      //     "bank_account_number": paymentInfo['bankAccountNumber'],
-      //     "bank_account_holder_name": "${box("FirstName")}${box("LastName")}",
-      //     "final_withdraw_amount": paymentInfo['amountBeforeFee'],
-      //     "picked_withdraw_method": paymentInfo['paymentMethod'],
-      //     "withdraw_amount_plus_fee": paymentInfo['amountPlusFee'],
-      //     "withdraw_amount_minus_fee": paymentInfo['amountBeforeFee'],
-      //   },
-      //   "p2p_sender_details": null,
-      //   "currency": box("Currency"),
-      //   "p2p_recipient_details": null,
-      //   "transaction_fee_details": {
-      //     "transaction_international_bank_tranfer_fee":
-      //         box("WithdrawFeeInternationalBanksInUSD").toString(),
-      //     "transaction_fee_amount":
-      //         paymentInfo['amountPlusFee'] - paymentInfo['amountBeforeFee'],
-      //     "transaction_local_bank_tranfer_fee":
-      //         box("WithdrawFeeLocalBanksInUSD").toString(),
-      //     "transaction_total_fee_percentage": "0",
-      //     "transaction_total_fee_currency": box("Currency"),
-      //     "transcation_bank_transfer_fee_currency": "USD",
-      //   },
-      //   "savings_account_details": null,
-      //   "transaction_type": "Withdrawal",
-      //   "method": paymentInfo['bankName'],
-      //   "user_is_verified": box("isVerified"),
-      //   "amount": paymentInfo['amountBeforeFee'],
-      //   "full_names": "${box("FirstName")}${box("LastName")}",
-      //   "wallet_balance_details": {
-      //     "wallet_balance_before_transaction": box("Balance"),
-      //     "wallet_balances_difference": paymentInfo['amountBeforeFee'],
-      //     "wallet_balance_after_transaction": wallet_bal_after_transaction,
-      //   },
-      //   "description": "To account number: ${paymentInfo['bankAccountNumber']}",
-      // }),
-      // _fire.collection("Users").doc(box("user_id")).update(
-      //     {"Balance": FieldValue.increment(-paymentInfo['amountPlusFee'])}),
-      // _fire.collection("Admin").doc("Metrics").update({
-      //   "numberOfPendingWithdrawals": FieldValue.increment(1),
-      //   "dailyNumberOfWithdrawalsMade": FieldValue.increment(1),
-      //   "totalUserBalances": FieldValue.increment(
-      //       -double.parse(paymentInfo['amountPlusFee'].toString()))
-      // }),
-    ]);
+    return res.data.data.status == "success";
   }
 }
 
+// converted to RLS
 class ReferralProviderFunctions extends ChangeNotifier {
   List<dynamic>? referral_commissions;
   int number_of_people_referred = 0;
@@ -2773,21 +2618,28 @@ class ReferralProviderFunctions extends ChangeNotifier {
   }
 
   // gets a snapshot of all referral commissions & number of people referred
-  Future<void> getMyReferralCommissions() async {
-    referral_commissions = await supabase
-        .from("referral_commission_transactions")
-        .select()
-        .eq("user_id", box("user_id"))
-        .order("created_at", ascending: false);
+  Future<bool> getMyReferralCommissions() async {
+    FunctionResponse res = await callGeneralFunction(
+      "get_my_referral_commissions",
+      {
+        "get_number_of_people_user_referred": false,
+        "number_of_rows_to_query": "all",
+      },
+    );
 
-    // QuerySnapshot result = await _fire
-    //     .collection("Users")
-    //     .where("ReferralCode", isEqualTo: box("Username_searchable"))
-    // .get();
+    List<dynamic>? commissions_rows = res.data.data.data.referral_commissions;
 
-    // number_of_people_referred = result.docs.length;
+    List<dynamic>? people_invited_rows =
+        res.data.data.data.people_user_has_referred;
+
+    referral_commissions = commissions_rows;
+
+    number_of_people_referred =
+        res.data.data.data.people_user_has_referred_count;
 
     notifyListeners();
+
+    return res.data.data.status == "success";
   }
 
   // opens the message app and gets ready to send sms
@@ -2820,6 +2672,7 @@ class ReferralProviderFunctions extends ChangeNotifier {
   }
 }
 
+// converted to RLS
 class UssdProviderFunctions extends ChangeNotifier {
   List<dynamic>? list_of_shortcuts;
   bool is_loading = false;
@@ -3044,6 +2897,7 @@ class UssdProviderFunctions extends ChangeNotifier {
   }
 }
 
+// converted to RLS
 class KycProviderFunctions extends ChangeNotifier {
   String selected_document_type = "National ID (NRC)";
   String current_verification_status = "";
@@ -3879,10 +3733,11 @@ class MessageProviderFunctions extends ChangeNotifier {
   }
 
   // Function to scroll to a specific message by its ID
-  void scrollToMessage(String messageId, messages, _scrollController) {
+  void scrollToMessage(
+      String messageId, messages, ScrollController scrollController) {
     int messageIndex = getMessageIndexById(messageId, messages);
     if (messageIndex != -1) {
-      _scrollController.animateTo(
+      scrollController.animateTo(
         messageIndex * 80.0,
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
@@ -5722,8 +5577,10 @@ class NfcProviderFunctions extends ChangeNotifier {
       return;
     }
 
+    String pin_code = "1234";
+
     // creates a database record for the tag
-    await createTagRecord(context, tag_serial_number);
+    await createTagRecord(context, tag_serial_number, pin_code);
 
     showSnackBar(
         context, 'Card has been linked successfully! You can now use card.',
@@ -5737,157 +5594,68 @@ class NfcProviderFunctions extends ChangeNotifier {
   }
 
   // creates a database record of the tag being registered
-  Future<void> createTagRecord(
-      BuildContext context, String tag_serial_number) async {
-    // encrypts the tag's PIN
-    String? encrypted_pin = await encryptPin(pin_code_string);
-
-    // creates a database record of the tag
-    await supabase.from("nfc_tags").insert({
-      "tag_name": "${box("FirstName")} ${box("LastName")}",
-      "complete_transactions_to_wallet_balance": true,
-      "owner_details": {
-        "profile_image_url": box("profile_image_url"),
-        "first_name": box("FirstName"),
-        "email_address": box("Email"),
-        "last_name": box("LastName"),
-        "currency": box("Currency"),
-        "user_id": box("user_id"),
-        "country": box("Country"),
-        "gender": box("Gender"),
-        "city": box("City"),
+  Future<bool> createTagRecord(
+    BuildContext context,
+    String tag_serial_number,
+    String pin_code,
+  ) async {
+    FunctionResponse res = await callGeneralFunction(
+      "register_nfc_tag",
+      {
+        "tag_serial_number": tag_serial_number,
+        "decrypted_pin_code": pin_code,
       },
-      "tag_serial_number": tag_serial_number,
-      "user_code": box("UserCode"),
-      "currency": box("Currency"),
-      "last_used_timestamp": null,
-      "number_of_transactions": 0,
-      "country": box("Country"),
-      "user_id": box("user_id"),
-      "pin_code": encrypted_pin,
-      "gps_location": null,
-      "city": box("City"),
-      "pin_tries_left": 3,
-      "is_frozen": false,
-      "is_active": true,
-      "balance": 0,
-    });
+    );
+
+    return res.data.data.staus == "Success";
   }
 
   // checks if the user has any tags registered
   Future<void> getTags() async {
-    list_of_registered_tags = await supabase
-        .from("nfc_tags")
-        .select()
-        .eq("is_active", true)
-        .eq("user_id", box("user_id"))
-        .order("created_at", ascending: false);
+    FunctionResponse res = await callGeneralFunction(
+        "get_my_registered_tags", {"get_tag_transactions_also": true});
 
-    list_of_registered_tags!.add(list_of_registered_tags![0]);
+    list_of_registered_tags = res.data;
 
-    // gets transactions for all tags
-    await getAllTagsTransactions();
-
-    notifyListeners();
-  }
-
-  // gets all transactions for all active cards
-  Future<void> getAllTagsTransactions() async {
-    List<Future> operations = [];
-
-    for (var i = 0; i < list_of_registered_tags!.length; i++) {
-      operations.add(supabase
-          .from("nfc_tag_transactions")
-          .select()
-          .eq("tag_id", list_of_registered_tags![i]["tag_id"])
-          .order("created_at", ascending: false));
-
-      // TODO optimize this code to only get 5 transactions here for each card
+    if (list_of_registered_tags!.isNotEmpty) {
+      list_of_registered_tags!.add(list_of_registered_tags![0]);
     }
 
-    list_of_registered_tags_transactions = await Future.wait(operations);
+    list_of_registered_tags_transactions = res.data.data.data.transactions;
 
     notifyListeners();
   }
 
   // gets the transactions for only one tag
   Future<List<dynamic>> getSingleTagsTransactions(String tag_id) async {
-    List<dynamic> result = await supabase
-        .from("nfc_tag_transactions")
-        .select()
-        .eq("tag_id", tag_id)
-        .order("created_at", ascending: false);
+    FunctionResponse res =
+        await callGeneralFunction("get_single_tag_transactions", {
+      "tag_id": tag_id,
+    });
 
-    return result;
+    return res.data.data.data;
   }
 
   // checks if the user has any tags registered
-  Future<void> checkIfHasTagsRegistered() async {
-    List<dynamic> results = await supabase
-        .from("nfc_tags")
-        .select()
-        .eq("user_id", box("user_id"))
-        .eq("is_active", true);
+  Future<void> checkIfUserHasTagsRegistered() async {
+    FunctionResponse res = await callGeneralFunction(
+      "check_if_user_has_tags_registered",
+      {},
+    );
 
-    has_tags_registered = results.isNotEmpty;
+    has_tags_registered = res.data.data;
+
     notifyListeners();
-  }
-
-  // encrypts the user's pin
-  Future<String?> encryptPin(String decrypted_pin) async {
-    if (decrypted_pin.isEmpty) return null;
-
-    // TODO make this a cloud function to further security
-
-    // DocumentSnapshot keys_doc = await FirebaseFirestore.instance
-    //     .collection("Admin")
-    //     .doc("Legal")
-    //     .collection(
-    //         "Sensitive_keys_q9!@#\$%^&*&^%\$#\$%^u5lay0nicoep2ws47d6bzkfx83gthj")
-    //     .doc("keys")
-    //     .get();
-
-    // var encrypted_pin = Encryptor.encrypt(
-    //     keys_doc.get("client_app_6_digit_pin_key"), decrypted_pin);
-
-    // // stores the encrypted pin locally
-    // boxPut("PIN", encrypted_pin);
-
-    // return encrypted_pin;
-
-    return "";
-  }
-
-// decrypts the user's pin
-  Future<String?> decryptPin(String encrypted_pin) async {
-    if (encrypted_pin.isEmpty) return null;
-
-    // TODO make this a cloud function to further security
-
-    // DocumentSnapshot keys_doc = await FirebaseFirestore.instance
-    //     .collection("Admin")
-    //     .doc("Legal")
-    //     .collection(
-    //         "Sensitive_keys_q9!@#\$%^&*&^%\$#\$%^u5lay0nicoep2ws47d6bzkfx83gthj")
-    //     .doc("keys")
-    //     .get();
-
-    // var decrypted_pin = Encryptor.decrypt(
-    //     keys_doc.get("client_app_6_digit_pin_key"), encrypted_pin);
-
-    // return decrypted_pin;
-
-    return "";
   }
 
   // checks if a tag has already been registered in the database
   Future<bool> checkIfTagExists(String tag_serial_number) async {
-    List<dynamic> results = await supabase
-        .from("nfc_tags")
-        .select()
-        .eq("tag_serial_number", tag_serial_number);
+    FunctionResponse res = await callGeneralFunction(
+      "check_if_tag_exists",
+      {"tag_serial_number": tag_serial_number},
+    );
 
-    return results.isNotEmpty;
+    return res.data.data.data.exists;
   }
 
   // reads an NFC tag
@@ -5924,9 +5692,14 @@ class NfcProviderFunctions extends ChangeNotifier {
     }
 
     changePage(
-        context,
-        SendMoneyByQRCode(
-            paymentInfo: {"receiverDoc": details[1], "scan_type": "NFC"}));
+      context,
+      SendMoneyByQRCode(
+        paymentInfo: {
+          "receiverDoc": details[1],
+          "scan_type": "NFC",
+        },
+      ),
+    );
   }
 }
 

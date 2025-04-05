@@ -393,6 +393,7 @@ module.exports = function (e) {
                         userID: "",
                     },
                 };
+                
                 sendNotif.push(
                     admin.messaging().sendToDevice(userDataAfter.NotificationToken, newUserPayload),
                 );

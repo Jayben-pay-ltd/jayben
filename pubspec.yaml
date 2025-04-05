@@ -48,7 +48,7 @@ dependencies:
   uuid: ^4.4.0
   google_fonts: ^6.1.0
   webview_flutter: ^4.2.3
-  # package_info_plus: ^8.3.0
+  package_info_plus: ^8.3.0
   # supabase_flutter: ^1.10.25
   supabase_flutter: ^2.1.0
   encryptor: ^0.0.1
@@ -56,7 +56,7 @@ dependencies:
   timeago: ^3.2.2
   # dart_openai: ^4.0.0
   # ussd_advanced: ^1.1.0
-  # device_info_plus: ^11.3.3
+  device_info_plus: ^11.3.3
   # contacts_service: ^0.6.3
   fast_contacts: ^4.0.0
   # flutter_sms: ^2.3.3
@@ -67,7 +67,7 @@ dependencies:
   dropdown_button2: ^2.3.9
   get_ip_address: ^0.0.6
   platform_device_id: ^1.0.1
-  # share_plus: ^10.1.4
+  share_plus: ^10.1.4
   video_compress: ^3.1.2
   video_player: ^2.8.1
   like_button: ^2.0.5

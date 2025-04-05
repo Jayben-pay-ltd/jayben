@@ -414,7 +414,93 @@ serve(async (req: Request) => {
         );
         break;
 
-      // ====================== Profile Functions Getters
+      // ====================== Purchase Airtime
+
+      case "purchase_airtime":
+        data_to_return_in_response = await purchase_airtime(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      // ====================== Withdrawal Functions
+
+      case "withdraw_funds":
+        data_to_return_in_response = await withdraw_funds(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      // ====================== NFC Functions
+
+      case "register_nfc_tag":
+        data_to_return_in_response = await register_nfc_tag(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      case "get_my_registered_tags":
+        data_to_return_in_response = await get_my_registered_tags(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      case "get_all_tags_transactions":
+        data_to_return_in_response = await get_single_tag_transactions(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      case "get_single_tag_transactions":
+        data_to_return_in_response = await get_single_tag_transactions(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      case "check_if_user_has_tags_registered":
+        data_to_return_in_response = await check_if_user_has_tags_registered(
+          supabaseClient,
+          req,
+        );
+        break;
+
+      case "check_if_tag_exists":
+        data_to_return_in_response = await check_if_tag_exists(
+          supabaseClient,
+          req,
+        );
+        break;
+
+      // ====================== Referral Functions
+
+      case "get_my_referral_commissions":
+        data_to_return_in_response = await get_my_referral_commissions(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      case "get_my_kyc_verification_records":
+        data_to_return_in_response = await get_my_kyc_verification_records(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
+      // ====================== Payment Functions
 
       case "send_money_p2p":
         data_to_return_in_response = await send_money_p2p(
@@ -526,75 +612,47 @@ const convert_currency = async (_supabase: any, _body: any): Promise<any> => {
 };
 
 // receives an unencrypted password and then encrypts it and sends it back to the user
-const encrypt_account_login_password = async (
+const _encrypt_account_login_password = async (
   _supabase: any,
   _body: any,
-): Promise<any> => {
-  /*
-        body preview:
-        {
-            "request_type": "convert_currency",
-            "decrypted_password": "string",
-        }
-    */
+): Promise<string> => {
+  try {
+    // Parse public key and create RSA instance
+    const publicKey = RSA.parseKey(
+      `-----BEGIN PUBLIC KEY-----\n${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY")}\n-----END PUBLIC KEY-----`
+    );
+    
+    const rsa = new RSA(publicKey);
 
-  // gets a list of the stored exchange rates
-  const key_record = await _supabase.from("appwide_admin_settings_private")
-    .select()
-    .eq("record_name", "---- Account Login Password Encryption Key ----")
-    .order("created_at", { ascending: false });
-
-  // gets the key
-  const key = key_record["data"][0]["record_contents"]["encryption_key"];
-
-  const publicKey = RSA.parseKey(`-----BEGIN PUBLIC KEY-----
-    ${key}
-    -----END PUBLIC KEY-----
-    `);
-
-  const rsa = new RSA(publicKey);
-
-  const encrypted_password = await rsa.encrypt(_body.decrypted_password);
-
-  console.log(encrypted_password);
-
-  return encrypted_password;
+    // Encrypt password and convert to base64 string
+    const encrypted_password = await rsa.encrypt(_body.decrypted_password);
+    return encrypted_password.base64();
+  } catch (error) {
+    console.error("Password encryption failed:", error);
+    throw new Error("Failed to encrypt password");
+  }
 };
 
 // receives an unencrypted password and then encrypts it and sends it back to the user
-const decrypt_account_login_password = async (
+const _decrypt_account_login_password = async (
   _supabase: any,
-  _body: any,
-): Promise<any> => {
-  /*
-        body preview:
-        {
-            "request_type": "decrypt_account_login_password",
-            "encrypted_password": "string",
-        }
-    */
+  _body: any
+): Promise<string> => {
+  try {
+    // Parse private key and create RSA instance
+    const privateKey = RSA.parseKey(
+      `-----BEGIN PRIVATE KEY-----\n${Deno.env.get("ACCOUNT_LOGIN_DECRYPTION_KEY")}\n-----END PRIVATE KEY-----`
+    );
+    
+    const rsa = new RSA(privateKey);
 
-  // gets a list of the stored exchange rates
-  const key_record = await _supabase.from("appwide_admin_settings_private")
-    .select()
-    .eq("record_name", "---- Account Login Password Encryption Key ----")
-    .order("created_at", { ascending: false });
-
-  // gets the key
-  const key = key_record["data"][0]["record_contents"]["decryption_key"];
-
-  const privateKey = RSA.parseKey(`-----BEGIN PRIVATE KEY-----
-    ${key}
-    -----END PRIVATE KEY-----
-    `);
-
-  const rsa = new RSA(privateKey);
-
-  const decrypted_password = await rsa.decrypt(_body.encrypted_password);
-
-  console.log(decrypted_password);
-
-  return decrypted_password;
+    // Decrypt password and convert to string
+    const decrypted_password = await rsa.decrypt(_body.encrypted_password);
+    return decrypted_password.toString();
+  } catch (error) {
+    console.error("Password decryption failed:", error);
+    throw new Error("Failed to decrypt password");
+  }
 };
 
 // deletes an existing user account row
@@ -1462,7 +1520,7 @@ const upvote_an_existing_feedback_submission = async (
 
     // if user has already upvoted the submission
     const hasUpvoted = feedback_row["users_who_upvoted"].some((user: any) =>
-      user.user_id === user_id
+      user.user_id == user_id
     ) ?? false;
 
     if (hasUpvoted) {
@@ -2009,9 +2067,416 @@ const send_money_with_time_limit = async (
   };
 };
 
+// ============================================================ Withdraw Functions
+
+// handles mobile money withdrawals by users
+const withdraw_funds = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+    body preview
+    {
+      "amount_to_withdraw_minus_fee": number,
+      "amount_to_withdraw_plus_fee": number,
+      "transaction_fee_currency": string,
+      "request_type": "withdraw_funds",
+      "transaction_fee_amount": number,
+      "phone_number": string,
+      "reference": string,
+      "method": string
+    }
+  */
+
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // Get user's account details
+  const user_result = await _supabaseClient
+    .from("users")
+    .select()
+    .eq("user_id", user_id)
+    .single();
+
+  const user = user_result.data;
+
+  const transaction_id = crypto.randomUUID();
+
+  const appwide_settings = await _supabaseClient.from("appwide_admin_settings")
+    .select().eq("record_name", "---- Withdrawal Settings ----");
+
+  const withdraw_record_contents = appwide_settings["data"][0];
+
+  // Check if user has sufficient balance
+  if (user.balance >= _body.amount_to_withdraw_plus_fee) {
+    try {
+      // Create transaction record
+      await _supabaseClient.from("transactions").insert({
+        transaction_fee_details: {
+          transaction_total_fee_percentage:
+            withdraw_record_contents.withdraw_fee_percentage,
+          transaction_fee_amount: _body.transaction_fee_amount,
+          transaction_international_bank_tranfer_fee: "",
+          transaction_total_fee_currency: user.currency,
+          transcation_bank_transfer_fee_currency: "",
+          transaction_local_bank_tranfer_fee: "",
+        },
+        wallet_balance_details: {
+          wallet_balance_after_transaction: user.balance -
+            _body.amount_to_withdraw_plus_fee,
+          wallet_balances_difference: _body.amount_to_withdraw_minus_fee,
+          rule: "balance before must be larger than balance after",
+          transaction_fee_amount: _body.transaction_fee_amount,
+          wallet_balance_before_transaction: user.balance,
+        },
+        withdrawal_details: {
+          withdraw_amount_to_send_to_method: _body.amount_to_withdraw_minus_fee,
+          withdraw_amount_minus_fee: _body.amount_to_withdraw_minus_fee,
+          withdraw_amount_plus_fee: _body.amount_to_withdraw_plus_fee,
+          picked_withdraw_method: _body.method,
+          phone_number: _body.phone_number,
+          bank_account_holder_name: "",
+          reference: _body.reference,
+          bank_routing_number: "",
+          bank_account_number: "",
+          bank_swift_code: "",
+          bank_sort_code: "",
+          bank_address: "",
+          bank_country: "",
+          bank_branch: "",
+          bank_name: "",
+        },
+        description: `To ${_body.phone_number} ${_body.reference}`,
+        full_names: `${user.first_name} ${user.last_name}`,
+        user_is_verified: user.account_kyc_is_verified,
+        amount: _body.amount_to_withdraw_minus_fee,
+        currency_symbol: user.currency_symbol,
+        transaction_type: "Withdrawal",
+        transaction_id: transaction_id,
+        savings_account_details: null,
+        p2p_recipient_details: null,
+        p2p_sender_details: null,
+        currency: user.currency,
+        country: user.country,
+        deposit_details: null,
+        sent_received: "Sent",
+        number_of_replies: 0,
+        method: _body.method,
+        number_of_views: 0,
+        number_of_likes: 0,
+        attended_to: false,
+        status: "Pending",
+        is_public: false,
+        user_id: user_id,
+        comment: "",
+      });
+
+      const fraud_check_response = await fetch(
+        new Request(
+          "https://srfjzsqimfuomlmjixsu.supabase.co/functions/v1/check_for_fraudulent_transactions",
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              user_id: user_id,
+            }),
+          },
+        ),
+      );
+
+      const fraud_check = await fraud_check_response.json();
+
+      if (
+        fraud_check.data ==
+          "Everything looks good boss. No fraudulent activity detected."
+      ) {
+        // Update user balance
+        await _supabaseClient
+          .from("users")
+          .update({
+            balance: user.balance - _body.amount_to_withdraw_plus_fee,
+          })
+          .eq("user_id", user_id);
+
+        // Send notification to user
+        await _supabaseClient.rpc("send_notifications_via_firebase", {
+          body:
+            `You have withdrawn ${user.currency_symbol}${_body.amount_to_withdraw_minus_fee} to ${_body.method}. It will be processed shortly, please be patient.`,
+          notification_tokens: [user.notification_token],
+          title: "Withdrawal Submitted",
+        });
+
+        // Send SMS to admin
+        // TODO: Implement SMS sending functionality
+
+        return {
+          "message": "Withdrawal submitted successfully",
+          "status": "success",
+          "status_code": 200,
+          "data": {
+            transaction_id: transaction_id,
+          },
+        };
+      } else {
+        // Flag transaction and put account on hold
+        await Promise.all([
+          _supabaseClient
+            .from("transactions")
+            .update({ status: "Flagged" })
+            .eq("transaction_id", transaction_id),
+
+          _supabaseClient
+            .from("users")
+            .update({ account_is_on_hold: true })
+            .eq("user_id", user_id),
+
+          _supabaseClient.rpc("send_notifications_via_firebase", {
+            body:
+              "Your withdrawal has been flagged. Please contact customer support.",
+            notification_tokens: [user.notification_token],
+            title: "Withdrawal Flagged 🚩",
+          }),
+        ]);
+
+        return {
+          "message": "Withdrawal flagged for suspicious activity",
+          "status": "failed",
+          "status_code": 400,
+          "data": null,
+        };
+      }
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+
+      return {
+        "message": "Error processing withdrawal",
+        "status": "failed",
+        "status_code": 500,
+        "data": null,
+      };
+    }
+  } else {
+    await _supabaseClient.rpc("send_notifications_via_firebase", {
+      body: "You have insufficient balance to conduct this withdrawal.",
+      notification_tokens: [user.notification_token],
+      title: "Withdrawal Declined",
+    });
+
+    return {
+      "message": "Insufficient balance",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+};
+
 // ============================================================ Airtime Functions
 
+// handles airtime purchases by users
+const purchase_airtime = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+    body preview
+    {
+      "request_type": "purchase_airtime",
+      "post_is_public": boolean,
+      "media_details": [{
+        "media_caption": string,
+        "thumbnail_url": string,
+        "aspect_ratio": number,
+        "media_type": string,
+        "post_type": string,
+        "media_url": string
+      }],
+      "phone_number": string,
+      "currency": string,
+      "comment": string,
+      "amount": number,
+    }
+  */
 
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // Get user's account details
+  const user_result = await _supabaseClient
+    .from("users")
+    .select()
+    .eq("user_id", user_id)
+    .single();
+
+  const user = user_result.data;
+
+  // Check if user has sufficient balance
+  if (user.balance < _body.amount) {
+    await _supabaseClient.rpc("send_notifications_via_firebase", {
+      body: "Insufficient balance for airtime purchase",
+      notification_tokens: [user.notification_token],
+      title: "Airtime Purchase Failed",
+    });
+
+    return {
+      "message": "Insufficient balance",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  const transaction_id = crypto.randomUUID();
+
+  try {
+    // Call Africa's Talking API to purchase airtime
+    const at_response = await fetch(
+      "https://api.africastalking.com/version1/airtime/send",
+      {
+        method: "POST",
+        headers: {
+          "apiKey": Deno.env.get("AFRICASTALKING_API_KEY") ?? "",
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          username: Deno.env.get("AFRICASTALKING_USERNAME"),
+          recipients: [{
+            phoneNumber: `+${_body.phone_number}`,
+            currency: _body.currency,
+            amount: _body.amount,
+          }],
+        }),
+      },
+    );
+
+    const at_result = await at_response.json();
+
+    if (at_result.errorMessage == "None") {
+      // Update user balance
+      await _supabaseClient
+        .from("users")
+        .update({
+          balance: user.balance - _body.amount,
+        })
+        .eq("user_id", user_id);
+
+      // Create transaction record
+      await _supabaseClient
+        .from("transactions")
+        .insert({
+          wallet_balance_details: {
+            wallet_balance_before_transaction: user.balance,
+            wallet_balance_after_transaction: user.balance -
+              _body.amount,
+            wallet_balances_difference: _body.amount,
+          },
+          full_names: `${user.first_name} ${user.last_name}`,
+          user_is_verified: user.account_kyc_is_verified,
+          description: `For +${_body.phone_number}`,
+          currency_symbol: user.currency_symbol,
+          transaction_type: "Airtime Purchase",
+          is_public: _body.post_is_public,
+          transaction_id: transaction_id,
+          savings_account_details: null,
+          transaction_fee_details: null,
+          p2p_receipient_details: null,
+          method: "Wallet transfer",
+          p2p_sender_details: null,
+          withdrawal_details: null,
+          currency: user.currency,
+          comment: _body.comment,
+          country: user.country,
+          sent_received: "Sent",
+          deposit_details: null,
+          amount: _body.amount,
+          number_of_replies: 0,
+          status: "Completed",
+          number_of_views: 0,
+          number_of_likes: 0,
+          attended_to: false,
+          user_id: user_id,
+        });
+
+      // Send success notification
+      await _supabaseClient.rpc("send_notifications_via_firebase", {
+        body:
+          `Airtime purchase of ${user.currency_symbol}${_body.amount} to +${_body.phone_number} was successful`,
+        notification_tokens: [user.notification_token],
+        title: "Airtime Purchase Successful 🎉",
+      });
+
+      return {
+        "message": "Airtime purchase successful",
+        "status": "success",
+        "status_code": 200,
+        "data": {
+          transaction_id: transaction_id,
+        },
+      };
+    } else {
+      // Handle Africa's Talking API error
+      await _supabaseClient.rpc("send_notifications_via_firebase", {
+        body: "Airtime purchase failed. Please try again later.",
+        notification_tokens: [user.notification_token],
+        title: "Purchase Failed",
+      });
+
+      // Log error
+      // await _supabaseClient
+      //   .from("error_logs")
+      //   .insert({
+      //     error_type: "Airtime Purchase",
+      //     error_details: at_result,
+      //     user_id: user_id,
+      //   });
+
+      return {
+        "message": "Airtime purchase failed",
+        "status": "failed",
+        "status_code": 400,
+        "data": null,
+      };
+    }
+  } catch (error) {
+    console.error("Airtime purchase error:", error);
+
+    await _supabaseClient.rpc("send_notifications_via_firebase", {
+      body:
+        "An error occurred during airtime purchase. Please try again later.",
+      notification_tokens: [user.notification_token],
+      title: "Purchase Error",
+    });
+
+    return {
+      "message": "Error processing airtime purchase",
+      "status": "failed",
+      "status_code": 500,
+      "data": null,
+    };
+  }
+};
 
 // ============================================================ Authentication Functions
 
@@ -2066,7 +2531,7 @@ const create_user_account_record = async (
     };
   } else {
     // encrypts the user's account login password
-    const encrypted_password = await encrypt_account_login_password(
+    const encrypted_password = await _encrypt_account_login_password(
       _supabaseClient,
       {
         "decrypted_password": _body["account_login_password"],
@@ -2348,6 +2813,426 @@ const get_users_email_address = async (
       },
     };
   }
+};
+
+// ============================================================ Referrals Functions
+
+const get_my_referral_commissions = async (
+  _supabaseClient: any,
+  _body: any,
+  _req: Request,
+): Promise<any> => {
+  /*
+  body preview
+  {
+    "request_type": "get_my_referral_commissions",
+    "get_number_of_people_user_referred": bool,
+    "number_of_rows_to_query": string,
+  }
+  */
+
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // gets the user's referral commissions rows
+  const my_referral_commissions = await _supabaseClient.from(
+    "referral_commission_transactions",
+  ).select().eq("user_id", user_id).order("created_at", {
+    ascending: false,
+  });
+
+  if (_body["get_number_of_people_user_referred"]) {
+    const user_account = await _supabaseClient.from("users").select().eq(
+      "user_id",
+      user_id,
+    );
+
+    const users_referral_code = user_account["data"][0].referral_code;
+
+    const people_user_has_referred = await _supabaseClient.from("users")
+      .select().eq("referred_by", users_referral_code);
+
+    return {
+      "data": {
+        "comission_transactions_count": my_referral_commissions["data"].length,
+        "people_user_has_referred": people_user_has_referred["data"],
+        "referral_commissions": my_referral_commissions["data"],
+        "people_user_has_referred_count":
+          people_user_has_referred["data"].length,
+      },
+      "message": "Referral commissions found",
+      "status": "success",
+      "status_code": 200,
+    };
+  } else {
+    return {
+      "data": {
+        "comission_transactions_count": my_referral_commissions["data"].length,
+        "referral_commissions": my_referral_commissions["data"],
+        "people_user_has_referred_count": null,
+        "people_user_has_referred": null,
+      },
+      "message": "Referral commissions found",
+      "status": "success",
+      "status_code": 200,
+    };
+  }
+};
+
+// ============================================================ NFC Functions Functions
+
+// creates a database record of the tag being registered
+const register_nfc_tag = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+      body preview
+      {
+        "request_type": "register_nfc_tag",
+        "decrypted_pin_code": string,
+        "tag_serial_number": string,
+      }
+  */
+
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // gets the user's account details
+  const user_result = await _supabaseClient
+    .from("users")
+    .select()
+    .eq("user_id", user_id)
+    .single();
+
+  const user = user_result.data;
+
+  // encrypts the tag's pin code
+  const encrypted_pin_code = await _encrypt_tag_pin_code(_supabaseClient, _body.decrypted_pin_code);
+
+  // creates the tag record
+  await _supabaseClient.from("nfc_tags").insert({
+    "tag_name": `${user.first_name} ${user.last_name}`,
+    "complete_transactions_to_wallet_balance": true,
+    "owner_details": {
+      "profile_image_url": user.profile_image_url,
+      "email_address": user.email_address,
+      "first_name": user.first_name,
+      "last_name": user.last_name,
+      "currency": user.currency,
+      "country": user.country,
+      "gender": user.gender,
+      "user_id": user_id,
+      "city": user.city,
+    },
+    "tag_serial_number": _body.tag_serial_number,
+    "pin_code": encrypted_pin_code,
+    "last_used_timestamp": null,
+    "number_of_transactions": 0,
+    "user_code": user.user_code,
+    "currency": user.currency,
+    "country": user.country,
+    "gps_location": null,
+    "pin_tries_left": 3,
+    "user_id": user_id,
+    "is_frozen": false,
+    "is_active": true,
+    "city": user.city,
+    "balance": 0,
+  });
+
+  return {
+    "message": "Tag registered successfully",
+    "status": "success",
+    "status_code": 200,
+    "data": null,
+  };
+};
+
+const _encrypt_tag_pin_code = async (_supabaseClient: any, _decrypted_pin_code: any): Promise<any> => {
+  /*
+      body preview
+      {
+        "pin_code": string
+      }
+  */
+
+  // encrypts the tag pin code
+  const encrypted_pin_code = await _encrypt_account_login_password(
+    _supabaseClient,
+    {
+      "decrypted_password": _decrypted_pin_code,
+    },
+  );
+
+  return encrypted_pin_code;
+};
+
+const _decrypt_tag_pin_code = async (_supabaseClient: any, _encrypted_pin_code: any): Promise<any> => {
+  /*
+      body preview
+      {
+        "pin_code": string
+      }
+  */
+
+  // encrypts the tag pin code
+  const decrypted_pin_code = await _decrypt_account_login_password(
+    _supabaseClient,
+    {
+      "encrypted_password": _encrypted_pin_code,
+    },
+  );
+
+  return decrypted_pin_code;
+};
+
+
+// gets all registered tags for a user
+const get_my_registered_tags = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+      body preview
+      {
+        "request_type": "get_my_registered_tags",
+        "get_tag_transactions_also": boolean
+      }
+  */
+
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // gets the user's registered nfc tags
+  const registered_tags = await _supabaseClient
+    .from("nfc_tags")
+    .select()
+    .eq("is_active", true)
+    .eq("user_id", user_id)
+    .order("created_at", { ascending: false });
+
+  if (_body["get_tag_transactions_also"]) {
+    const tags_transactions = await _get_all_tags_transactions(
+      _supabaseClient,
+      registered_tags.data,
+    );
+
+    return {
+      "message": "Tags retrieved successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": {
+        "transactions": tags_transactions,
+        "tags": registered_tags.data,
+      },
+    };
+  } else {
+    return {
+      "message": "Tags retrieved successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": {
+        "tags": registered_tags.data,
+        "transactions": null,
+      },
+    };
+  }
+};
+
+// gets transactions for all tags
+const _get_all_tags_transactions = async (
+  _supabaseClient: any,
+  tags: any[],
+): Promise<any[]> => {
+  const operations = tags.map((tag) =>
+    _supabaseClient
+      .from("nfc_tag_transactions")
+      .select()
+      .eq("tag_id", tag.tag_id)
+      .order("created_at", { ascending: false })
+  );
+
+  return await Promise.all(operations);
+};
+
+// gets transactions for a single tag
+const get_single_tag_transactions = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+      body preview
+      {
+        "request_type": "get_single_tag_transactions",
+        "tag_id": string
+      }
+    */
+
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // gets the transactions for a specific nfc tag
+  const result = await _supabaseClient
+    .from("nfc_tag_transactions")
+    .select()
+    .eq("user_id", user_id)
+    .eq("tag_id", _body.tag_id)
+    .order("created_at", { ascending: false });
+
+  return {
+    "message": "Tag transactions retrieved successfully",
+    "status": "success",
+    "status_code": 200,
+    "data": result.data,
+  };
+};
+
+// checks if user has any registered tags
+const check_if_user_has_tags_registered = async (
+  _supabaseClient: any,
+  _req: Request,
+): Promise<any> => {
+  /*
+      body preview
+      {
+        "request_type": "check_if_user_has_tags_registered"
+      }
+    */
+
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  const results = await _supabaseClient
+    .from("nfc_tags")
+    .select()
+    .eq("user_id", user_id)
+    .eq("is_active", true);
+
+  return {
+    "message": "Check completed successfully",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "has_tags": results.data.length > 0,
+    },
+  };
+};
+
+// checks if a tag has already been registered
+const check_if_tag_exists = async (
+  _supabaseClient: any,
+  _body: any,
+): Promise<any> => {
+  /*
+      body preview
+      {
+        "request_type": "check_if_tag_exists",
+        "tag_id": string
+      }
+    */
+
+  const results = await _supabaseClient
+    .from("nfc_tags")
+    .select()
+    .eq("tag_serial_number", _body.tag_serial_number);
+
+  return {
+    "message": "Check completed successfully",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "exists": results.data.length > 0,
+    },
+  };
+};
+
+// ============================================================ QR Code Scanner Functions
+
+const get_my_kyc_verification_records = async (
+  _supabaseClient: any,
+  _body: any,
+  _req: Request,
+): Promise<any> => {
+  /*
+  body preview
+  {
+    "request_type": "get_my_kyc_verification_records",
+    "number_of_rows_to_query": string,
+    "get_number_of_people"
+  }
+  */
+
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // gets the user's referral commissions rows
+  const my_referral_commissions = await _supabaseClient.from(
+    "referral_commission_transactions",
+  ).select().eq("user_id", user_id).order("created_at", {
+    ascending: false,
+  });
+
+  return {
+    "message": "Referral commissions found",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "referral_commissions": my_referral_commissions["data"],
+      "count": my_referral_commissions["data"].length,
+    },
+  };
 };
 
 // ============================================================ QR Code Scanner Functions
@@ -3385,7 +4270,7 @@ const create_shared_no_access_savings_account = async (
   await _supabase.from("shared_no_access_savings_accounts").insert({
     account_holder_notification_token: user.notification_token,
     expiration_date_and_time: expiration_date.toISOString(),
-    currency_symbol: user.currency === "ZMW" ? "K" : "",
+    currency_symbol: user.currency == "ZMW" ? "K" : "",
     total_minutes_for_account: number_of_minutes_left,
     total_days_for_account: _body.number_of_days,
     last_deposit_date: new Date().toISOString(),
@@ -3622,7 +4507,7 @@ async function sendNasMembersNotifications(
   _body: any,
   _list_of_account_members: any,
 ): Promise<void> {
-  if (!_list_of_account_members || _list_of_account_members.length === 0) {
+  if (!_list_of_account_members || _list_of_account_members.length == 0) {
     return;
   }
 
@@ -4172,7 +5057,7 @@ const donate_to_shared_nas_account = async (
               wallet_balances_difference: _body["amount"],
             },
             full_names: `${user_map["first_name"]} ${user_map["last_name"]}`,
-            currency_symbol: user_map["currency"] === "ZMW" ? "K" : "",
+            currency_symbol: user_map["currency"] == "ZMW" ? "K" : "",
             savings_account_name: account_map["account_name"],
             savings_account_type: account_map["account_type"],
             account_holder_details: {
@@ -4253,7 +5138,7 @@ async function update_owner_shared_nas_acc_bal_record(
 
   // gets the owner's existing acc bal share map's index
   const index: number = existingListOfAccountBalShares.findIndex(
-    (map: any) => map["user_id"] === _transferInfo["account_map"]["user_id"],
+    (map: any) => map["user_id"] == _transferInfo["account_map"]["user_id"],
   );
 
   // gets owner's the existing acc bal share map
@@ -4324,7 +5209,7 @@ const send_notifications_to_all_nas_members = async (
     .select()
     .eq("account_id", _body["account_id"]);
 
-  if (results["data"].length === 0) return;
+  if (results["data"].length == 0) return;
 
   // stores list of shared nas acc members
   const members = results["data"][0]["account_balance_shares"];
@@ -4707,11 +5592,8 @@ const scan_all_user_accounts_for_fraud_at_once = async (
 
   // runs all the operations all at once
   await Promise.all(http_functions_to_call);
-
-  console.log("Finished calling all https functions all at once boss!");
 };
 
-// gets all the user rows and adds them to batches
 const get_user_rows_in_batches_to_scan = async (
   _supabase: any,
 ): Promise<any> => {
