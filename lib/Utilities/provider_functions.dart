@@ -4121,6 +4121,7 @@ class MessageProviderFunctions extends ChangeNotifier {
   }
 }
 
+// converted to RLS
 class AttachProviderFunctions extends ChangeNotifier {
   VideoPlayerController? video_player_controller;
   bool video_is_initialized = false;
@@ -4224,121 +4225,94 @@ class AttachProviderFunctions extends ChangeNotifier {
   // uploads media files to firebase
   // then creates a supabase document for the post
   Future<void> addCashToSavingsWithMedia(
-      BuildContext context, Map transfer_info) async {
+    BuildContext context,
+    Map transfer_info,
+  ) async {
     // uploads the media files to firebase
     // then returns a media url and thumbnail url
     List<String>? urls = await uploadMedia(transfer_info["media_type"]);
 
-    // gets the public supabase keys document
-    // DocumentSnapshot supabase_keys = await _fire
-    //     .collection("Admin")
-    //     .doc("Legal")
-    //     .collection("Supabase")
-    //     .doc("keys")
-    //     .get();
+    FunctionResponse res =
+        await callGeneralFunction("add_money_to_shared_nas_account", {
+      "post_is_public": box("DefaultTransactionPrivacy") == "Public",
+      "media_details": [
+        {
+          "aspect_ratio": transfer_info['aspect_ratio'],
+          "media_type": transfer_info['media_type'],
+          "media_caption": transfer_info['comment'],
+          "post_type": transfer_info['media_type'],
+          "thumbnail_url": urls![1],
+          "media_url": urls[0],
+        }
+      ],
+      "account_id": transfer_info["transfer_info"]["accountID"],
+      "amount": transfer_info["transfer_info"]["amount"],
+      "comment": transfer_info['comment'],
+    });
 
-    // calls the transfer money API
-    // var res = await http.post(
-    //   Uri.parse(
-    //       "https://srfjzsqimfuomlmjixsu.supabase.co/functions/v1/general_functions"),
-    //   headers: {
-    //     "Authorization": "Bearer ${supabase_keys.get("anon_key")}",
-    //     "Content-type": "application/json",
-    //   },
-    //   body: json.encode(
-    //     {
-    //       "post_is_public": box("DefaultTransactionPrivacy") == "Public",
-    //       "media_details": [
-    //         {
-    //           "aspect_ratio": transfer_info['aspect_ratio'],
-    //           "media_type": transfer_info['media_type'],
-    //           "media_caption": transfer_info['comment'],
-    //           "post_type": transfer_info['media_type'],
-    //           "thumbnail_url": urls![1],
-    //           "media_url": urls[0],
-    //         }
-    //       ],
-    //       "account_id": transfer_info["transfer_info"]["accountID"],
-    //       "full_names": "${box("FirstName")} ${box("LastName")}",
-    //       "amount": transfer_info["transfer_info"]["amount"],
-    //       "request_type": "add_money_nas_account",
-    //       "comment": transfer_info['comment'],
-    //       "currency": box("Currency"),
-    //       "user_id": box("user_id"),
-    //       "country": box("Country"),
-    //     },
-    //   ),
-    // );
+    if (res.data.data.status == 'success') {
+      // tells user post has successfully been created
+      showSnackBar(context, "Post has been created successfully",
+          color: Colors.grey[700]!);
 
-    // if (res.body == '{"data":"success"}') {
-    //   // tells user post has successfully been created
-    //   showSnackBar(context, "Post has been created successfully",
-    //       color: Colors.grey[700]!);
+      // routes user back to home page
+      changePage(context, const HomePage(), type: "pr");
 
-    //   // routes user back to home page
-    //   changePage(context, const HomePage(), type: "pr");
+      if (!video_is_initialized) return;
 
-    //   if (!video_is_initialized) return;
-
-    //   // dispose the vid player controller
-    //   video_player_controller!.dispose();
-    // } else {
-    //   // tells user post has successfully been created
-    //   showSnackBar(context, "An error occured, please try again later.",
-    //       color: Colors.grey[700]!);
-    // }
+      // dispose the vid player controller
+      video_player_controller!.dispose();
+    } else {
+      // tells user post has successfully been created
+      showSnackBar(context, "An error occured, please try again later.",
+          color: Colors.grey[700]!);
+    }
   }
 
   // uploads media files to firebase
   // then creates a supabase document for the post
-  Future<void> sendP2PWithMedia(BuildContext context, Map postInfo) async {
+  Future<bool> sendP2PWithMedia(BuildContext context, Map postInfo) async {
     // uploads the media files to firebase
     // then returns a media url and thumbnail url
     List<String>? urls = await uploadMedia(postInfo["media_type"]);
 
-    // calls the transfer money API
-    var res = await http.post(
-      Uri.parse(
-          "https://us-central1-jayben-de41c.cloudfunctions.net/transactions/v3/transfer/p2p/wallet"),
-      headers: {
-        "Content-type": "application/json",
-      },
-      body: json.encode(
+    FunctionResponse res = await callGeneralFunction("send_money_p2p", {
+      "post_is_public": box("DefaultTransactionPrivacy") == "Public",
+      "receiver_user_id": postInfo["payment_info"]["receiver_map"]["user_id"],
+      "amount": postInfo["payment_info"]["amount"],
+      "media_details": [
         {
-          "post_is_public": box("DefaultTransactionPrivacy") == "Public",
-          "receiver_user_id": postInfo["payment_info"]["receiver_map"]
-              ["user_id"],
-          "amount": postInfo["payment_info"]["amount"],
-          "media_details": [
-            {
-              "aspect_ratio": postInfo['aspect_ratio'],
-              "media_type": postInfo['media_type'],
-              "media_caption": postInfo['comment'],
-              "post_type": postInfo['media_type'],
-              "thumbnail_url": urls![1],
-              "media_url": urls[0],
-            }
-          ],
-          "comment": postInfo['comment'],
-          "method": "Wallet transfer",
-          "currency": box("Currency"),
-          "user_id": box("user_id"),
-          "country": box("Country"),
-        },
-      ),
-    );
+          "aspect_ratio": postInfo['aspect_ratio'],
+          "media_type": postInfo['media_type'],
+          "media_caption": postInfo['comment'],
+          "post_type": postInfo['media_type'],
+          "thumbnail_url": urls![1],
+          "media_url": urls[0],
+        }
+      ],
+      "comment": postInfo['comment'],
+    });
+
+    bool is_sent = res.data.data.status == "success";
+
+    if (!is_sent) {
+      showSnackBar(context, "Transfer failed. Please try again.",
+          color: Colors.red[700]!);
+
+      return false;
+    }
 
     // tells user post has successfully been created
-    showSnackBar(context, "Post has been created successfully",
-        color: Colors.grey[700]!);
+    showSnackBar(context, "Transfer successfully", color: Colors.grey[700]!);
 
     // routes user back to home page
     changePage(context, const HomePage(), type: "pr");
 
-    if (!video_is_initialized) return;
+    if (!video_is_initialized) return false;
 
     // dispose the vid player controller
     video_player_controller!.dispose();
+    return true;
   }
 
   // uploads the file and returns a list of the urls
@@ -5445,6 +5419,7 @@ class AgentProviderFunctions extends ChangeNotifier {
   Future<void> createDispute(String deposit_id) async {}
 }
 
+// converted to RLS
 class NfcProviderFunctions extends ChangeNotifier {
   List<dynamic>? list_of_registered_tags_transactions;
   String current_nfc_listener_state = "read";
@@ -5580,7 +5555,14 @@ class NfcProviderFunctions extends ChangeNotifier {
     String pin_code = "1234";
 
     // creates a database record for the tag
-    await createTagRecord(context, tag_serial_number, pin_code);
+    bool is_created =
+        await createTagRecord(context, tag_serial_number, pin_code);
+
+    if (!is_created) {
+      showSnackBar(context, 'Failed to link card. Please try again.',
+          color: Colors.green);
+      return;
+    }
 
     showSnackBar(
         context, 'Card has been linked successfully! You can now use card.',

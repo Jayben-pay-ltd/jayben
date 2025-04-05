@@ -510,6 +510,14 @@ serve(async (req: Request) => {
         );
         break;
 
+      case "send_money_with_time_limit":
+        data_to_return_in_response = await send_money_with_time_limit(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
       default:
     }
 
@@ -619,9 +627,11 @@ const _encrypt_account_login_password = async (
   try {
     // Parse public key and create RSA instance
     const publicKey = RSA.parseKey(
-      `-----BEGIN PUBLIC KEY-----\n${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY")}\n-----END PUBLIC KEY-----`
+      `-----BEGIN PUBLIC KEY-----\n${
+        Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY")
+      }\n-----END PUBLIC KEY-----`,
     );
-    
+
     const rsa = new RSA(publicKey);
 
     // Encrypt password and convert to base64 string
@@ -636,14 +646,16 @@ const _encrypt_account_login_password = async (
 // receives an unencrypted password and then encrypts it and sends it back to the user
 const _decrypt_account_login_password = async (
   _supabase: any,
-  _body: any
+  _body: any,
 ): Promise<string> => {
   try {
     // Parse private key and create RSA instance
     const privateKey = RSA.parseKey(
-      `-----BEGIN PRIVATE KEY-----\n${Deno.env.get("ACCOUNT_LOGIN_DECRYPTION_KEY")}\n-----END PRIVATE KEY-----`
+      `-----BEGIN PRIVATE KEY-----\n${
+        Deno.env.get("ACCOUNT_LOGIN_DECRYPTION_KEY")
+      }\n-----END PRIVATE KEY-----`,
     );
-    
+
     const rsa = new RSA(privateKey);
 
     // Decrypt password and convert to string
@@ -1757,6 +1769,15 @@ const send_money_p2p = async (
     }
   */
 
+  const appwide_admin_settings = await _supabaseClient.from("appwide_admin_settings")
+    .select()
+    .eq("record_name", "--- Timeline Settings ---");
+
+  const default_timeline_privacy_setting =
+    appwide_admin_settings["data"][0][
+      "default_privacy_post_to_timeline_setting"
+    ];
+
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
   if (user_id == null) {
@@ -2478,6 +2499,413 @@ const purchase_airtime = async (
   }
 };
 
+// ============================================================ Timeline Functions
+
+// ============================================================ Timeline Functions
+
+// gets a feed of timeline posts for a user
+const getFeedTransactions = async (
+  _supabaseClient: any,
+  _req: Request,
+): Promise<any> => {
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  try {
+    const feed = await _supabaseClient
+      .from("timeline_posts")
+      .select()
+      .eq("user_id", user_id)
+      .neq("post_owner_user_id", user_id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    return {
+      "message": "Feed retrieved successfully",
+      "status": "success", 
+      "status_code": 200,
+      "data": feed.data
+    };
+
+  } catch (error) {
+    return {
+      "message": "Error retrieving feed",
+      "status": "failed",
+      "status_code": 400,
+      "data": null
+    };
+  }
+};
+
+// gets only the user's own timeline posts
+const getMyFeedTransactions = async (
+  _supabaseClient: any,
+  _req: Request,
+): Promise<any> => {
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  try {
+    const myFeed = await _supabaseClient
+      .from("timeline_posts")
+      .select()
+      .eq("user_id", user_id)
+      .eq("post_owner_user_id", user_id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    return {
+      "message": "Personal feed retrieved successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": myFeed.data
+    };
+  } catch (error) {
+    return {
+      "message": "Error retrieving personal feed",
+      "status": "failed",
+      "status_code": 400,
+      "data": null
+    };
+  }
+};
+
+// likes a post and updates all relevant records
+const likePost = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const post_info = _body.post_info;
+
+  if (!user_id) {
+    return {
+      "message": "Unauthorized",
+      "status": "failed",
+      "status_code": 401,
+      "data": null
+    };
+  }
+
+  try {
+    // Get user info
+    const user_result = await _supabaseClient
+      .from("users")
+      .select()
+      .eq("user_id", user_id)
+      .single();
+
+    const user = user_result.data;
+
+    // Mark user's copy of post as liked
+    await _supabaseClient
+      .from("timeline_posts")
+      .update({ 
+        "is_liked": true,
+        "number_of_likes": 1
+      })
+      .eq("user_id", user_id)
+      .eq("post_id", post_info.post_id);
+
+    // Get original post
+    const original_post = await _supabaseClient
+      .from("timeline_posts")
+      .select()
+      .eq("post_id", post_info.original_post_id)
+      .single();
+
+    const new_like_count = original_post.data.number_of_likes + 1;
+
+    // Update original post like count
+    await _supabaseClient
+      .from("timeline_posts")
+      .update({
+        "number_of_likes": new_like_count
+      })
+      .eq("post_id", post_info.original_post_id);
+
+    // Create like record
+    await _supabaseClient
+      .from("liked_posts")
+      .insert({
+        "profile_image_url": user.profile_image_url,
+        "post_id": post_info.original_post_id,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "user_id": user_id
+      });
+
+    return {
+      "message": "Post liked successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": null
+    };
+
+  } catch (error) {
+    return {
+      "message": "Error liking post",
+      "status": "failed",
+      "status_code": 400,
+      "data": null
+    };
+  }
+};
+
+// unlikes a post and updates all relevant records
+const unlikePost = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any
+): Promise<any> => {
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const post_info = _body.post_info;
+
+  if (!user_id) {
+    return {
+      "message": "Unauthorized",
+      "status": "failed",
+      "status_code": 401,
+      "data": null
+    };
+  }
+
+  try {
+    // Mark user's copy as unliked
+    await _supabaseClient
+      .from("timeline_posts")
+      .update({
+        "is_liked": false,
+        "number_of_likes": 0
+      })
+      .eq("user_id", user_id)
+      .eq("post_id", post_info.post_id);
+
+    // Get original post
+    const original_post = await _supabaseClient
+      .from("timeline_posts")
+      .select()
+      .eq("post_id", post_info.original_post_id)
+      .single();
+
+    const new_like_count = original_post.data.number_of_likes - 1;
+
+    // Update original post like count
+    await _supabaseClient
+      .from("timeline_posts")
+      .update({
+        "number_of_likes": new_like_count
+      })
+      .eq("post_id", post_info.original_post_id);
+
+    // Delete like record
+    await _supabaseClient
+      .from("liked_posts")
+      .delete()
+      .eq("post_id", post_info.original_post_id)
+      .eq("user_id", user_id);
+
+    return {
+      "message": "Post unliked successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": null
+    };
+
+  } catch (error) {
+    return {
+      "message": "Error unliking post",
+      "status": "failed", 
+      "status_code": 400,
+      "data": null
+    };
+  }
+};
+
+// blocks a user and updates blocked users list
+const blockUser = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any
+): Promise<any> => {
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_to_block = _body.user_to_block;
+
+  if (!user_id) {
+    return {
+      "message": "Unauthorized",
+      "status": "failed",
+      "status_code": 401,
+      "data": null
+    };
+  }
+
+  try {
+    // Get current user record
+    const user_result = await _supabaseClient
+      .from("users")
+      .select()
+      .eq("user_id", user_id)
+      .single();
+
+    const current_blocked_users = user_result.data.blocked_peoples_user_details || [];
+
+    // Add blocked user to list
+    await _supabaseClient
+      .from("users")
+      .update({
+        "blocked_peoples_user_details": [
+          {
+            "profile_image_url": user_to_block.profile_image_url,
+            "date_blocked": new Date().toISOString(),
+            "first_name": user_to_block.first_name,
+            "last_name": user_to_block.last_name,
+            "user_id": user_to_block.user_id,
+            "blocked_reason": ""
+          },
+          ...current_blocked_users
+        ]
+      })
+      .eq("user_id", user_id);
+
+    return {
+      "message": "User blocked successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": null
+    };
+
+  } catch (error) {
+    return {
+      "message": "Error blocking user",
+      "status": "failed",
+      "status_code": 400,
+      "data": null
+    };
+  }
+};
+
+// reports a post for review
+const reportPost = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any
+): Promise<any> => {
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const report_info = _body.report_info;
+  const post_info = _body.post_info;
+
+  if (!user_id) {
+    return {
+      "message": "Unauthorized", 
+      "status": "failed",
+      "status_code": 401,
+      "data": null
+    };
+  }
+
+  try {
+    const user_result = await _supabaseClient
+      .from("users")
+      .select()
+      .eq("user_id", user_id)
+      .single();
+
+    const user = user_result.data;
+
+    await _supabaseClient
+      .from("reported_posts")
+      .insert({
+        "report_comment": report_info.report_comment,
+        "report_type": report_info.report_type,
+        "reporter_details": {
+          "profile_image_url": user.profile_image_url,
+          "first_name": user.first_name,
+          "last_name": user.last_name,
+          "user_id": user_id
+        },
+        "post_id": post_info.post_id,
+        "admin_reviewer_details": null,
+        "is_reviewed_by_admin": false,
+        "admin_review_comment": "",
+        "user_id": user_id
+      });
+
+    return {
+      "message": "Post reported successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": null
+    };
+
+  } catch (error) {
+    return {
+      "message": "Error reporting post",
+      "status": "failed",
+      "status_code": 400,
+      "data": null
+    };
+  }
+};
+
+// deletes a post and all its copies from timelines
+const deletePost = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any
+): Promise<any> => {
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const post_id = _body.post_id;
+
+  if (!user_id) {
+    return {
+      "message": "Unauthorized",
+      "status": "failed",
+      "status_code": 401,
+      "data": null
+    };
+  }
+
+  try {
+    // Get all copies of the post
+    const posts_result = await _supabaseClient
+      .from("timeline_posts")
+      .select()
+      .eq("original_post_id", post_id);
+
+    const delete_operations = posts_result.data.map((post: any) =>
+      _supabaseClient
+        .from("timeline_posts")
+        .delete()
+        .eq("post_id", post.post_id)
+    );
+
+    // Delete original post
+    delete_operations.push(
+      _supabaseClient
+        .from("timeline_posts")
+        .delete()
+        .eq("post_id", post_id)
+    );
+
+    await Promise.all(delete_operations);
+
+    return {
+      "message": "Post deleted successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": null
+    };
+
+  } catch (error) {
+    return {
+      "message": "Error deleting post",
+      "status": "failed",
+      "status_code": 400,
+      "data": null
+    };
+  }
+};
+
 // ============================================================ Authentication Functions
 
 // creates a new user row record - used when signing up
@@ -2925,7 +3353,10 @@ const register_nfc_tag = async (
   const user = user_result.data;
 
   // encrypts the tag's pin code
-  const encrypted_pin_code = await _encrypt_tag_pin_code(_supabaseClient, _body.decrypted_pin_code);
+  const encrypted_pin_code = await _encrypt_tag_pin_code(
+    _supabaseClient,
+    _body.decrypted_pin_code,
+  );
 
   // creates the tag record
   await _supabaseClient.from("nfc_tags").insert({
@@ -2966,7 +3397,10 @@ const register_nfc_tag = async (
   };
 };
 
-const _encrypt_tag_pin_code = async (_supabaseClient: any, _decrypted_pin_code: any): Promise<any> => {
+const _encrypt_tag_pin_code = async (
+  _supabaseClient: any,
+  _decrypted_pin_code: any,
+): Promise<any> => {
   /*
       body preview
       {
@@ -2985,7 +3419,10 @@ const _encrypt_tag_pin_code = async (_supabaseClient: any, _decrypted_pin_code: 
   return encrypted_pin_code;
 };
 
-const _decrypt_tag_pin_code = async (_supabaseClient: any, _encrypted_pin_code: any): Promise<any> => {
+const _decrypt_tag_pin_code = async (
+  _supabaseClient: any,
+  _encrypted_pin_code: any,
+): Promise<any> => {
   /*
       body preview
       {
@@ -3003,7 +3440,6 @@ const _decrypt_tag_pin_code = async (_supabaseClient: any, _encrypted_pin_code: 
 
   return decrypted_pin_code;
 };
-
 
 // gets all registered tags for a user
 const get_my_registered_tags = async (
@@ -3190,7 +3626,7 @@ const check_if_tag_exists = async (
   };
 };
 
-// ============================================================ QR Code Scanner Functions
+// ============================================================ KYC Functions
 
 const get_my_kyc_verification_records = async (
   _supabaseClient: any,
@@ -3688,7 +4124,7 @@ const create_daily_copy_of_user_rows = async (
   console.log("DONE creating supabase records of the contacts boss!");
 };
 
-// ============================================================ Create a record of today's metrics
+// ============================================================ Metric Functions
 
 // runs an operation that creates a record of today's app metrics
 const record_daily_metrics = async (supabase: any): Promise<void> => {
@@ -4340,7 +4776,16 @@ const add_money_to_shared_nas_account = async (
               "amount": double or float,
               "request_type": "add_money_to_shared_nas_account",
           }
-      */
+  */
+
+  const appwide_admin_settings = await _supabase.from("appwide_admin_settings")
+    .select()
+    .eq("record_name", "--- Timeline Settings ---");
+
+  const default_timeline_privacy_setting =
+    appwide_admin_settings["data"][0][
+      "default_privacy_post_to_timeline_setting"
+    ];
 
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabase);
