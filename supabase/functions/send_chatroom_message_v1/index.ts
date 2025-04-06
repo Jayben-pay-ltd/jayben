@@ -1,6 +1,8 @@
 // deno-lint-ignore-file
+// deno-lint-ignore-file no-explicit-any require-await
+import { RSA } from "https://deno.land/x/god_crypto@v1.4.11/mod.ts";
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7&no-check";
 
 serve(async (req: Request) => {
     const body = await req.json();

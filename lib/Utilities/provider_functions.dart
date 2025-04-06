@@ -12,6 +12,7 @@ import 'package:jayben/Home/elements/attach_media/attach_media.dart';
 import 'package:jayben/Home/elements/nfc/components/extensions.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:platform_device_id/platform_device_id.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -1472,7 +1473,7 @@ class AuthProviderFunctions extends ChangeNotifier {
   final picker = ImagePicker();
   String verificationId = "";
   String buildVersion = "";
-  // PackageInfo? packageInfo;
+  PackageInfo? packageInfo;
   File? profileImageFile;
   XFile? pickedPhotoFile;
   bool isLoading = false;
@@ -1533,11 +1534,11 @@ class AuthProviderFunctions extends ChangeNotifier {
     notifyListeners();
   }
 
-  getBuildVersion() async {
-    // packageInfo = await PackageInfo.fromPlatform();
-    // buildVersion = packageInfo!.version;
+  Future<void> getBuildVersion() async {
+    packageInfo = await PackageInfo.fromPlatform();
+    buildVersion = packageInfo!.version;
 
-    // boxPut("CurrentBuildVersion", packageInfo!.version);
+    boxPut("CurrentBuildVersion", packageInfo!.version);
 
     notifyListeners();
   }

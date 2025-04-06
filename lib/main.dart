@@ -33,7 +33,7 @@ void main() async {
         ChangeNotifierProvider.value(value: KycProviderFunctions()),
         ChangeNotifierProvider.value(value: NfcProviderFunctions()),
         ChangeNotifierProvider.value(value: UssdProviderFunctions()),
-        // ChangeNotifierProvider.value(value: UserProviderFunctions()),
+        ChangeNotifierProvider.value(value: UserProviderFunctions()),
         ChangeNotifierProvider.value(value: AuthProviderFunctions()),
         ChangeNotifierProvider.value(value: HomeProviderFunctions()),
         ChangeNotifierProvider.value(value: FeedProviderFunctions()),

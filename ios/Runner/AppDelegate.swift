@@ -4,7 +4,7 @@ import awesome_notifications
 import shared_preferences_foundation
 //import Firebase
 
-@UIApplicationMain
+@main
 @objc class AppDelegate: FlutterAppDelegate {
   override func application(
     _ application: UIApplication,
