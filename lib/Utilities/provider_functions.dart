@@ -10,7 +10,6 @@ import 'package:jayben/Home/elements/qr_scanner/scan_confirmation_page.dart';
 import 'package:flutter_countdown_timer/countdown_timer_controller.dart';
 import 'package:jayben/Home/elements/attach_media/attach_media.dart';
 import 'package:jayben/Home/elements/nfc/components/extensions.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:platform_device_id/platform_device_id.dart';
@@ -108,10 +107,10 @@ class UserProviderFunctions extends ChangeNotifier {
   // gets user's account achievements
   Future<void> getUserAchievements() async {
     // gets a list of all this user's transactions
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("get_all_users_transactions", {});
 
-    List<dynamic> transactions = res.data;
+    List<dynamic> transactions = res["data"];
 
     double temp_total_amount_ever_withdrawn = 0.0;
     double temp_total_amount_ever_deposited = 0.0;
@@ -200,10 +199,10 @@ class UserProviderFunctions extends ChangeNotifier {
 
   // gets a list of all active submissions
   Future<void> getFeedbackSubmissions() async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("get_feedback_submissions", {});
 
-    List<dynamic> feedback_submissions = res.data;
+    List<dynamic> feedback_submissions = res["data"];
 
     if (feedback_submissions.isEmpty) return;
 
@@ -221,7 +220,7 @@ class UserProviderFunctions extends ChangeNotifier {
 
   // creates a submission row in supabase
   Future<void> submitFeedback(String text, String type) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("create_a_feedback_submission", {
       "users_who_upvoted": [
         {
@@ -247,17 +246,17 @@ class UserProviderFunctions extends ChangeNotifier {
       "submission_text": text,
     });
 
-    print(res.data);
+    print(res["data"]);
   }
 
   // submits an upvote to an existing feedback submission
   Future<void> upvoteFeedbackSubmission(String submission_id) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("upvote_an_existing_feedback_submission", {
       "submission_id": submission_id,
     });
 
-    print(res.data);
+    print(res["data"]);
   }
 }
 
@@ -363,9 +362,10 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (box("user_id") == null) return;
 
     // gets the user's account row from supabase
-    FunctionResponse res = await callGeneralFunction("get_user_account", {});
+    Map<String, dynamic> res =
+        await callGeneralFunction("get_user_account", {});
 
-    Map user_row = res.data;
+    Map user_row = res["data"];
 
     // if no user has been returned
     if (user_row.isEmpty) return;
@@ -385,7 +385,8 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (user_row["current_device_ip_address"] == "" ||
         user_row["current_device_id"] == "") {
       // updates the ip address field
-      await callGeneralFunction("update_device_id_and_ip_address", {
+      Map<String, dynamic> res =
+          await callGeneralFunction("update_device_id_and_ip_address", {
         "new_device_ip_address": ip_address,
         "new_device_id": device_id,
       });
@@ -438,12 +439,12 @@ class HomeProviderFunctions extends ChangeNotifier {
     await loadDetailsToHive();
 
     // gets home transactions
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "get_users_home_page_transactions",
       {},
     );
 
-    homeTransactions = res.data;
+    homeTransactions = res["data"];
 
     // gets home time limited transactions
     // homeTimeLimitedTransactionsQS = await _fire
@@ -487,12 +488,12 @@ class HomeProviderFunctions extends ChangeNotifier {
 
   // gets all transactions for the All transactions page
   Future<void> getAllTransactions() async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "get_all_users_transactions",
       {},
     );
 
-    allTransactions = res.data;
+    allTransactions = res["data"];
 
     // gets home time limited transactions
     // homeTimeLimitedTransactionsQS = await _fire
@@ -546,14 +547,17 @@ class HomeProviderFunctions extends ChangeNotifier {
   // 3). precaches the user's profile image locally
   Future<void> loadDetailsToHive() async {
     // gets this user's account record row
-    FunctionResponse res = await callGeneralFunction("get_user_account", {});
+    Map<String, dynamic> res =
+        await callGeneralFunction("get_user_account", {});
 
-    Map user_map = res.data;
+    Map user_map = res["data"]["data"];
+
+    if (user_map == null) return;
 
     // DocumentSnapshot adminDoc =
     //     await _fire.collection("Admin").doc("Legal").get();
 
-    boxPut("DateOfBirth", user_map["date_of_birth"].toDate().toIso8601String());
+    boxPut("DateOfBirth", user_map["date_of_birth"]);
     boxPut("CurrentAppBuildVersion", user_map["current_build_version"]);
     boxPut("Username_searchable", user_map["username_searchable"]);
     boxPut("NotificationToken", user_map["notification_token"]);
@@ -652,7 +656,7 @@ class HomeProviderFunctions extends ChangeNotifier {
     await cacheImage(box("profile_image_url"));
 
     // initializes dynmaic links
-    await initDynamicLinks();
+    // await initDynamicLinks();
 
     notifyListeners();
   }
@@ -661,13 +665,13 @@ class HomeProviderFunctions extends ChangeNotifier {
     // https://jayben.page.link
 
     // Get any initial links
-    final PendingDynamicLinkData? initialLink =
-        await FirebaseDynamicLinks.instance.getInitialLink();
+    // final PendingDynamicLinkData? initialLink =
+    //     await FirebaseDynamicLinks.instance.getInitialLink();
 
-    if (initialLink != null) {
-      final Uri deepLink = initialLink.link;
-      // Example of using the dynamic link to push the user to a different screen
-    }
+    // if (initialLink != null) {
+    //   final Uri deepLink = initialLink.link;
+    //   // Example of using the dynamic link to push the user to a different screen
+    // }
   }
 
   // 1). updates user's notification token
@@ -677,13 +681,21 @@ class HomeProviderFunctions extends ChangeNotifier {
   Future<void> updateNotificationToken() async {
     if (box("user_id") == null) return;
 
+    String? token;
+
     // gets valid notification token
-    String? token = await FirebaseMessaging.instance.getToken();
+    if (Platform.isIOS) {
+      token = await FirebaseMessaging.instance.getAPNSToken();
+    } else {
+      token = await FirebaseMessaging.instance.getToken();
+    }
 
     // saves token to hive
     boxPut("NotificationToken", token);
 
-    if (box("user_map")["notification_token"] == token) return;
+    if (box("user_map") != null) {
+      if (box("user_map")["notification_token"] == token) return;
+    }
 
     // updates token in user's account document
     await callGeneralFunction("update_user_notification_token", {
@@ -738,13 +750,13 @@ class HomeProviderFunctions extends ChangeNotifier {
   // 2). Adds the totals of all accounts into one value
   Future<void> getHomeSavingsAccounts() async {
     // gets the top 20 & user's savings accounts
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "get_home_saving_accounts",
       {},
     );
 
-    top_20_shared_nas_accounts = res.data["top_20_nas_accounts"];
-    my_shared_nas_accounts = res.data["my_shared_nas_accounts"];
+    top_20_shared_nas_accounts = res["data"]["top_20_nas_accounts"];
+    my_shared_nas_accounts = res["data"]["my_shared_nas_accounts"];
 
     double temp_balance = 0.0;
 
@@ -951,8 +963,10 @@ class DepositProviderFunctions extends ChangeNotifier {
         "amount": amount
       });
 
-      String checkout_link_url = res.data["checkout_link_url"];
-      String deposit_id = res.data["deposit_id"];
+      Map<String, dynamic> res_map = res.data as Map<String, dynamic>;
+
+      String checkout_link_url = res_map["checkout_link_url"];
+      String deposit_id = res_map["deposit_id"];
 
       // returns the checkout link & reference
       return [checkout_link_url, deposit_id];
@@ -1073,14 +1087,14 @@ class QRScannerProviderFunctions extends ChangeNotifier {
   Future<List<dynamic>> getReceiverDetailsFromVendorCode(
       String user_code) async {
     // vendorCode is another word UserCode
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
         "get_limited_user_row_from_usercode", {"user_code": user_code});
 
-    print(res.data);
+    print(res["data"]);
 
-    Map merchant_map = res.data.data;
+    Map merchant_map = res["data"].data;
 
-    bool is_error = res.data.status == "failed";
+    bool is_error = res["data"].status == "failed";
 
     return !is_error ? [true, merchant_map] : [false, null];
   }
@@ -1088,22 +1102,23 @@ class QRScannerProviderFunctions extends ChangeNotifier {
   // get's the receivers details using the user id
   Future<List<dynamic>> getReceiversDetails(String user_id) async {
     // vendorCode is another word UserCode
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("get_limited_user_row_from_userid", {
       "user_id": user_id,
     });
 
-    print(res.data);
+    print(res["data"]);
 
-    Map merchant_map = res.data.data;
+    Map merchant_map = res["data"].data;
 
-    bool is_error = res.data.status == "failed";
+    bool is_error = res["data"].status == "failed";
 
     return !is_error ? [true, merchant_map] : [false, null];
   }
 
   Future<void> initateMerchantPayment(Map paymentInfo) async {
-    FunctionResponse res = await callGeneralFunction("send_money_via_qr_code", {
+    Map<String, dynamic> res =
+        await callGeneralFunction("send_money_via_qr_code", {
       "transaction_details": {
         "merchant_commission_per_transaction":
             double.parse(box("MerchantCommissionPerTransaction").toString()),
@@ -1113,7 +1128,7 @@ class QRScannerProviderFunctions extends ChangeNotifier {
       }
     });
 
-    print(res.data.data);
+    print(res["data"].data);
   }
 }
 
@@ -1221,12 +1236,12 @@ class SavingsProviderFunctions extends ChangeNotifier {
 
   // gets a shared nas account's transactions
   Future<List<dynamic>> getSharedNasAccTranxs(String account_id) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("get_my_shared_nas_account_transactions", {
       "savings_account_id": account_id,
     });
 
-    List<dynamic> transactions = res.data.data.data;
+    List<dynamic> transactions = res["data"].data.data;
 
     print(transactions);
 
@@ -1238,7 +1253,7 @@ class SavingsProviderFunctions extends ChangeNotifier {
     double amount,
     String account_id,
   ) async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "add_money_to_shared_nas_account",
       {
         "request_type": "add_money_to_shared_nas_account",
@@ -1250,7 +1265,7 @@ class SavingsProviderFunctions extends ChangeNotifier {
       },
     );
 
-    List<dynamic> response = res.data.data.data;
+    List<dynamic> response = res["data"].data.data;
 
     return response.isEmpty;
   }
@@ -1309,7 +1324,7 @@ class SavingsProviderFunctions extends ChangeNotifier {
 
   // creates a no access account row
   Future<bool> createSharedNoAccessAccount(Map account_info) async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "create_shared_no_access_savings_account",
       {
         "request_type": "create_shared_no_access_savings_account",
@@ -1318,44 +1333,45 @@ class SavingsProviderFunctions extends ChangeNotifier {
       },
     );
 
-    String response = res.data.data.status;
+    String response = res["data"].data.status;
 
     return response == "success";
   }
 
   // gets a list of user rows that have the username
   Future<List<dynamic>> searchUsernameInDB(String username) async {
-    FunctionResponse res = await callGeneralFunction("search_username_in_db",
+    Map<String, dynamic> res = await callGeneralFunction(
+        "search_username_in_db",
         {"request_type": "search_username_in_db", "username": username});
 
-    List<dynamic> username_search_results = res.data.data.data;
+    List<dynamic> username_search_results = res["data"].data.data;
 
     return username_search_results;
   }
 
   // adds a new user to a shared NAS
   Future<bool> addPersonToSharedNasAccount(Map account_info) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("add_person_to_nas_account", {
       "user_id_for_person_joining": account_info["user_map"]["user_id"],
       "account_id": account_info["account_map"]["account_id"],
       "request_type": "add_person_to_nas_account",
     });
 
-    String response = res.data.data.status;
+    String response = res["data"].data.status;
 
     return response == "success";
   }
 
   // joins a user to a shared NAS via link
   Future<bool> joinSharedNasAccount(String account_id) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("join_shared_nas_account", {
       "request_type": "join_shared_nas_account",
       "account_id": account_id,
     });
 
-    String response = res.data.data.status;
+    String response = res["data"].data.status;
 
     return response == "success";
   }
@@ -1364,7 +1380,7 @@ class SavingsProviderFunctions extends ChangeNotifier {
   // 2). Updates the shared nas account's details (new number of minutes & the name)
   Future<bool> extendExistingSharedNasAccDaysLeft(
       String account_id, int days_to_extend) async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "extend_shared_nas_account_days",
       {
         "request_type": "extend_shared_nas_account_days",
@@ -1373,7 +1389,7 @@ class SavingsProviderFunctions extends ChangeNotifier {
       },
     );
 
-    Map response = res.data.data.data;
+    Map response = res["data"].data.data;
 
     return response.isEmpty;
   }
@@ -1402,55 +1418,59 @@ class SavingsProviderFunctions extends ChangeNotifier {
 
   // generates a link for joining shared NAS accounts
   Future<String> generateSharedNasJoinLink(String account_id) async {
-    final DynamicLinkParameters parameters = DynamicLinkParameters(
-      link: Uri.parse('https://jayben.page.link?id=$account_id'),
-      androidParameters: const AndroidParameters(
-        packageName: 'com.jayben.app',
-        minimumVersion: 1,
-      ),
-      uriPrefix: 'https://jayben.page.link',
-      iosParameters: const IOSParameters(
-        bundleId: "com.jayben.ios.app",
-        appStoreId: "1626899274",
-      ),
-    );
+    // final DynamicLinkParameters parameters = DynamicLinkParameters(
+    //   link: Uri.parse('https://jayben.page.link?id=$account_id'),
+    //   androidParameters: const AndroidParameters(
+    //     packageName: 'com.jayben.app',
+    //     minimumVersion: 1,
+    //   ),
+    //   uriPrefix: 'https://jayben.page.link',
+    //   iosParameters: const IOSParameters(
+    //     bundleId: "com.jayben.ios.app",
+    //     appStoreId: "1626899274",
+    //   ),
+    // );
 
-    // gets a scrambled short link
-    final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
-        shortLinkType: ShortDynamicLinkType.unguessable, parameters);
+    // // gets a scrambled short link
+    // final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
+    //     shortLinkType: ShortDynamicLinkType.unguessable, parameters);
 
-    return dynamicLink.shortUrl.toString();
+    // return dynamicLink.shortUrl.toString();
+
+    return "";
   }
 
   // =================== Donate to Shared NAS account functions
 
   // generates a link for donating to shared NAS accounts
   Future<String> generateSharedNasDonationLink(String account_id) async {
-    final DynamicLinkParameters parameters = DynamicLinkParameters(
-      link: Uri.parse('https://jayben.page.link?id=${account_id}_donation'),
-      androidParameters: const AndroidParameters(
-        packageName: 'com.jayben.app',
-        minimumVersion: 1,
-      ),
-      uriPrefix: 'https://jayben.page.link',
-      iosParameters: const IOSParameters(
-        bundleId: "com.jayben.ios.app",
-        appStoreId: "1626899274",
-      ),
-    );
+    // final DynamicLinkParameters parameters = DynamicLinkParameters(
+    //   link: Uri.parse('https://jayben.page.link?id=${account_id}_donation'),
+    //   androidParameters: const AndroidParameters(
+    //     packageName: 'com.jayben.app',
+    //     minimumVersion: 1,
+    //   ),
+    //   uriPrefix: 'https://jayben.page.link',
+    //   iosParameters: const IOSParameters(
+    //     bundleId: "com.jayben.ios.app",
+    //     appStoreId: "1626899274",
+    //   ),
+    // );
 
-    // gets a scrambled short link
-    final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
-        shortLinkType: ShortDynamicLinkType.unguessable, parameters);
+    // // gets a scrambled short link
+    // final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
+    //     shortLinkType: ShortDynamicLinkType.unguessable, parameters);
 
-    print(dynamicLink.shortUrl.toString());
+    // print(dynamicLink.shortUrl.toString());
 
-    return dynamicLink.shortUrl.toString();
+    // return dynamicLink.shortUrl.toString();
+
+    return "";
   }
 
   // donates money to an active shared nas account
   Future<bool> donateToSharedNasAccount(Map transfer_info) async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "donate_to_shared_nas_account",
       {
         "request_type": "donate_to_shared_nas_account",
@@ -1459,7 +1479,7 @@ class SavingsProviderFunctions extends ChangeNotifier {
       },
     );
 
-    String response = res.data.data.status;
+    String response = res["data"].data.status;
 
     return response == "success";
   }
@@ -1509,7 +1529,11 @@ class AuthProviderFunctions extends ChangeNotifier {
     show_login_password = false;
   }
 
-  toggleIsLoading() {
+  void stopLoading() {
+    isLoading = false;
+  }
+
+  void toggleIsLoading() {
     isLoading = !isLoading;
     notifyListeners();
   }
@@ -1545,19 +1569,20 @@ class AuthProviderFunctions extends ChangeNotifier {
 
   // deletes the user's account & auth record
   Future<bool> deleteAccount(String reason) async {
-    FunctionResponse res = await callGeneralFunction("delete_user_account", {
+    Map<String, dynamic> res =
+        await callGeneralFunction("delete_user_account", {
       "deletion_reason": reason,
     });
 
-    return res.data.status == "success";
+    return res["data"].status == "success";
   }
 
   // checks if user has money somewhere in their account
   Future<bool> checkIfUserHasMoneyInSystemBeforeAccountDeletion() async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
         "check_if_user_has_money_in_system_before_deletion", {});
 
-    return res.data.status == "success";
+    return res["data"].status == "success";
   }
 
   // changes the email address used for the account
@@ -1621,51 +1646,57 @@ class AuthProviderFunctions extends ChangeNotifier {
       print('Failed to get deviceId.');
     }
 
-    FunctionResponse res = await callGeneralFunction(
-        "update_device_id_and_ip_address",
-        {"new_device_ip_address": ip_address, "new_device_id": device_id});
+    Map<String, dynamic> res =
+        await callGeneralFunction("update_device_id_and_ip_address", {
+      "new_device_ip_address": ip_address,
+      "new_device_id": device_id,
+    });
 
-    return res.data.data.status == "success";
+    return res["data"]["status"] == "success";
   }
 
   // checks if the number user entered exists in DB
   Future<bool> checkIfPhoneNumberAlreadyExists(String? phoneNumber) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("check_if_account_phone_number_exists", {
       "phone_number": phoneNumber!.trim(),
     });
 
-    return res.data.data.data.exists;
+    return !res["data"]["data"]["exists"];
   }
 
   // checks if auth account exists for AUTH
   Future<bool> checkIfEmailExists(String? email) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("check_if_account_email_address_exists", {
       "email_address": email!.trim().toLowerCase(),
     });
 
-    return res.data.data.data.exists;
+    return res["data"]["data"]["exists"];
   }
 
   // checks if the username has already been used
-  Future<bool> checkIfUsernameExists(String? username) async {
-    FunctionResponse res =
+  Future<bool?> checkIfUsernameExists(String? username) async {
+    Map<String, dynamic> res =
         await callGeneralFunction("check_if_account_username_exists", {
       "username": username!.toLowerCase(),
     });
 
-    return res.data.data.data.exists;
+    if (res == null || res.isEmpty) {
+      return null;
+    }
+
+    return !res["data"]["data"]["exists"];
   }
 
   // checks if the referral code entered is valid
   Future<bool> checkIfReferralCodeIsValid(String referralCode) async {
-    FunctionResponse res =
-        await callGeneralFunction("check_if_referral_code_is_valid", {
+    Map<String, dynamic> res =
+        await callGeneralFunction("check_if_referral_code_exists", {
       "referral_code": referralCode,
     });
 
-    return res.data.data.data.exists;
+    return res["data"]["data"]["exists"];
   }
 
   // opens gallery for user to pick a photo
@@ -1717,49 +1748,38 @@ class AuthProviderFunctions extends ChangeNotifier {
     }
   }
 
-  Future<void> signInWithEmailAndPassword(context, Map userInfo) async {
+  Future<void> signInWithEmailAndPassword(context, Map login_info) async {
+    // 1).
     try {
-      // checks if email exists in the firebase database
-      bool emailExists = await checkIfEmailExists(userInfo['email']);
+      final AuthResponse res = await supabase.auth.signInWithPassword(
+        password: login_info["password"],
+        email: login_info["email"].toString().trim().toLowerCase(),
+      );
 
-      // if the email is non existent
-      if (emailExists) {
-        showSnackBar(context,
-            "No account found. Please click 'Create Account' to create an account");
+      if (res.user == null) return;
 
-        return;
-      } else {
-        // try {
-        //   // final authCredential = await FirebaseAuth.instance
-        //   //     .signInWithEmailAndPassword(
-        //   //         email: userInfo['email'], password: userInfo['password']);
+      boxPut("session", res.session!.toJson());
 
-        //   // if (authCredential.user == null) return;
-
-        //   // String id = FirebaseAuth.instance.currentUser!.uid;
-
-        //   // stores the latest user id locally
-        //   boxPut("user_id", id);
-
-        //   boxPut("is_logged_in", "true");
-
-        //   await updateDeviceIDAndIPAddress();
-
-        //   changePage(
-        //       context,
-        //       box("enable_six_digit_pin") == null
-        //           ? const HomePage()
-        //           : box("enable_six_digit_pin") && box("PIN") != ""
-        //               ? const PasscodePage()
-        //               : const HomePage(),
-        //       type: "pr");
-        // } on FirebaseAuthException catch (e) {
-        //   showSnackBar(context, e.code.replaceAll("-", " "));
-        // }
+      boxPut("user_id", res.user!.id);
+    } on AuthException catch (error) {
+      if (error.message == "Invalid login credentials") {
+        showSnackBar(context, "Invalid email or password.");
       }
-    } catch (_) {
-      showSnackBar(context, "enter a valid email and password");
+    } catch (error) {
+      showSnackBar(context, "Unexpected auth error occurred");
     }
+
+    // listens to when the user logs in again HOPEFULLY
+    supabase.auth.onAuthStateChange.listen((AuthState data) async {
+      if (data.event != AuthChangeEvent.signedIn) return;
+
+      boxPut("is_logged_in", "true");
+
+      // 2).
+      changePage(context, const HomePage(), type: "pr");
+
+      await updateDeviceIDAndIPAddress();
+    });
   }
 
   // 1). Signs the user up and gets a user_id
@@ -1773,11 +1793,10 @@ class AuthProviderFunctions extends ChangeNotifier {
     try {
       // creates a supabase auth profile
       final AuthResponse res = await supabase.auth.signUp(
-        email: user_info["email"].toString().toLowerCase(),
+        email: user_info["email"].toString().trim().toLowerCase(),
         data: {
-          "phone_number": user_info["phoneNumber"],
-          "first_name": user_info["firstName"],
-          "last_name": user_info["lastName"]
+          "first_name": user_info["first_name"],
+          "last_name": user_info["last_name"]
         },
         password: user_info["password"],
       );
@@ -1785,7 +1804,7 @@ class AuthProviderFunctions extends ChangeNotifier {
       if (res.user == null) return;
 
       // stores the session info locally
-      boxPut("session", res.session!.toJson());
+      // boxPut("session", res.session!.toJson());
 
       user_id = res.user!.id;
     } on AuthException catch (error) {
@@ -1796,6 +1815,10 @@ class AuthProviderFunctions extends ChangeNotifier {
     } catch (_) {
       showSnackBar(context, "Unexpected auth error occurred");
     }
+
+    isLoading = false;
+
+    notifyListeners();
 
     // listens for sign up actions
     supabase.auth.onAuthStateChange.listen((AuthState data) async {
@@ -1821,55 +1844,63 @@ class AuthProviderFunctions extends ChangeNotifier {
   // uploads the profile image
   Future<void> createUserAccount(BuildContext context, Map userInfo) async {
     // gets user's notification token
-    String? notifToken = await FirebaseMessaging.instance.getToken();
+    String? notif_token;
+
+    if (Platform.isIOS) {
+      notif_token = await FirebaseMessaging.instance.getAPNSToken();
+    } else {
+      notif_token = await FirebaseMessaging.instance.getToken();
+    }
 
     // gets curreny details using country ISO code
-    List<String> currencyDetails =
-        await getCurrencyDetails(userInfo["selectedCountryISOCode"]);
+    List<String> currency_details =
+        await getCurrencyDetails(userInfo["selected_country_iso_code"]);
 
     // gets the device's ip address
     dynamic ip_address = await ipAddress.getIpAddress();
 
+    String date = DateTime.now().toIso8601String();
+
     // creates the user's account row
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("create_user_account_record", {
       "user_code": ["Agent"].contains(box("AccountType"))
           ? null
           : box("user_id").substring(box("user_id").length - 6).toLowerCase(),
       "email_address_lowercase": userInfo["email"].toString().toLowerCase(),
       "username_searchable": userInfo["username"].toString().toLowerCase(),
-      "referral_code": userInfo['referralCode'].toString().toLowerCase(),
-      "last_time_online_timestamp": DateTime.now().toIso8601String(),
+      "referral_code": userInfo['referral_code'].toString().toLowerCase(),
       "current_os_platform": Platform.isAndroid ? "Android" : "iOS",
       "account_login_password": userInfo["password"],
-      'created_at': DateTime.now().toIso8601String(),
-      'date_of_birth': userInfo["dateOfBirth"],
+      'date_of_birth': userInfo["date_of_birth"],
+      "country_code": userInfo["country_code"],
+      'phone_number': userInfo["phone_number"],
+      "account_type": userInfo["account_type"],
+      'country': userInfo["selected_country"],
       "current_device_ip_address": ip_address,
-      "country_code": userInfo["countryCode"],
       "physical_address": userInfo["address"],
-      'phone_number': userInfo["phoneNumber"],
-      "account_type": userInfo["accountType"],
-      'country': userInfo["selectedCountry"],
       "current_build_version": buildVersion,
-      "currency_symbol": currencyDetails[0],
-      'first_name': userInfo["firstName"],
+      "currency_symbol": currency_details[0],
+      'first_name': userInfo["first_name"],
+      "last_time_online_timestamp": date,
       "email_address": userInfo["email"],
-      'last_name': userInfo["lastName"],
+      'last_name': userInfo["last_name"],
+      "notification_token": notif_token,
       'username': userInfo["username"],
-      "notification_token": notifToken,
-      "currency": currencyDetails[1],
+      "currency": currency_details[1],
       'gender': userInfo["gender"],
       'city': userInfo["city"],
     });
 
-    String status = res.data.data.status;
+    String status = res["data"]["status"];
 
-    String message = res.data.message;
+    String message = res["data"]["message"];
 
-    showSnackBar(context, message,
-        color: status == "success" ? Colors.green : Colors.red);
-
-    print(res.data);
+    showSnackBar(
+      context,
+      message,
+      color: status == "success" ? Colors.green : Colors.red,
+    );
   }
 
   // gets the current device's information
@@ -1878,7 +1909,7 @@ class AuthProviderFunctions extends ChangeNotifier {
 
     if (Platform.isAndroid) {
       AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-      print('Running on ${androidInfo.model}'); // e.g. "Moto G (4)"
+      print('Running on ${androidInfo.model}');
 
       return androidInfo.model;
     }
@@ -1914,7 +1945,13 @@ class AuthProviderFunctions extends ChangeNotifier {
     // int number_of_minutes_left =
     //     admin_doc.get("NewUserNoAccessAccountDurationInMinutes");
 
-    String? notif_token = await FirebaseMessaging.instance.getToken();
+    String? notif_token;
+
+    if (Platform.isIOS) {
+      notif_token = await FirebaseMessaging.instance.getAPNSToken();
+    } else {
+      notif_token = await FirebaseMessaging.instance.getToken();
+    }
 
     // creates a new row
     // await supabase.from("no_access_savings_accounts").insert({
@@ -1982,36 +2019,36 @@ class AuthProviderFunctions extends ChangeNotifier {
 
   // checks if the pin entered by user is correct
   Future<bool> checkIfPINCorrect(String entered_pin) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("check_if_pin_is_correct", {
       "entered_pin": entered_pin,
     });
 
-    return res.data.data.status == "success";
+    return res["data"]["status"] == "success";
   }
 
   // changes user's current pin
   Future<bool> changePIN(String new_pin_code, String old_pin_code) async {
-    FunctionResponse res = await callGeneralFunction("change_pin_code", {
+    Map<String, dynamic> res = await callGeneralFunction("change_pin_code", {
       "old_pin_code": old_pin_code,
       "new_pin_code": new_pin_code,
     });
 
-    return res.data.data.status == "success";
+    return res["data"]["status"] == "success";
   }
 
   Future<bool> resetPIN(String any_previous_pin_code_used) async {
-    FunctionResponse res = await callGeneralFunction("reset_pin_code", {
+    Map<String, dynamic> res = await callGeneralFunction("reset_pin_code", {
       "any_previous_pin_code_used": any_previous_pin_code_used,
     });
 
-    return res.data.data.status == "success";
+    return res["data"].data.status == "success";
   }
 
   Future<String> getResetEmail() async {
-    FunctionResponse res = await callGeneralFunction("get_reset_email", {});
+    Map<String, dynamic> res = await callGeneralFunction("get_reset_email", {});
 
-    return res.data.data.data.email;
+    return res["data"]["data"]["email"];
   }
 
   // converts a regular email to a reducted version
@@ -2030,50 +2067,41 @@ class AuthProviderFunctions extends ChangeNotifier {
     // returns an email eg J****a@gmail.com for Justinkaunda@gmail.com
   }
 
-  // checks if the email entered is valid
-  Future<bool> checkIfEmailValid(String email) async {
-    // DocumentSnapshot ds =
-    //     await _fire.collection("Users").doc(box("user_id")).get();
-
-    // String emailDB = ds.get("Email_lowercase");
-
-    // String emailEntered = email.toLowerCase();
-
-    // return emailDB == emailEntered ? true : false;
-
-    return false;
-  }
-
   // gets terms anf conditions
   Future<void> getTOS() async {
-    FunctionResponse res = await callGeneralFunction("get_terms_of_service", {
+    Map<String, dynamic> res =
+        await callGeneralFunction("get_terms_of_service", {
       "kind_of_tos_to_get": "default",
     });
 
-    tos = res.data.data.data.content;
+    tos = res["data"]["data"]["content"];
 
     notifyListeners();
   }
 
   // routes user according to their login status
   Future<void> splashScreenNav(
-      BuildContext context, PendingDynamicLinkData? initialLink) async {
-    await Future.delayed(const Duration(milliseconds: 1300), () async {
-      if (box("is_logged_in") == null) {
-        changePage(context, const PreLoginPage(), type: "pr");
+    BuildContext context,
+  ) async {
+    await Future.delayed(
+      const Duration(milliseconds: 1300),
+      () async {
+        if (box("is_logged_in") == null) {
+          changePage(context, const PreLoginPage(), type: "pr");
 
-        return;
-      }
+          return;
+        }
 
-      changePage(
-          context,
-          box("enable_six_digit_pin") == null
-              ? HomePage(initialLink: initialLink)
-              : box("enable_six_digit_pin") && box("PIN") != ""
-                  ? const PasscodePage()
-                  : HomePage(initialLink: initialLink),
-          type: "pr");
-    });
+        changePage(
+            context,
+            box("enable_six_digit_pin") == null
+                ? HomePage()
+                : box("enable_six_digit_pin") && box("PIN") != ""
+                    ? const PasscodePage()
+                    : HomePage(),
+            type: "pr");
+      },
+    );
   }
 }
 
@@ -2171,20 +2199,20 @@ class PaymentProviderFunctions extends ChangeNotifier {
 
   // gets a list of user rows that have the username
   Future<List<dynamic>> searchUsername(String username) async {
-    FunctionResponse res = await callGeneralFunction("search_username", {
+    Map<String, dynamic> res = await callGeneralFunction("search_username", {
       "username": username,
     });
 
-    username_search_results = res.data.data.data;
+    username_search_results = res["data"]["data"]["data"];
 
     notifyListeners();
 
-    return res.data.data;
+    return username_search_results;
   }
 
   // transfers money to a non merchant Jayben user
   Future<bool> sendMoneyP2P(Map paymentInfo) async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "send_money_p2p",
       {
         "post_is_public": box("DefaultTransactionPrivacy") == "Public",
@@ -2208,7 +2236,7 @@ class PaymentProviderFunctions extends ChangeNotifier {
       },
     );
 
-    return res.data.data.status == "success";
+    return res["data"]["status"] == "success";
   }
 
   List<String> computeDates(int daysLeft) {
@@ -2357,9 +2385,9 @@ class AirtimeProviderFunctions extends ChangeNotifier {
       return false;
     }
 
-    double amountToBuy = double.parse(amount_string.replaceAll('-', ''));
+    double amount_to_buy = double.parse(amount_string.replaceAll('-', ''));
 
-    String phoneNumber = phone_number_string.trim();
+    String phone_number = phone_number_string.trim();
 
     showSnackBar(
       context,
@@ -2371,7 +2399,7 @@ class AirtimeProviderFunctions extends ChangeNotifier {
     changePage(context, const HomePage(), type: "pr");
 
     // submits a request to purchase airtime
-    return await buyAirtime(amountToBuy, phoneNumber);
+    return await buyAirtime(amount_to_buy, phone_number, "cash");
   }
 
   Future<bool> payWithPoints(BuildContext context) async {
@@ -2391,9 +2419,9 @@ class AirtimeProviderFunctions extends ChangeNotifier {
       return false;
     }
 
-    String phoneNumber = phone_number_string.trim();
+    String phone_number = phone_number_string.trim();
 
-    double amountToBuy = double.parse(amount_string);
+    double amount_to_buy = double.parse(amount_string);
 
     showSnackBar(context, "Airtime purchase is being processed. Please wait.",
         color: Colors.grey[800]!);
@@ -2402,15 +2430,14 @@ class AirtimeProviderFunctions extends ChangeNotifier {
     changePage(context, const HomePage(), type: "pr");
 
     // submits a request to purchase airtime
-    return await buyAirtime(amountToBuy, phoneNumber);
+    return await buyAirtime(amount_to_buy, phone_number, "points");
   }
 
   // creates a reques to purchase airtime
-  Future<bool> buyAirtime(
-    double amount_to_purchase,
-    String phone_number,
-  ) async {
-    FunctionResponse res = await callGeneralFunction("purchase_airtime", {
+  Future<bool> buyAirtime(double amount_to_purchase, String phone_number,
+      String method_of_purchase) async {
+    Map<String, dynamic> res = await callGeneralFunction("purchase_airtime", {
+      "method_of_purchase": method_of_purchase,
       "amount": amount_to_purchase,
       "phone_number": phone_number,
       "currency": box("currency"),
@@ -2428,7 +2455,7 @@ class AirtimeProviderFunctions extends ChangeNotifier {
       "comment": null,
     });
 
-    return res.data.data.status == "success";
+    return res["data"]["status"] == "success";
   }
 }
 
@@ -2575,7 +2602,7 @@ class WithdrawProviderFunctions extends ChangeNotifier {
             double.parse(paymentInfo['amountBeforeFee'].toString());
 
     // Submit withdrawal using general function
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "submit_mobile_money_withdrawal",
       {
         "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
@@ -2588,7 +2615,7 @@ class WithdrawProviderFunctions extends ChangeNotifier {
       },
     );
 
-    return res.data.data.status == "success";
+    return res["data"].data.status == "success";
   }
 }
 
@@ -2620,7 +2647,7 @@ class ReferralProviderFunctions extends ChangeNotifier {
 
   // gets a snapshot of all referral commissions & number of people referred
   Future<bool> getMyReferralCommissions() async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "get_my_referral_commissions",
       {
         "get_number_of_people_user_referred": false,
@@ -2628,19 +2655,20 @@ class ReferralProviderFunctions extends ChangeNotifier {
       },
     );
 
-    List<dynamic>? commissions_rows = res.data.data.data.referral_commissions;
+    List<dynamic>? commissions_rows =
+        res["data"].data.data.referral_commissions;
 
     List<dynamic>? people_invited_rows =
-        res.data.data.data.people_user_has_referred;
+        res["data"].data.data.people_user_has_referred;
 
     referral_commissions = commissions_rows;
 
     number_of_people_referred =
-        res.data.data.data.people_user_has_referred_count;
+        res["data"].data.data.people_user_has_referred_count;
 
     notifyListeners();
 
-    return res.data.data.status == "success";
+    return res["data"].data.status == "success";
   }
 
   // opens the message app and gets ready to send sms
@@ -2652,24 +2680,26 @@ class ReferralProviderFunctions extends ChangeNotifier {
 
   // generates a link for joining shared NAS accounts
   Future<String> generateAppDownloadLink() async {
-    final DynamicLinkParameters parameters = DynamicLinkParameters(
-      link: Uri.parse('https://jayben.page.link?${box("user_id")}'),
-      androidParameters: const AndroidParameters(
-        packageName: 'com.jayben.app',
-        minimumVersion: 1,
-      ),
-      uriPrefix: 'https://jayben.page.link',
-      iosParameters: const IOSParameters(
-        bundleId: "com.jayben.ios.app",
-        appStoreId: "1626899274",
-      ),
-    );
+    // final DynamicLinkParameters parameters = DynamicLinkParameters(
+    //   link: Uri.parse('https://jayben.page.link?${box("user_id")}'),
+    //   androidParameters: const AndroidParameters(
+    //     packageName: 'com.jayben.app',
+    //     minimumVersion: 1,
+    //   ),
+    //   uriPrefix: 'https://jayben.page.link',
+    //   iosParameters: const IOSParameters(
+    //     bundleId: "com.jayben.ios.app",
+    //     appStoreId: "1626899274",
+    //   ),
+    // );
 
-    // gets a scrambled short link
-    final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
-        shortLinkType: ShortDynamicLinkType.unguessable, parameters);
+    // // gets a scrambled short link
+    // final dynamicLink = await FirebaseDynamicLinks.instance.buildShortLink(
+    //     shortLinkType: ShortDynamicLinkType.unguessable, parameters);
 
-    return dynamicLink.shortUrl.toString();
+    // return dynamicLink.shortUrl.toString();
+
+    return "";
   }
 }
 
@@ -4233,7 +4263,7 @@ class AttachProviderFunctions extends ChangeNotifier {
     // then returns a media url and thumbnail url
     List<String>? urls = await uploadMedia(transfer_info["media_type"]);
 
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("add_money_to_shared_nas_account", {
       "post_is_public": box("DefaultTransactionPrivacy") == "Public",
       "media_details": [
@@ -4251,7 +4281,7 @@ class AttachProviderFunctions extends ChangeNotifier {
       "comment": transfer_info['comment'],
     });
 
-    if (res.data.data.status == 'success') {
+    if (res["data"].data.status == 'success') {
       // tells user post has successfully been created
       showSnackBar(context, "Post has been created successfully",
           color: Colors.grey[700]!);
@@ -4277,7 +4307,7 @@ class AttachProviderFunctions extends ChangeNotifier {
     // then returns a media url and thumbnail url
     List<String>? urls = await uploadMedia(postInfo["media_type"]);
 
-    FunctionResponse res = await callGeneralFunction("send_money_p2p", {
+    Map<String, dynamic> res = await callGeneralFunction("send_money_p2p", {
       "post_is_public": box("DefaultTransactionPrivacy") == "Public",
       "receiver_user_id": postInfo["payment_info"]["receiver_map"]["user_id"],
       "amount": postInfo["payment_info"]["amount"],
@@ -4294,7 +4324,7 @@ class AttachProviderFunctions extends ChangeNotifier {
       "comment": postInfo['comment'],
     });
 
-    bool is_sent = res.data.data.status == "success";
+    bool is_sent = res["data"].data.status == "success";
 
     if (!is_sent) {
       showSnackBar(context, "Transfer failed. Please try again.",
@@ -5582,7 +5612,7 @@ class NfcProviderFunctions extends ChangeNotifier {
     String tag_serial_number,
     String pin_code,
   ) async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "register_nfc_tag",
       {
         "tag_serial_number": tag_serial_number,
@@ -5590,55 +5620,55 @@ class NfcProviderFunctions extends ChangeNotifier {
       },
     );
 
-    return res.data.data.staus == "Success";
+    return res["data"].data.staus == "Success";
   }
 
   // checks if the user has any tags registered
   Future<void> getTags() async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
         "get_my_registered_tags", {"get_tag_transactions_also": true});
 
-    list_of_registered_tags = res.data;
+    list_of_registered_tags = res["data"];
 
     if (list_of_registered_tags!.isNotEmpty) {
       list_of_registered_tags!.add(list_of_registered_tags![0]);
     }
 
-    list_of_registered_tags_transactions = res.data.data.data.transactions;
+    list_of_registered_tags_transactions = res["data"].data.data.transactions;
 
     notifyListeners();
   }
 
   // gets the transactions for only one tag
   Future<List<dynamic>> getSingleTagsTransactions(String tag_id) async {
-    FunctionResponse res =
+    Map<String, dynamic> res =
         await callGeneralFunction("get_single_tag_transactions", {
       "tag_id": tag_id,
     });
 
-    return res.data.data.data;
+    return res["data"].data.data;
   }
 
   // checks if the user has any tags registered
   Future<void> checkIfUserHasTagsRegistered() async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "check_if_user_has_tags_registered",
       {},
     );
 
-    has_tags_registered = res.data.data;
+    has_tags_registered = res["data"].data;
 
     notifyListeners();
   }
 
   // checks if a tag has already been registered in the database
   Future<bool> checkIfTagExists(String tag_serial_number) async {
-    FunctionResponse res = await callGeneralFunction(
+    Map<String, dynamic> res = await callGeneralFunction(
       "check_if_tag_exists",
       {"tag_serial_number": tag_serial_number},
     );
 
-    return res.data.data.data.exists;
+    return res["data"].data.data.exists;
   }
 
   // reads an NFC tag
@@ -5689,14 +5719,28 @@ class NfcProviderFunctions extends ChangeNotifier {
 // ========== regular functions below
 
 // calls the supabase general function
-Future<FunctionResponse> callGeneralFunction(String req_type, Map body) async {
+Future<Map<String, dynamic>> callGeneralFunction(
+  String req_type,
+  Map body,
+) async {
   FunctionResponse res =
       await supabase.functions.invoke("general_functions", body: {
     "request_type": req_type,
     ...body,
   });
 
-  return res;
+  Map<String, dynamic> data = res.data as Map<String, dynamic>;
+
+  if (data == null) {
+    return {
+      "message": "failed, please try again",
+      "status": "failed",
+      "status_code": 400,
+      "data": null
+    };
+  }
+
+  return data;
 }
 
 // plays a sound from assets

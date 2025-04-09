@@ -3,15 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key, required this.initialLink}) : super(key: key);
-
-  final PendingDynamicLinkData? initialLink;
+  const SplashScreen({super.key});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
@@ -27,9 +24,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     super.initState();
     if (!mounted) return;
-    context
+    context 
         .read<AuthProviderFunctions>()
-        .splashScreenNav(context, widget.initialLink);
+        .splashScreenNav(context);
   }
 
   @override

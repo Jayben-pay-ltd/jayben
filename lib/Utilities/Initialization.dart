@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:jayben/Auth/splash_page.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+
+import '../Auth/Splash_page.dart';
 
 class InitializerWidget extends StatefulWidget {
-  const InitializerWidget({Key? key, this.initialLink}) : super(key: key);
+  const InitializerWidget({super.key});
 
-  final PendingDynamicLinkData? initialLink;
+  // final PendingDynamicLinkData? initialLink;
 
   @override
   State<InitializerWidget> createState() => _InitializerWidgetState();
@@ -26,5 +26,5 @@ class _InitializerWidgetState extends State<InitializerWidget>
   }
 
   @override
-  Widget build(BuildContext _) => SplashScreen(initialLink: widget.initialLink);
+  Widget build(BuildContext _) => SplashScreen();
 }

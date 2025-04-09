@@ -550,7 +550,7 @@ Widget cityTextField(controller) {
         Text(
           "City*",
           style: GoogleFonts.ubuntu(
-              color: Colors.black87, fontSize: 15, fontWeight: FontWeight.w300),
+              color: Colors.black87, fontSize: 15, fontWeight: FontWeight.w300,),
         ),
         hGap(10),
         TextField(

@@ -85,22 +85,24 @@ Widget customAppBar(BuildContext context) {
 }
 
 Widget floatingActionButtonWidgetStep2(onFinish) {
-  return Consumer<AuthProviderFunctions>(builder: (context, value, child) {
-    return FloatingActionButton.extended(
-      onPressed: value.returnIsLoading() ? null : onFinish,
-      backgroundColor: Colors.green,
-      label: value.returnIsLoading()
-          ? loadingIcon(context)
-          : Text(
-              "FINISH",
-              style: GoogleFonts.ubuntu(
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-                fontSize: 20,
+  return Consumer<AuthProviderFunctions>(
+    builder: (context, value, child) {
+      return FloatingActionButton.extended(
+        onPressed: value.returnIsLoading() ? null : onFinish,
+        backgroundColor: Colors.green,
+        label: value.returnIsLoading()
+            ? loadingIcon(context)
+            : Text(
+                "FINISH",
+                style: GoogleFonts.ubuntu(
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                  fontSize: 20,
+                ),
               ),
-            ),
-    );
-  });
+      );
+    },
+  );
 }
 
 Widget exampleNumberWidget() {

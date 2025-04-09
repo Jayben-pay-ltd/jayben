@@ -94,9 +94,7 @@ class _BirthDateConfirmState extends State<BirthDateConfirm> {
                                   Radius.circular(30),
                                 ),
                               ),
-                              child: value.returnIsLoading()
-                                  ? loadingIcon(context)
-                                  : Text(
+                              child: Text(
                                       "No",
                                       textAlign: TextAlign.center,
                                       style: GoogleFonts.ubuntu(
@@ -127,9 +125,7 @@ class _BirthDateConfirmState extends State<BirthDateConfirm> {
                                   Radius.circular(30),
                                 ),
                               ),
-                              child: value.returnIsLoading()
-                                  ? loadingIcon(context)
-                                  : Text(
+                              child:  Text(
                                       "Yes",
                                       textAlign: TextAlign.center,
                                       style: GoogleFonts.ubuntu(

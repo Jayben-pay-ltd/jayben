@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:jayben/Home/elements/savings/elements/make_donation_to_shared_nas_acc_card.dart';
 import 'package:jayben/Home/elements/savings/elements/join_shared_nas_account_card.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:jayben/Home/components/home_page_widgets.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
 import 'package:jayben/Home/elements/drawer/drawer.dart';
@@ -17,9 +16,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key, this.initialLink}) : super(key: key);
-
-  final PendingDynamicLinkData? initialLink;
+  const HomePage({super.key});
 
   @override
   _HomePageState createState() => _HomePageState();
@@ -32,36 +29,36 @@ class _HomePageState extends State<HomePage>
 
   @override
   void initState() {
-    FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
-      if (!mounted) return;
+    // FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
+    //   if (!mounted) return;
 
-      List<String> split_id_list =
-          dynamicLinkData.link.queryParameters["id"].toString().split("_");
+    //   List<String> split_id_list =
+    //       dynamicLinkData.link.queryParameters["id"].toString().split("_");
 
-      /// if the link has no type
-      if (split_id_list.length == 1) {
-        // show the join nas account card
-        showBottomCard(
-          context,
-          JoinSharedNasAccountCard(
-            account_id: split_id_list[0],
-          ),
-        );
-      } else if (split_id_list.length != 1) {
-        /// if the link has type donation
-        if (split_id_list[1] == "donation") {
-          // show make a donation to nas account card
-          showBottomCard(
-            context,
-            DonateToSharedNasAccountCard(
-              account_id: split_id_list[0],
-            ),
-          );
-        }
-      }
-    }).onError((error) {
-      showSnackBar(context, "An error ocurred trying to open link");
-    });
+    //   /// if the link has no type
+    //   if (split_id_list.length == 1) {
+    //     // show the join nas account card
+    //     showBottomCard(
+    //       context,
+    //       JoinSharedNasAccountCard(
+    //         account_id: split_id_list[0],
+    //       ),
+    //     );
+    //   } else if (split_id_list.length != 1) {
+    //     /// if the link has type donation
+    //     if (split_id_list[1] == "donation") {
+    //       // show make a donation to nas account card
+    //       showBottomCard(
+    //         context,
+    //         DonateToSharedNasAccountCard(
+    //           account_id: split_id_list[0],
+    //         ),
+    //       );
+    //     }
+    //   }
+    // }).onError((error) {
+    //   showSnackBar(context, "An error ocurred trying to open link");
+    // });
 
     if (Platform.isAndroid) {
       NfcProviderFunctions nfc_prov = context.read<NfcProviderFunctions>();
@@ -96,30 +93,30 @@ class _HomePageState extends State<HomePage>
       return;
     }
 
-    if (widget.initialLink != null) {
-      final Uri deepLink = widget.initialLink!.link;
-      // Example of using the dynamic link to push the user to a different screen
+    // if (widget.initialLink != null) {
+    //   final Uri deepLink = widget.initialLink!.link;
+    //   // Example of using the dynamic link to push the user to a different screen
 
-      List<String> list = deepLink.queryParameters["id"].toString().split("_");
+    //   List<String> list = deepLink.queryParameters["id"].toString().split("_");
 
-      if (list.length == 1) {
-        showBottomCard(
-          context,
-          JoinSharedNasAccountCard(
-            account_id: list[0],
-          ),
-        );
-      } else if (list.length != 1) {
-        if (list[1] == "donation") {
-          showBottomCard(
-            context,
-            DonateToSharedNasAccountCard(
-              account_id: list[0],
-            ),
-          );
-        }
-      }
-    }
+    //   if (list.length == 1) {
+    //     showBottomCard(
+    //       context,
+    //       JoinSharedNasAccountCard(
+    //         account_id: list[0],
+    //       ),
+    //     );
+    //   } else if (list.length != 1) {
+    //     if (list[1] == "donation") {
+    //       showBottomCard(
+    //         context,
+    //         DonateToSharedNasAccountCard(
+    //           account_id: list[0],
+    //         ),
+    //       );
+    //     }
+    //   }
+    // }
 
     HomeProviderFunctions prov = context.read<HomeProviderFunctions>();
 

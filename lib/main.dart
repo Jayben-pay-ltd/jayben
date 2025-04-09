@@ -7,7 +7,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'Utilities/hive_and_notification_functions.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
 import 'package:responsive_framework/responsive_framework.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,8 +21,8 @@ void main() async {
   ]);
 
   // Get any initial links
-  final PendingDynamicLinkData? initialLink =
-      await FirebaseDynamicLinks.instance.getInitialLink();
+  // final PendingDynamicLinkData? initialLink =
+  //     await FirebaseDynamicLinks.instance.getInitialLink();
 
   // debugRepaintRainbowEnabled = true;
 
@@ -55,7 +54,7 @@ void main() async {
         builder: (_) {
           // gets app's current build version & stores it locally
           context.read<AuthProviderFunctions>().getBuildVersion();
-          return MyApp(initialLink: initialLink);
+          return MyApp();
         },
       ),
     ),
@@ -63,8 +62,8 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key, this.initialLink}) : super(key: key);
-  final PendingDynamicLinkData? initialLink;
+  const MyApp({super.key});
+  // final PendingDynamicLinkData? initialLink;
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
@@ -95,7 +94,7 @@ class MyApp extends StatelessWidget {
             const ResponsiveBreakpoint.autoScale(1000, name: TABLET),
           ],
         ),
-        home: InitializerWidget(initialLink: initialLink),
+        home: InitializerWidget(),
       ),
     );
   }

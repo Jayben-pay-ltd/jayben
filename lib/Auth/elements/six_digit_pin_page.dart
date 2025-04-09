@@ -1,7 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
-import 'package:jayben/Home/elements/savings/elements/join_shared_nas_account_card.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:jayben/Auth/elements/six_digit_pin_reset_page.dart';
+import 'package:jayben/Utilities/provider_functions.dart';
 import '../../Home/elements/legal/account_restricted_page.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -21,16 +20,16 @@ class PasscodePage extends StatefulWidget {
 class _PasscodePageState extends State<PasscodePage> {
   @override
   void initState() {
-    FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
-      if (!mounted) return;
+    // FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
+    //   if (!mounted) return;
 
-      showBottomCard(
-          context,
-          JoinSharedNasAccountCard(
-              account_id: dynamicLinkData.link.queryParameters["id"]!));
-    }).onError((error) {
-      showSnackBar(context, "An error ocurred trying to open link");
-    });
+    //   showBottomCard(
+    //       context,
+    //       JoinSharedNasAccountCard(
+    //           account_id: dynamicLinkData.link.queryParameters["id"]!));
+    // }).onError((error) {
+    //   showSnackBar(context, "An error ocurred trying to open link");
+    // });
 
     onPageLaunch();
     super.initState();

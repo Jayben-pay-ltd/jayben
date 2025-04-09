@@ -37,13 +37,13 @@ class _PinResetPageState extends State<PinResetPage> {
 
                 value.toggleIsLoading();
 
-                var isValid = await context
+                bool email_already_exists = await context
                     .read<AuthProviderFunctions>()
-                    .checkIfEmailValid(emailController.text);
+                    .checkIfEmailExists(emailController.text);
 
                 value.toggleIsLoading();
 
-                if (!isValid) {
+                if (!email_already_exists) {
                   showSnackBar(context, 'Incorrect Email, please try again.');
 
                   return;
@@ -54,7 +54,9 @@ class _PinResetPageState extends State<PinResetPage> {
                 showSnackBar(context, 'PIN has been sent to your Email.');
 
                 // sends user reset PIN email
-                bool is_reset = await context.read<AuthProviderFunctions>().resetPIN("1234");
+                bool is_reset = await context
+                    .read<AuthProviderFunctions>()
+                    .resetPIN("1234");
               },
               backgroundColor: Colors.grey[800],
               label: value.returnIsLoading()
@@ -161,7 +163,8 @@ class _PinResetPageState extends State<PinResetPage> {
                         ),
                         hGap(20),
                         GestureDetector(
-                          onTap: () => changePage(context, const ContactUsPage()),
+                          onTap: () =>
+                              changePage(context, const ContactUsPage()),
                           child: Container(
                             width: width(context),
                             color: Colors.white,

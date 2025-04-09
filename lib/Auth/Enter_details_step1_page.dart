@@ -1,3 +1,5 @@
+// ignore_for_file: non_constant_identifier_names
+
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,19 +19,19 @@ class EnterDetailsStep1Page extends StatefulWidget {
 }
 
 class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
-  final phoneNumberController = TextEditingController();
-  final firstNameController = TextEditingController();
-  final lastNameController = TextEditingController();
-  final usernameController = TextEditingController();
-  final addressController = TextEditingController();
+  final phone_number_controller = TextEditingController();
+  final first_name_controller = TextEditingController();
+  final last_name_controller = TextEditingController();
+  final username_controller = TextEditingController();
+  final address_controller = TextEditingController();
   final countryController = TextEditingController();
-  final cityController = TextEditingController();
-  DateTime selectedDate = DateTime(2004, 1);
-  String selectedCountryISOCode = "";
-  String selectedCountry = "";
-  String accountType = "";
-  String countryCode = "";
-  String selectedSex = "";
+  final city_controller = TextEditingController();
+  DateTime selected_date = DateTime(2004, 1);
+  String selected_country_iso_code = "";
+  String selected_country = "";
+  String account_type = "";
+  String country_code = "";
+  String selected_sex = "";
   String dob = "";
   String yob = "";
 
@@ -45,21 +47,21 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
             hideKeyboard();
 
             if (dob.isEmpty ||
-                selectedSex.isEmpty ||
-                accountType.isEmpty ||
-                selectedCountry.isEmpty ||
-                cityController.text.isEmpty ||
-                addressController.text.isEmpty ||
-                usernameController.text.isEmpty ||
-                lastNameController.text.isEmpty ||
-                firstNameController.text.isEmpty ||
-                phoneNumberController.text.isEmpty) {
+                selected_sex.isEmpty ||
+                account_type.isEmpty ||
+                selected_country.isEmpty ||
+                city_controller.text.isEmpty ||
+                address_controller.text.isEmpty ||
+                username_controller.text.isEmpty ||
+                last_name_controller.text.isEmpty ||
+                first_name_controller.text.isEmpty ||
+                phone_number_controller.text.isEmpty) {
               showSnackBar(context, "Enter all the boxes");
 
               return;
             }
 
-            if (phoneNumberController.text.length < 10) {
+            if (phone_number_controller.text.length < 10) {
               showSnackBar(context, "Enter a valid Zambian Phone Number");
 
               return;
@@ -68,19 +70,20 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
             value.toggleIsLoading();
 
             // checks if the username entered by user exists
-            bool isUsernameValid = await value
-                .checkIfUsernameExists(usernameController.text.trim());
+            bool? is_username_valid = await value.checkIfUsernameExists(
+                username_controller.text.trim().toLowerCase());
             // returns a bool value
 
             // checks if the phone number entered by user exists
-            bool isPhoneNumberValid = await value.checkIfPhoneNumberAlreadyExists(
-                "+${countryCode.replaceAll("0", "")}${phoneNumberController.text.trim()}");
+            bool is_phone_number_valid =
+                await value.checkIfPhoneNumberAlreadyExists(
+                    "+${country_code.replaceAll("0", "")}${phone_number_controller.text.trim()}");
             // returns a bool value
 
             value.toggleIsLoading();
 
             // if the username has been used already
-            if (!isUsernameValid) {
+            if (!is_username_valid!) {
               showSnackBar(context,
                   "Username has been taken. Please use another username");
 
@@ -88,7 +91,7 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
             }
 
             // if the phone number has been used already
-            if (!isPhoneNumberValid) {
+            if (!is_phone_number_valid) {
               showSnackBar(context,
                   "Phone number has been taken. Please use another number");
 
@@ -100,38 +103,38 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
               BirthDateConfirm(
                 account_details_map: {
                   "dob": dob,
-                  "gender": selectedSex,
-                  "countryCode": countryCode,
-                  "accountType": accountType,
-                  "dateOfBirth": selectedDate,
-                  "city": cityController.text,
-                  "address": addressController.text,
-                  "selectedCountry": selectedCountry,
-                  "username": usernameController.text,
-                  "lastName": lastNameController.text,
-                  "firstName": firstNameController.text,
-                  "selectedCountryISOCode": selectedCountryISOCode,
-                  "phoneNumber": "+${countryCode.replaceAll("0", "")}"
-                      "${phoneNumberController.text.trim()}",
-                  "onDateConfirm": () async {
+                  "gender": selected_sex,
+                  "country_code": country_code,
+                  "account_type": account_type,
+                  "city": city_controller.text,
+                  "date_of_birth": selected_date,
+                  "address": address_controller.text,
+                  "selected_country": selected_country,
+                  "username": username_controller.text,
+                  "last_name": last_name_controller.text,
+                  "first_name": first_name_controller.text,
+                  "selected_country_iso_code": selected_country_iso_code,
+                  "phone_number": "+${country_code.replaceAll("0", "")}"
+                      "${phone_number_controller.text.trim()}",
+                  "on_date_confirm": () async {
                     showModalBottomSheet(
                       enableDrag: false,
                       context: context,
-                      builder: (_) {
+                      builder: (BuildContext _) {
                         return SizedBox(
                           height: height(context) * 0.3,
                           child: CupertinoDatePicker(
-                            backgroundColor: Colors.transparent,
                             initialDateTime: DateTime.now(),
                             mode: CupertinoDatePickerMode.date,
+                            backgroundColor: Colors.transparent,
                             use24hFormat: true,
                             onDateTimeChanged: (DateTime picked) {
-                              if (picked != selectedDate) {
+                              if (picked != selected_date) {
                                 setState(() {
-                                  selectedDate = picked;
-                                  DateFormat formatShowUser =
+                                  selected_date = picked;
+                                  DateFormat format_show_user =
                                       DateFormat("d MMMM, yyyy");
-                                  dob = formatShowUser.format(selectedDate);
+                                  dob = format_show_user.format(selected_date);
                                 });
                               }
                             },
@@ -166,16 +169,16 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
                           hGap(10),
                           requiredTextWidget(),
                           hGap(30),
-                          accountTypeWidget(context, accountType,
-                              (value) => setState(() => accountType = value!)),
+                          accountTypeWidget(context, account_type,
+                              (value) => setState(() => account_type = value!)),
                           hGap(30),
-                          usernameTextfield(usernameController),
+                          usernameTextfield(username_controller),
                           hGap(20),
-                          firstNameTextField(firstNameController),
+                          firstNameTextField(first_name_controller),
                           hGap(30),
-                          lastNameTextField(lastNameController),
+                          lastNameTextField(last_name_controller),
                           hGap(30),
-                          phoneNumberTextField(phoneNumberController),
+                          phoneNumberTextField(phone_number_controller),
                           hGap(30),
                           birthDayWidget(dob, () async {
                             showModalBottomSheet(
@@ -190,13 +193,13 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
                                     mode: CupertinoDatePickerMode.date,
                                     use24hFormat: true,
                                     onDateTimeChanged: (DateTime picked) {
-                                      if (picked != selectedDate) {
+                                      if (picked != selected_date) {
                                         setState(() {
-                                          selectedDate = picked;
-                                          DateFormat formatShowUser =
+                                          selected_date = picked;
+                                          DateFormat format_show_user =
                                               DateFormat("d MMMM, yyyy");
-                                          dob = formatShowUser
-                                              .format(selectedDate);
+                                          dob = format_show_user
+                                              .format(selected_date);
                                         });
                                       }
                                     },
@@ -206,15 +209,15 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
                             );
                           }),
                           hGap(30),
-                          genderSelector(context, selectedSex,
-                              (value) => setState(() => selectedSex = value!)),
+                          genderSelector(context, selected_sex,
+                              (value) => setState(() => selected_sex = value!)),
                           hGap(30),
-                          addressTextField(addressController),
+                          addressTextField(address_controller),
                           hGap(30),
-                          cityTextField(cityController),
+                          cityTextField(city_controller),
                           hGap(30),
                           countryWidget(
-                            selectedCountry,
+                            selected_country,
                             () {
                               showCupertinoModalPopup<void>(
                                 context: context,
@@ -224,9 +227,9 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
                                     backgroundColor: Colors.white,
                                     onValuePicked: (Country country) {
                                       setState(() {
-                                        selectedCountry = country.name;
-                                        countryCode = country.phoneCode;
-                                        selectedCountryISOCode =
+                                        selected_country = country.name;
+                                        country_code = country.phoneCode;
+                                        selected_country_iso_code =
                                             country.isoCode;
                                       });
                                     },

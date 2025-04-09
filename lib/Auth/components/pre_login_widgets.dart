@@ -57,6 +57,21 @@ Widget preLoginBody(BuildContext context, Map controllers) {
 Widget signUpButton(BuildContext context) {
   return GestureDetector(
     onTap: () => changePage(context, const EnterDetailsStep1Page()),
+    // onTap: () async {
+    //   print("taaaaaaaaaap");
+
+    //   bool? isUsernameValid = await context
+    //       .read<AuthProviderFunctions>()
+    //       .checkIfUsernameExists("teeeeee");
+
+    //   if (isUsernameValid!) {
+    //     showSnackBar(context, "username is valid", color: Colors.green);
+    //     print("username exists");
+    //   } else {
+    //     showSnackBar(context, "username does not exist", color: Colors.red);
+    //     print("username does not exist");
+    //   }
+    // },
     child: Container(
       width: width(context) * 0.8,
       alignment: Alignment.center,

@@ -1,8 +1,8 @@
 // deno-lint-ignore-file
 // deno-lint-ignore-file no-explicit-any require-await
 import { RSA } from "https://deno.land/x/god_crypto@v1.4.11/mod.ts";
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7&no-check";
+import { serve } from "https://deno.land/std@0.210.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.2&no-check";
 
 serve(async (req: Request) => {
   const body = await req.json();
@@ -12,7 +12,7 @@ serve(async (req: Request) => {
     // Supabase API URL - env var exported by default.
     Deno.env.get("SUPABASE_URL") ?? "",
     // Supabase API SERVICE KEY - env var exported by default.
-    Deno.env.get("SUPABASE_SERVICE_KEY") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     // Create client with Auth context of the user that called the function.
     // This way your row-level-security (RLS) policies are applied.
   );
@@ -1038,7 +1038,7 @@ const send_temporary_pin_code_to_user = async (
 const get_user_account = async (
   _supabaseClient: any,
   _req: Request,
-): Promise<JSON> => {
+): Promise<any> => {
   /*
     body preview
     {
@@ -1050,18 +1050,27 @@ const get_user_account = async (
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
   // gets the user's account row
-  const res = await _supabaseClient.from("users").select().eq(
+  const res = await _supabaseClient.from("users").select().ilike(
     "user_id",
-    user_id,
+    `%${user_id}%`,
   );
 
-  return res["data"][0];
+  console.log(user_id);
+
+  console.log("The get user res is: ", res);
+
+  return {
+    "message": "successfully got the user's account row",
+    "status": "success",
+    "status_code": 200,
+    "data": res["data"][0],
+  };
 };
 
 const get_all_users_transactions = async (
   _supabaseClient: any,
   _req: Request,
-) => {
+): Promise<any> => {
   /*
     body preview
     {
@@ -1088,6 +1097,15 @@ const get_users_home_page_transactions = async (
 ): Promise<any> => {
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  if (user_id == null) {
+    return {
+      "message": "Please login first",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
 
   let transactions_to_return = [];
 
@@ -1116,7 +1134,7 @@ const get_users_home_page_transactions = async (
 const get_home_saving_accounts = async (
   _supabaseClient: any,
   _req: Request,
-) => {
+): Promise<any> => {
   /*
     body preview
     {
@@ -1491,7 +1509,7 @@ const upvote_an_existing_feedback_submission = async (
   _supabaseClient: any,
   _req: Request,
   _body: any,
-) => {
+): Promise<any> => {
   /*
     body preview
     {
@@ -1566,7 +1584,7 @@ const upvote_an_existing_feedback_submission = async (
 
 const get_feedback_submissions = async (
   _supabaseClient: any,
-) => {
+): Promise<any> => {
   /*
     body preview
     {
@@ -1587,7 +1605,7 @@ const create_a_feedback_submission = async (
   _supabaseClient: any,
   _req: Request,
   _body: any,
-) => {
+): Promise<any> => {
   /*
     body preview
     {
@@ -1769,14 +1787,15 @@ const send_money_p2p = async (
     }
   */
 
-  const appwide_admin_settings = await _supabaseClient.from("appwide_admin_settings")
+  const appwide_admin_settings = await _supabaseClient.from(
+    "appwide_admin_settings",
+  )
     .select()
     .eq("record_name", "--- Timeline Settings ---");
 
-  const default_timeline_privacy_setting =
-    appwide_admin_settings["data"][0][
-      "default_privacy_post_to_timeline_setting"
-    ];
+  const default_timeline_privacy_setting = appwide_admin_settings["data"][0][
+    "default_privacy_post_to_timeline_setting"
+  ];
 
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
@@ -2316,6 +2335,7 @@ const purchase_airtime = async (
     body preview
     {
       "request_type": "purchase_airtime",
+      "method_of_purchase": string,
       "post_is_public": boolean,
       "media_details": [{
         "media_caption": string,
@@ -2395,67 +2415,73 @@ const purchase_airtime = async (
     const at_result = await at_response.json();
 
     if (at_result.errorMessage == "None") {
-      // Update user balance
-      await _supabaseClient
-        .from("users")
-        .update({
-          balance: user.balance - _body.amount,
-        })
-        .eq("user_id", user_id);
+      if (_body["method_of_purchase"] == "cash") {
+        // Update user balance
+        await _supabaseClient
+          .from("users")
+          .update({
+            balance: user.balance - _body.amount,
+          })
+          .eq("user_id", user_id);
 
-      // Create transaction record
-      await _supabaseClient
-        .from("transactions")
-        .insert({
-          wallet_balance_details: {
-            wallet_balance_before_transaction: user.balance,
-            wallet_balance_after_transaction: user.balance -
-              _body.amount,
-            wallet_balances_difference: _body.amount,
-          },
-          full_names: `${user.first_name} ${user.last_name}`,
-          user_is_verified: user.account_kyc_is_verified,
-          description: `For +${_body.phone_number}`,
-          currency_symbol: user.currency_symbol,
-          transaction_type: "Airtime Purchase",
-          is_public: _body.post_is_public,
-          transaction_id: transaction_id,
-          savings_account_details: null,
-          transaction_fee_details: null,
-          p2p_receipient_details: null,
-          method: "Wallet transfer",
-          p2p_sender_details: null,
-          withdrawal_details: null,
-          currency: user.currency,
-          comment: _body.comment,
-          country: user.country,
-          sent_received: "Sent",
-          deposit_details: null,
-          amount: _body.amount,
-          number_of_replies: 0,
-          status: "Completed",
-          number_of_views: 0,
-          number_of_likes: 0,
-          attended_to: false,
-          user_id: user_id,
+        // Create transaction record
+        await _supabaseClient
+          .from("transactions")
+          .insert({
+            wallet_balance_details: {
+              wallet_balance_before_transaction: user.balance,
+              wallet_balance_after_transaction: user.balance -
+                _body.amount,
+              wallet_balances_difference: _body.amount,
+            },
+            full_names: `${user.first_name} ${user.last_name}`,
+            user_is_verified: user.account_kyc_is_verified,
+            description: `For +${_body.phone_number}`,
+            currency_symbol: user.currency_symbol,
+            transaction_type: "Airtime Purchase",
+            is_public: _body.post_is_public,
+            transaction_id: transaction_id,
+            savings_account_details: null,
+            transaction_fee_details: null,
+            p2p_receipient_details: null,
+            method: "Wallet transfer",
+            p2p_sender_details: null,
+            withdrawal_details: null,
+            currency: user.currency,
+            comment: _body.comment,
+            country: user.country,
+            sent_received: "Sent",
+            deposit_details: null,
+            amount: _body.amount,
+            number_of_replies: 0,
+            status: "Completed",
+            number_of_views: 0,
+            number_of_likes: 0,
+            attended_to: false,
+            user_id: user_id,
+          });
+
+        // Send success notification
+        await _supabaseClient.rpc("send_notifications_via_firebase", {
+          body:
+            `Airtime purchase of ${user.currency_symbol}${_body.amount} to +${_body.phone_number} was successful`,
+          notification_tokens: [user.notification_token],
+          title: "Airtime Purchase Successful 🎉",
         });
 
-      // Send success notification
-      await _supabaseClient.rpc("send_notifications_via_firebase", {
-        body:
-          `Airtime purchase of ${user.currency_symbol}${_body.amount} to +${_body.phone_number} was successful`,
-        notification_tokens: [user.notification_token],
-        title: "Airtime Purchase Successful 🎉",
-      });
+        return {
+          "message": "Airtime purchase successful",
+          "status": "success",
+          "status_code": 200,
+          "data": {
+            transaction_id: transaction_id,
+          },
+        };
+      } else {
+        // TODO implement current price per point and then deduct that price from their points.
 
-      return {
-        "message": "Airtime purchase successful",
-        "status": "success",
-        "status_code": 200,
-        "data": {
-          transaction_id: transaction_id,
-        },
-      };
+        await complete_airtime_purchase_via_points(_supabaseClient, _body, user, user_id, transaction_id);
+      }
     } else {
       // Handle Africa's Talking API error
       await _supabaseClient.rpc("send_notifications_via_firebase", {
@@ -2499,6 +2525,68 @@ const purchase_airtime = async (
   }
 };
 
+const complete_airtime_purchase_via_points = async (
+  _supabaseClient: any,
+  _body: any,
+  _user: any,
+  _user_id: any,
+  _tranx_id: any
+): Promise<any> => {
+  // Create transaction record
+  await _supabaseClient
+    .from("transactions")
+    .insert({
+      wallet_balance_details: {
+        wallet_balance_before_transaction: _user.balance,
+        wallet_balance_after_transaction: _user.balance -
+          _body.amount,
+        wallet_balances_difference: _body.amount,
+      },
+      full_names: `${_user.first_name} ${_user.last_name}`,
+      user_is_verified: _user.account_kyc_is_verified,
+      description: `For +${_body.phone_number}`,
+      currency_symbol: _user.currency_symbol,
+      transaction_type: "Airtime Purchase",
+      is_public: _body.post_is_public,
+      transaction_id: _tranx_id,
+      savings_account_details: null,
+      transaction_fee_details: null,
+      p2p_receipient_details: null,
+      method: "Wallet transfer",
+      p2p_sender_details: null,
+      withdrawal_details: null,
+      currency: _user.currency,
+      comment: _body.comment,
+      country: _user.country,
+      sent_received: "Sent",
+      deposit_details: null,
+      amount: _body.amount,
+      number_of_replies: 0,
+      status: "Completed",
+      number_of_views: 0,
+      number_of_likes: 0,
+      attended_to: false,
+      user_id: _user_id,
+    });
+
+  // Send success notification
+  await _supabaseClient.rpc("send_notifications_via_firebase", {
+    body:
+      `Airtime purchase of ${_user.currency_symbol}${_body.amount} to +${_body.phone_number} was successful`,
+    notification_tokens: [_user.notification_token],
+    title: "Airtime Purchase Successful 🎉",
+  });
+
+  return {
+    "message": "Airtime purchase successful",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      transaction_id: _tranx_id,
+    },
+  };
+};
+
 // ============================================================ Timeline Functions
 
 // ============================================================ Timeline Functions
@@ -2521,17 +2609,16 @@ const getFeedTransactions = async (
 
     return {
       "message": "Feed retrieved successfully",
-      "status": "success", 
+      "status": "success",
       "status_code": 200,
-      "data": feed.data
+      "data": feed.data,
     };
-
   } catch (error) {
     return {
       "message": "Error retrieving feed",
       "status": "failed",
       "status_code": 400,
-      "data": null
+      "data": null,
     };
   }
 };
@@ -2556,14 +2643,14 @@ const getMyFeedTransactions = async (
       "message": "Personal feed retrieved successfully",
       "status": "success",
       "status_code": 200,
-      "data": myFeed.data
+      "data": myFeed.data,
     };
   } catch (error) {
     return {
       "message": "Error retrieving personal feed",
       "status": "failed",
       "status_code": 400,
-      "data": null
+      "data": null,
     };
   }
 };
@@ -2582,7 +2669,7 @@ const likePost = async (
       "message": "Unauthorized",
       "status": "failed",
       "status_code": 401,
-      "data": null
+      "data": null,
     };
   }
 
@@ -2599,9 +2686,9 @@ const likePost = async (
     // Mark user's copy of post as liked
     await _supabaseClient
       .from("timeline_posts")
-      .update({ 
+      .update({
         "is_liked": true,
-        "number_of_likes": 1
+        "number_of_likes": 1,
       })
       .eq("user_id", user_id)
       .eq("post_id", post_info.post_id);
@@ -2619,7 +2706,7 @@ const likePost = async (
     await _supabaseClient
       .from("timeline_posts")
       .update({
-        "number_of_likes": new_like_count
+        "number_of_likes": new_like_count,
       })
       .eq("post_id", post_info.original_post_id);
 
@@ -2631,22 +2718,21 @@ const likePost = async (
         "post_id": post_info.original_post_id,
         "first_name": user.first_name,
         "last_name": user.last_name,
-        "user_id": user_id
+        "user_id": user_id,
       });
 
     return {
       "message": "Post liked successfully",
       "status": "success",
       "status_code": 200,
-      "data": null
+      "data": null,
     };
-
   } catch (error) {
     return {
       "message": "Error liking post",
       "status": "failed",
       "status_code": 400,
-      "data": null
+      "data": null,
     };
   }
 };
@@ -2655,7 +2741,7 @@ const likePost = async (
 const unlikePost = async (
   _supabaseClient: any,
   _req: Request,
-  _body: any
+  _body: any,
 ): Promise<any> => {
   const user_id = await get_auth_user_id(_req, _supabaseClient);
   const post_info = _body.post_info;
@@ -2665,7 +2751,7 @@ const unlikePost = async (
       "message": "Unauthorized",
       "status": "failed",
       "status_code": 401,
-      "data": null
+      "data": null,
     };
   }
 
@@ -2675,7 +2761,7 @@ const unlikePost = async (
       .from("timeline_posts")
       .update({
         "is_liked": false,
-        "number_of_likes": 0
+        "number_of_likes": 0,
       })
       .eq("user_id", user_id)
       .eq("post_id", post_info.post_id);
@@ -2693,7 +2779,7 @@ const unlikePost = async (
     await _supabaseClient
       .from("timeline_posts")
       .update({
-        "number_of_likes": new_like_count
+        "number_of_likes": new_like_count,
       })
       .eq("post_id", post_info.original_post_id);
 
@@ -2708,15 +2794,14 @@ const unlikePost = async (
       "message": "Post unliked successfully",
       "status": "success",
       "status_code": 200,
-      "data": null
+      "data": null,
     };
-
   } catch (error) {
     return {
       "message": "Error unliking post",
-      "status": "failed", 
+      "status": "failed",
       "status_code": 400,
-      "data": null
+      "data": null,
     };
   }
 };
@@ -2725,7 +2810,7 @@ const unlikePost = async (
 const blockUser = async (
   _supabaseClient: any,
   _req: Request,
-  _body: any
+  _body: any,
 ): Promise<any> => {
   const user_id = await get_auth_user_id(_req, _supabaseClient);
   const user_to_block = _body.user_to_block;
@@ -2735,7 +2820,7 @@ const blockUser = async (
       "message": "Unauthorized",
       "status": "failed",
       "status_code": 401,
-      "data": null
+      "data": null,
     };
   }
 
@@ -2747,7 +2832,8 @@ const blockUser = async (
       .eq("user_id", user_id)
       .single();
 
-    const current_blocked_users = user_result.data.blocked_peoples_user_details || [];
+    const current_blocked_users =
+      user_result.data.blocked_peoples_user_details || [];
 
     // Add blocked user to list
     await _supabaseClient
@@ -2760,10 +2846,10 @@ const blockUser = async (
             "first_name": user_to_block.first_name,
             "last_name": user_to_block.last_name,
             "user_id": user_to_block.user_id,
-            "blocked_reason": ""
+            "blocked_reason": "",
           },
-          ...current_blocked_users
-        ]
+          ...current_blocked_users,
+        ],
       })
       .eq("user_id", user_id);
 
@@ -2771,15 +2857,14 @@ const blockUser = async (
       "message": "User blocked successfully",
       "status": "success",
       "status_code": 200,
-      "data": null
+      "data": null,
     };
-
   } catch (error) {
     return {
       "message": "Error blocking user",
       "status": "failed",
       "status_code": 400,
-      "data": null
+      "data": null,
     };
   }
 };
@@ -2788,7 +2873,7 @@ const blockUser = async (
 const reportPost = async (
   _supabaseClient: any,
   _req: Request,
-  _body: any
+  _body: any,
 ): Promise<any> => {
   const user_id = await get_auth_user_id(_req, _supabaseClient);
   const report_info = _body.report_info;
@@ -2796,10 +2881,10 @@ const reportPost = async (
 
   if (!user_id) {
     return {
-      "message": "Unauthorized", 
+      "message": "Unauthorized",
       "status": "failed",
       "status_code": 401,
-      "data": null
+      "data": null,
     };
   }
 
@@ -2821,28 +2906,27 @@ const reportPost = async (
           "profile_image_url": user.profile_image_url,
           "first_name": user.first_name,
           "last_name": user.last_name,
-          "user_id": user_id
+          "user_id": user_id,
         },
         "post_id": post_info.post_id,
         "admin_reviewer_details": null,
         "is_reviewed_by_admin": false,
         "admin_review_comment": "",
-        "user_id": user_id
+        "user_id": user_id,
       });
 
     return {
       "message": "Post reported successfully",
       "status": "success",
       "status_code": 200,
-      "data": null
+      "data": null,
     };
-
   } catch (error) {
     return {
       "message": "Error reporting post",
       "status": "failed",
       "status_code": 400,
-      "data": null
+      "data": null,
     };
   }
 };
@@ -2851,7 +2935,7 @@ const reportPost = async (
 const deletePost = async (
   _supabaseClient: any,
   _req: Request,
-  _body: any
+  _body: any,
 ): Promise<any> => {
   const user_id = await get_auth_user_id(_req, _supabaseClient);
   const post_id = _body.post_id;
@@ -2861,7 +2945,7 @@ const deletePost = async (
       "message": "Unauthorized",
       "status": "failed",
       "status_code": 401,
-      "data": null
+      "data": null,
     };
   }
 
@@ -2884,7 +2968,7 @@ const deletePost = async (
       _supabaseClient
         .from("timeline_posts")
         .delete()
-        .eq("post_id", post_id)
+        .eq("post_id", post_id),
     );
 
     await Promise.all(delete_operations);
@@ -2893,15 +2977,14 @@ const deletePost = async (
       "message": "Post deleted successfully",
       "status": "success",
       "status_code": 200,
-      "data": null
+      "data": null,
     };
-
   } catch (error) {
     return {
       "message": "Error deleting post",
       "status": "failed",
       "status_code": 400,
-      "data": null
+      "data": null,
     };
   }
 };
@@ -3054,7 +3137,7 @@ const check_if_account_email_address_exists = async (
   // checks if the email address already exists
   const res = await _supabaseClient.from("users").select().eq(
     "email_address_lowercase",
-    _body["email_address"].toLowerCase(),
+    _body["email_address"].toString().toLowerCase(),
   );
 
   if (res["data"].length != 0) {
@@ -3093,32 +3176,46 @@ const check_if_account_username_exists = async (
     }
   */
 
-  // checks if the email address already exists
-  const res = await _supabaseClient.from("users").select().eq(
-    "username_searchable",
-    _body["username"].toLowerCase(),
+  console.log(
+    "The username given is: ",
+    _body["username"].toString().toLowerCase(),
   );
 
-  if (res["data"].length != 0) {
-    return {
-      "message": "username already exists",
-      "status": "success",
-      "status_code": 200,
-      "data": {
-        "username": _body["username"],
-        "exists": true,
-      },
-    };
-  } else {
-    return {
-      "message": "username does not exist",
-      "status": "success",
-      "status_code": 200,
-      "data": {
-        "username": _body["username"],
-        "exists": false,
-      },
-    };
+  try {
+    // checks if the email address already exists
+    const { data, error } = await _supabaseClient.from("users").select()
+      .eq(
+        "username_searchable",
+        _body["username"].toString().toLowerCase(),
+      );
+
+    console.log("This is the result broo", data);
+
+    console.log("If there is an error, its:", error);
+
+    if (data.length != 0) {
+      return {
+        "message": "username already exists",
+        "status": "success",
+        "status_code": 200,
+        "data": {
+          "username": _body["username"],
+          "exists": true,
+        },
+      };
+    } else {
+      return {
+        "message": "username does not exist",
+        "status": "success",
+        "status_code": 200,
+        "data": {
+          "username": _body["username"],
+          "exists": false,
+        },
+      };
+    }
+  } catch (e) {
+    console.log(e);
   }
 };
 
@@ -3180,9 +3277,9 @@ const check_if_referral_code_exists = async (
   // checks if the gets a list of accounts that have this re already exists
   const accs_with_this_referral_code = await _supabase.from("users")
     .select()
-    .eq("referral_code", _body["referral_code"]);
+    .eq("referral_code", _body["referral_code"].toString().toLowerCase());
 
-  if (accs_with_this_referral_code["data"].length != 0) {
+  if (accs_with_this_referral_code["data"].length == 0) {
     return {
       "message": "referral code does not exist",
       "status": "success",
@@ -4782,10 +4879,9 @@ const add_money_to_shared_nas_account = async (
     .select()
     .eq("record_name", "--- Timeline Settings ---");
 
-  const default_timeline_privacy_setting =
-    appwide_admin_settings["data"][0][
-      "default_privacy_post_to_timeline_setting"
-    ];
+  const default_timeline_privacy_setting = appwide_admin_settings["data"][0][
+    "default_privacy_post_to_timeline_setting"
+  ];
 
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabase);
