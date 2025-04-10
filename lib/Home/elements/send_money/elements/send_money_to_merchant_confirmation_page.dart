@@ -45,7 +45,7 @@ class _SendMoneyToMerchantConfirmationPageState
   Widget build(BuildContext context) {
     String currency = Hive.box("userInfo").get("Currency");
     double transactionFeePercentMerchants =
-        Hive.box('userInfo').get("TransactionFeePercentToMerchants");
+        Hive.box('userInfo').get("transaction_fee_percentage_to_merchants");
     double transactionFee =
         widget.paymentInfo['amount'] * (transactionFeePercentMerchants / 100);
     return Consumer<PaymentProviderFunctions>(

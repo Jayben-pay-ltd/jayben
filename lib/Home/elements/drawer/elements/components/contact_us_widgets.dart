@@ -334,7 +334,7 @@ Widget faqBody(BuildContext context) {
           questionWidget(
               context,
               "Do you charge any fees?",
-              "The only fee we charge is a small withdraw fee of ${box("WithdrawFeePercent") ?? 3.5} percent when withdrawing money from your Jayben Wallet to your Mobile Money wallet. \n\nWe currently do"
+              "The only fee we charge is a small withdraw fee of ${box("agent_payments_withdraw_fee_percent") ?? 3.5} percent when withdrawing money from your Jayben Wallet to your Mobile Money wallet. \n\nWe currently do"
                   " not charge for deposits, in-app wallet to wallet transactions, or deposits & withdraws to and from No Access Savings (NAS) Accounts."),
           questionWidget(
               context,

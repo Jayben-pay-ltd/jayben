@@ -239,7 +239,7 @@ module.exports = function (e) {
                         // sends notification to the user
                         await admin.messaging().sendToDevice(userData.NotificationToken, {
                             notification: {
-                                body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("ContactUs")}.`,
+                                body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("jayben_primary_customer_support_hotline")}.`,
                                 icon: "@drawable/ic_stat_jayben_logo_1_044317_copy_3",
                                 clickAction: "FLUTTER_NOTIFICATION_CLICK",
                                 title: "Account Flagged 🚩",
@@ -630,7 +630,7 @@ module.exports = function (e) {
                         // sends notification to the user
                         await admin.messaging().sendToDevice(withdrawal_owner_document.docs[0].get("NotificationToken"), {
                             notification: {
-                                body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("ContactUs")}.`,
+                                body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("jayben_primary_customer_support_hotline")}.`,
                                 icon: "@drawable/ic_stat_jayben_logo_1_044317_copy_3",
                                 clickAction: "FLUTTER_NOTIFICATION_CLICK",
                                 title: "Account Flagged 🚩",
@@ -1054,7 +1054,7 @@ module.exports = function (e) {
                         // sends notification to the user
                         await admin.messaging().sendToDevice(userDoc.get("NotificationToken"), {
                             notification: {
-                                body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("ContactUs")}.`,
+                                body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("jayben_primary_customer_support_hotline")}.`,
                                 icon: "@drawable/ic_stat_jayben_logo_1_044317_copy_3",
                                 clickAction: "FLUTTER_NOTIFICATION_CLICK",
                                 title: "Account Flagged 🚩",

@@ -78,7 +78,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         leading: const Icon(Icons.person_2),
                         onTap: () => changePage(context, const ProfilePage()),
                         title: const Text("Edit Profile")),
-                    !box("Timeline")
+                    !box("enable_timeline_feed")
                         ? nothing()
                         : ListTile(
                             leading: const Icon(Icons.remove_red_eye),

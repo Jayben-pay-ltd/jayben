@@ -107,12 +107,12 @@ class _EnterDetailsStep1PageState extends State<EnterDetailsStep1Page> {
                   "country_code": country_code,
                   "account_type": account_type,
                   "city": city_controller.text,
-                  "date_of_birth": selected_date,
                   "address": address_controller.text,
                   "selected_country": selected_country,
                   "username": username_controller.text,
                   "last_name": last_name_controller.text,
                   "first_name": first_name_controller.text,
+                  "date_of_birth": selected_date.toIso8601String(),
                   "selected_country_iso_code": selected_country_iso_code,
                   "phone_number": "+${country_code.replaceAll("0", "")}"
                       "${phone_number_controller.text.trim()}",

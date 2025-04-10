@@ -97,7 +97,7 @@
 // Widget quantityButtons(BuildContext context, DocumentSnapshot ds) {
 //   String currency = ds.get("Currency");
 //   double transactionFeePercentMerchants =
-//       box("TransactionFeePercentToMerchants");
+//       box("transaction_fee_percentage_to_merchants");
 //   double transactionFee =
 //       ds.get("Amount") * (transactionFeePercentMerchants / 100);
 //   double amountBeforeFee = double.parse(ds.get("Amount").toString());

@@ -26,7 +26,6 @@ serve(async (req: Request) => {
     "check_if_account_username_exists",
     "check_if_referral_code_exists",
     "alert_admins_about_new_signup",
-    "create_user_account_record",
     "get_encrypted_password",
     "get_terms_of_service",
     "send_reset_password",
@@ -244,6 +243,15 @@ serve(async (req: Request) => {
         data_to_return_in_response = await get_user_account(
           supabaseClient,
           req,
+          body,
+        );
+        break;
+
+      case "check_if_app_is_upto_date":
+        data_to_return_in_response = await check_if_app_is_upto_date(
+          supabaseClient,
+          req,
+          body,
         );
         break;
 
@@ -619,54 +627,6 @@ const convert_currency = async (_supabase: any, _body: any): Promise<any> => {
   return final_converted_amount;
 };
 
-// receives an unencrypted password and then encrypts it and sends it back to the user
-const _encrypt_account_login_password = async (
-  _supabase: any,
-  _body: any,
-): Promise<string> => {
-  try {
-    // Parse public key and create RSA instance
-    const publicKey = RSA.parseKey(
-      `-----BEGIN PUBLIC KEY-----\n${
-        Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY")
-      }\n-----END PUBLIC KEY-----`,
-    );
-
-    const rsa = new RSA(publicKey);
-
-    // Encrypt password and convert to base64 string
-    const encrypted_password = await rsa.encrypt(_body.decrypted_password);
-    return encrypted_password.base64();
-  } catch (error) {
-    console.error("Password encryption failed:", error);
-    throw new Error("Failed to encrypt password");
-  }
-};
-
-// receives an unencrypted password and then encrypts it and sends it back to the user
-const _decrypt_account_login_password = async (
-  _supabase: any,
-  _body: any,
-): Promise<string> => {
-  try {
-    // Parse private key and create RSA instance
-    const privateKey = RSA.parseKey(
-      `-----BEGIN PRIVATE KEY-----\n${
-        Deno.env.get("ACCOUNT_LOGIN_DECRYPTION_KEY")
-      }\n-----END PRIVATE KEY-----`,
-    );
-
-    const rsa = new RSA(privateKey);
-
-    // Decrypt password and convert to string
-    const decrypted_password = await rsa.decrypt(_body.encrypted_password);
-    return decrypted_password.toString();
-  } catch (error) {
-    console.error("Password decryption failed:", error);
-    throw new Error("Failed to decrypt password");
-  }
-};
-
 // deletes an existing user account row
 const delete_user_account = async (
   _supabaseClient: any,
@@ -755,6 +715,88 @@ const check_if_user_has_money_in_system_before_deletion = async (
     };
   }
 };
+
+// ============================================================ Encryption Functions
+
+// Utility: Convert between strings and ArrayBuffer
+function encode(str: string): Uint8Array {
+  return new TextEncoder().encode(str);
+}
+
+function decode(buf: Uint8Array): string {
+  return new TextDecoder().decode(buf);
+}
+
+// Utility: Convert ArrayBuffer to Base64 and back
+function toBase64(buffer: ArrayBuffer): string {
+  return btoa(String.fromCharCode(...new Uint8Array(buffer)));
+}
+
+function fromBase64(base64: string): Uint8Array {
+  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+}
+
+// Generate a key from a passphrase (so you can reuse a string secret)
+async function deriveKey(passphrase: string): Promise<CryptoKey> {
+  const salt = encode("a_fixed_salt"); // You can customize or randomize
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encode(passphrase),
+    "PBKDF2",
+    false,
+    ["deriveKey"],
+  );
+
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 100_000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"],
+  );
+}
+
+// Encrypt
+export async function encrypt(
+  plainText: string,
+  secret: string,
+): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV
+  const key = await deriveKey(secret);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encode(plainText),
+  );
+
+  // Combine IV + encrypted and return as base64
+  const result = new Uint8Array(iv.length + encrypted.byteLength);
+  result.set(iv);
+  result.set(new Uint8Array(encrypted), iv.length);
+  return toBase64(result.buffer);
+}
+
+// Decrypt
+export async function decrypt(
+  encryptedBase64: string,
+  secret: string,
+): Promise<string> {
+  const data = fromBase64(encryptedBase64);
+  const iv = data.slice(0, 12); // first 12 bytes
+  const encrypted = data.slice(12);
+  const key = await deriveKey(secret);
+  const decrypted = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    encrypted,
+  );
+  return decode(new Uint8Array(decrypted));
+}
 
 // ============================================================ Security Functions
 
@@ -1038,11 +1080,13 @@ const send_temporary_pin_code_to_user = async (
 const get_user_account = async (
   _supabaseClient: any,
   _req: Request,
+  _body: any,
 ): Promise<any> => {
   /*
     body preview
     {
       "request_type": "get_user_account",
+      "get_app_wide_settings": true,
     }
   */
 
@@ -1050,21 +1094,41 @@ const get_user_account = async (
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
   // gets the user's account row
-  const res = await _supabaseClient.from("users").select().ilike(
+  const user_data = await _supabaseClient.from("users").select().eq(
     "user_id",
-    `%${user_id}%`,
+    user_id,
   );
 
-  console.log(user_id);
+  if (_body["get_app_wide_settings"]) {
+    const settings_data = await _supabaseClient.from(
+      "appwide_admin_settings_private",
+    )
+      .select()
+      .eq("record_name", "---- App Wide Settings ---")
+      .eq("country", "Zambia");
 
-  console.log("The get user res is: ", res);
+    console.log(user_id);
 
-  return {
-    "message": "successfully got the user's account row",
-    "status": "success",
-    "status_code": 200,
-    "data": res["data"][0],
-  };
+    return {
+      "message": "successfully got the user's account row",
+      "status": "success",
+      "status_code": 200,
+      "data": {
+        "app_wide_settings": settings_data[0],
+        "user_data": user_data[0],
+      },
+    };
+  } else {
+    return {
+      "message": "successfully got the user's account row",
+      "status": "success",
+      "status_code": 200,
+      "data": {
+        "app_wide_settings": null,
+        "user_data": user_data[0],
+      },
+    };
+  }
 };
 
 const get_all_users_transactions = async (
@@ -1087,7 +1151,12 @@ const get_all_users_transactions = async (
       user_id,
     ).order("created_at", { ascending: false });
 
-  return res["data"];
+  return {
+    "message": "successfully got the user's transactions",
+    "status": "success",
+    "status_code": 200,
+    "data": res["data"],
+  };
 };
 
 // gets the 5 or less transactions that are displated in the app's home page
@@ -1098,15 +1167,6 @@ const get_users_home_page_transactions = async (
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  }
-
   let transactions_to_return = [];
 
   try {
@@ -1115,7 +1175,7 @@ const get_users_home_page_transactions = async (
       .eq(
         "user_id",
         user_id,
-      );
+      ).order("created_at", { ascending: false });
 
     transactions_to_return = res["data"];
   } catch (_) {
@@ -1123,12 +1183,17 @@ const get_users_home_page_transactions = async (
       .eq(
         "user_id",
         user_id,
-      );
+      ).order("created_at", { ascending: false });
 
     transactions_to_return = res["data"];
   }
 
-  return transactions_to_return;
+  return {
+    "message": "successfully got the user's transactions",
+    "status": "success",
+    "status_code": 200,
+    "data": transactions_to_return,
+  };
 };
 
 const get_home_saving_accounts = async (
@@ -1163,8 +1228,13 @@ const get_home_saving_accounts = async (
     .order("balance", { ascending: false });
 
   return {
-    "top_20_nas_accounts": top_20_nas_accounts["data"],
-    "my_shared_nas_accounts": shared_nas_acocounts["data"],
+    "message": "successfully got the user's shared no access savings accounts",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "shared_nas_acocounts": shared_nas_acocounts["data"],
+      "top_20_nas_accounts": top_20_nas_accounts["data"],
+    },
   };
 };
 
@@ -1185,93 +1255,84 @@ const update_profile_image_url = async (
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  } else {
-    // updates the user's user account row
-    await _supabaseClient.from("users").update({
+  // updates the user's user account row
+  await _supabaseClient.from("users").update({
+    "profile_image_url": _body["profile_image_url"],
+  }).eq(
+    "user_id",
+    user_id,
+  );
+
+  const shared_nas_accounts = await _supabaseClient
+    .from("shared_no_access_savings_accounts")
+    .select()
+    .eq("is_active", true)
+    .contains("user_ids_able_to_view_accounts", [`${user_id}`]);
+
+  let operations_to_run = [];
+
+  // gets the user's current user record row
+  const user_result = await _supabaseClient.from("users").select().eq(
+    "user_id",
+    user_id,
+  );
+
+  for (var i = 0; i < shared_nas_accounts.length; i++) {
+    // gets a list of all the existing acc bal shares
+    const existing_list_of_account_bal_shares =
+      shared_nas_accounts[i]["account_balance_shares"];
+
+    // gets the user's existing acc bal share map's index
+    const index: number = existing_list_of_account_bal_shares.findIndex((
+      map: any,
+    ) => map["user_id"] == user_id);
+
+    // gets user's the existing acc bal share map
+    const existing_account_bal_share_map =
+      existing_list_of_account_bal_shares[index];
+
+    // removes the user's existing acc bal share map from list
+    existing_list_of_account_bal_shares.splice(index, 1);
+
+    // the user's updated acc bal share map
+    const new_account_bal_share_map = {
+      "user_is_kyc_verified": user_result[0]["account_kyc_is_verified"],
+      "date_user_joined_account":
+        existing_account_bal_share_map["date_user_joined_account"],
+      "date_user_last_deposited":
+        existing_account_bal_share_map["date_user_last_deposited"],
+      "number_of_deposits_made":
+        existing_account_bal_share_map["number_of_deposits_made"],
+      "notification_token": user_result[0]["notification_token"],
+      "balance": existing_account_bal_share_map["balance"],
+      "currency_symbol": user_result[0]["currency_symbol"],
+      "names": existing_account_bal_share_map["names"],
       "profile_image_url": _body["profile_image_url"],
-    }).eq(
-      "user_id",
-      user_id,
-    );
-
-    const shared_nas_accounts = await _supabaseClient
-      .from("shared_no_access_savings_accounts")
-      .select()
-      .eq("is_active", true)
-      .contains("user_ids_able_to_view_accounts", [`${user_id}`]);
-
-    let operations_to_run = [];
-
-    // gets the user's current user record row
-    const user_result = await _supabaseClient.from("users").select().eq(
-      "user_id",
-      user_id,
-    );
-
-    for (var i = 0; i < shared_nas_accounts.length; i++) {
-      // gets a list of all the existing acc bal shares
-      const existing_list_of_account_bal_shares =
-        shared_nas_accounts[i]["account_balance_shares"];
-
-      // gets the user's existing acc bal share map's index
-      const index: number = existing_list_of_account_bal_shares.findIndex((
-        map: any,
-      ) => map["user_id"] == user_id);
-
-      // gets user's the existing acc bal share map
-      const existing_account_bal_share_map =
-        existing_list_of_account_bal_shares[index];
-
-      // removes the user's existing acc bal share map from list
-      existing_list_of_account_bal_shares.splice(index, 1);
-
-      // the user's updated acc bal share map
-      const new_account_bal_share_map = {
-        "user_is_kyc_verified": user_result[0]["account_kyc_is_verified"],
-        "date_user_joined_account":
-          existing_account_bal_share_map["date_user_joined_account"],
-        "date_user_last_deposited":
-          existing_account_bal_share_map["date_user_last_deposited"],
-        "number_of_deposits_made":
-          existing_account_bal_share_map["number_of_deposits_made"],
-        "notification_token": user_result[0]["notification_token"],
-        "balance": existing_account_bal_share_map["balance"],
-        "currency_symbol": user_result[0]["currency_symbol"],
-        "names": existing_account_bal_share_map["names"],
-        "profile_image_url": _body["profile_image_url"],
-        "currency": user_result[0]["currency"],
-        "country": user_result[0]["country"],
-        "user_id": user_id,
-      };
-
-      // updates the NAS account's row
-      operations_to_run.push(
-        _supabaseClient.from("shared_no_access_savings_accounts").update({
-          "account_balance_shares": [
-            ...existing_list_of_account_bal_shares,
-            new_account_bal_share_map,
-          ],
-        }).eq("account_id", shared_nas_accounts[i]["account_id"]),
-      );
-    }
-
-    // runs all the operations at once
-    await Promise.all(operations_to_run);
-
-    return {
-      "message": "successfully updated user's profile picture",
-      "status": "success",
-      "status_code": 200,
-      "data": null,
+      "currency": user_result[0]["currency"],
+      "country": user_result[0]["country"],
+      "user_id": user_id,
     };
+
+    // updates the NAS account's row
+    operations_to_run.push(
+      _supabaseClient.from("shared_no_access_savings_accounts").update({
+        "account_balance_shares": [
+          ...existing_list_of_account_bal_shares,
+          new_account_bal_share_map,
+        ],
+      }).eq("account_id", shared_nas_accounts[i]["account_id"]),
+    );
   }
+
+  // runs all the operations at once
+  await Promise.all(operations_to_run);
+
+  return {
+    "message": "successfully updated user's profile picture",
+    "status": "success",
+    "status_code": 200,
+    "data": null,
+  };
 };
 
 // updates the users device id & ip address
@@ -1292,30 +1353,22 @@ const update_device_id_and_ip_address = async (
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  } else {
-    // updates the user's user account row
-    await _supabaseClient.from("users").update({
-      "current_device_ip_address": _body["new_device_ip_address"],
-      "current_device_id": _body["new_device_id"],
-    }).eq(
-      "user_id",
-      user_id,
-    );
+  // updates the user's user account row
+  await _supabaseClient.from("users").update({
+    "current_device_ip_address": _body["new_device_ip_address"],
+    "last_time_online_timestamp": new Date().toISOString(),
+    "current_device_id": _body["new_device_id"],
+  }).eq(
+    "user_id",
+    user_id,
+  );
 
-    return {
-      "message": "successfully updated device id and ip address",
-      "status": "success",
-      "status_code": 200,
-      "data": null,
-    };
-  }
+  return {
+    "message": "successfully updated device id and ip address",
+    "status": "success",
+    "status_code": 200,
+    "data": null,
+  };
 };
 
 // updates the users last seen timestamp and build version
@@ -1336,32 +1389,22 @@ const update_last_time_seen_and_build_version = async (
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  } else {
-    // updates the user's user account row
-    await _supabaseClient.from("users").update({
-      "last_time_online_timestamp": _body["last_time_online_timestamp"],
-      "current_build_version": _body["current_build_version"],
-      "current_os_platform": _body["current_os_platform"],
-    }).eq(
-      "user_id",
-      user_id,
-    );
+  // updates the user's user account row
+  await _supabaseClient.from("users").update({
+    "current_build_version": _body["current_build_version"],
+    "last_time_online_timestamp": new Date().toISOString(),
+    "current_os_platform": _body["current_os_platform"],
+  }).eq(
+    "user_id",
+    user_id,
+  );
 
-    return {
-      "message":
-        "successfully updated user last seen timestamp & build version",
-      "status": "success",
-      "status_code": 200,
-      "data": null,
-    };
-  }
+  return {
+    "message": "successfully updated user last seen timestamp & build version",
+    "status": "success",
+    "status_code": 200,
+    "data": null,
+  };
 };
 
 // updates the user's notification token
@@ -1381,91 +1424,82 @@ const update_user_notification_token = async (
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  } else {
-    // gets the user's user account row
-    await _supabaseClient.from("users").update({
+  // gets the user's user account row
+  await _supabaseClient.from("users").update({
+    "last_time_online_timestamp": new Date().toISOString(),
+    "notification_token": _body["notification_token"],
+  }).eq(
+    "user_id",
+    user_id,
+  );
+
+  // gets the current savings accounts
+  const result = await _supabaseClient
+    .from("shared_no_access_savings_accounts")
+    .select()
+    .eq("is_active", true)
+    .contains("user_ids_able_to_view_accounts", [`${user_id}`]);
+
+  if (result.length == 0) return;
+
+  let operations_to_run = [];
+
+  // for reach NAS account, it updates the token
+  for (let i = 0; i < result["data"].length; i++) {
+    const existing_list_of_account_bal_shares =
+      result["data"][i]["account_balance_shares"];
+
+    // gets the user's existing acc bal share map's index
+    const index: number = existing_list_of_account_bal_shares.findIndex((
+      map: any,
+    ) => map["user_id"] == user_id);
+
+    // gets user's the existing acc bal share map
+    const existing_account_bal_share_map =
+      existing_list_of_account_bal_shares[index];
+
+    // removes the user's existing acc bal share map from list
+    existing_list_of_account_bal_shares.splice(index, 1);
+
+    // the user's updated acc bal share map
+    const new_account_bal_share_map = {
+      "profile_image_url": existing_account_bal_share_map["profile_image_url"],
+      "currency_symbol": existing_account_bal_share_map["currency_symbol"],
+      "date_user_joined_account":
+        existing_account_bal_share_map["date_user_joined_account"],
+      "date_user_last_deposited":
+        existing_account_bal_share_map["date_user_last_deposited"],
+      "number_of_deposits_made":
+        existing_account_bal_share_map["number_of_deposits_made"],
+      "user_is_kyc_verified":
+        existing_account_bal_share_map["user_is_kyc_verified"],
+      "currency": existing_account_bal_share_map["currency"],
+      "country": existing_account_bal_share_map["country"],
+      "balance": existing_account_bal_share_map["balance"],
+      "user_id": existing_account_bal_share_map["user_id"],
+      "names": existing_account_bal_share_map["names"],
       "notification_token": _body["notification_token"],
-    }).eq(
-      "user_id",
-      user_id,
-    );
-
-    // gets the current savings accounts
-    const result = await _supabaseClient
-      .from("shared_no_access_savings_accounts")
-      .select()
-      .eq("is_active", true)
-      .contains("user_ids_able_to_view_accounts", [`${user_id}`]);
-
-    if (result.length == 0) return;
-
-    let operations_to_run = [];
-
-    // for reach NAS account, it updates the token
-    for (let i = 0; i < result["data"].length; i++) {
-      const existing_list_of_account_bal_shares =
-        result["data"][i]["account_balance_shares"];
-
-      // gets the user's existing acc bal share map's index
-      const index: number = existing_list_of_account_bal_shares.findIndex((
-        map: any,
-      ) => map["user_id"] == user_id);
-
-      // gets user's the existing acc bal share map
-      const existing_account_bal_share_map =
-        existing_list_of_account_bal_shares[index];
-
-      // removes the user's existing acc bal share map from list
-      existing_list_of_account_bal_shares.splice(index, 1);
-
-      // the user's updated acc bal share map
-      const new_account_bal_share_map = {
-        "profile_image_url":
-          existing_account_bal_share_map["profile_image_url"],
-        "currency_symbol": existing_account_bal_share_map["currency_symbol"],
-        "date_user_joined_account":
-          existing_account_bal_share_map["date_user_joined_account"],
-        "date_user_last_deposited":
-          existing_account_bal_share_map["date_user_last_deposited"],
-        "number_of_deposits_made":
-          existing_account_bal_share_map["number_of_deposits_made"],
-        "user_is_kyc_verified":
-          existing_account_bal_share_map["user_is_kyc_verified"],
-        "currency": existing_account_bal_share_map["currency"],
-        "country": existing_account_bal_share_map["country"],
-        "balance": existing_account_bal_share_map["balance"],
-        "user_id": existing_account_bal_share_map["user_id"],
-        "names": existing_account_bal_share_map["names"],
-        "notification_token": _body["notification_token"],
-      };
-
-      operations_to_run.push(
-        _supabaseClient.from("shared_no_access_savings_accounts").update({
-          "account_balance_shares": [
-            ...existing_list_of_account_bal_shares,
-            new_account_bal_share_map,
-          ],
-        }).eq("account_id", result["data"][i]["account_id"]),
-      );
-    }
-
-    // updates all savings accounts all at once
-    await Promise.all(operations_to_run);
-
-    return {
-      "message": "successfully updated the user's notification tokens",
-      "status": "success",
-      "status_code": 200,
-      "data": null,
     };
+
+    operations_to_run.push(
+      _supabaseClient.from("shared_no_access_savings_accounts").update({
+        "account_balance_shares": [
+          ...existing_list_of_account_bal_shares,
+          new_account_bal_share_map,
+        ],
+      }).eq("account_id", result["data"][i]["account_id"]),
+    );
   }
+
+  // updates all savings accounts all at once
+  await Promise.all(operations_to_run);
+
+  return {
+    "message": "successfully updated the user's notification tokens",
+    "status": "success",
+    "status_code": 200,
+    "data": null,
+  };
 };
 
 // updates the value of the show update alert
@@ -1501,6 +1535,63 @@ const update_show_update_alert = async (
     "data": {
       "new_value": _body["new_value"],
       "user_id": _body["user_id"],
+    },
+  };
+};
+
+const check_if_app_is_upto_date = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+        body preview:
+        {
+          "request_type": "check_if_app_is_upto_date",
+          "current_build_version": string
+        }
+    */
+
+  // gets the user's id from the request
+  const user_id = await get_auth_user_id(_req, _supabaseClient);
+
+  const app_wide_settings = await _supabaseClient.from(
+    "app_wide_settings_private",
+  ).select().eq("record_name", "---- App Wide Settings ---").eq(
+    "country",
+    "Zambia",
+  );
+
+  if (
+    app_wide_settings[0]["record_contents"][
+      "current_most_recent_client_app_build_version"
+    ] != _body["current_build_version"]
+  ) {
+    return {
+      "message": "App is not up to date",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  // gets the user's user account row
+  const user_account_row = await _supabaseClient.from("users").update({
+    "show_update_alert": false,
+  }).eq(
+    "user_id",
+    user_id,
+  );
+
+  const user_row = user_account_row["data"][0];
+
+  return {
+    "message": "successfully got the user's account row",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "show_update_alert": user_row["show_update_alert"],
+      "current_build_version": user_row["current_build_version"],
     },
   };
 };
@@ -2131,15 +2222,6 @@ const withdraw_funds = async (
 
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  }
-
   // Get user's account details
   const user_result = await _supabaseClient
     .from("users")
@@ -2480,7 +2562,13 @@ const purchase_airtime = async (
       } else {
         // TODO implement current price per point and then deduct that price from their points.
 
-        await complete_airtime_purchase_via_points(_supabaseClient, _body, user, user_id, transaction_id);
+        await complete_airtime_purchase_via_points(
+          _supabaseClient,
+          _body,
+          user,
+          user_id,
+          transaction_id,
+        );
       }
     } else {
       // Handle Africa's Talking API error
@@ -2530,7 +2618,7 @@ const complete_airtime_purchase_via_points = async (
   _body: any,
   _user: any,
   _user_id: any,
-  _tranx_id: any
+  _tranx_id: any,
 ): Promise<any> => {
   // Create transaction record
   await _supabaseClient
@@ -2586,8 +2674,6 @@ const complete_airtime_purchase_via_points = async (
     },
   };
 };
-
-// ============================================================ Timeline Functions
 
 // ============================================================ Timeline Functions
 
@@ -3000,7 +3086,7 @@ const create_user_account_record = async (
   /*
     body preview
     {
-      "request_type": "create_user_account_record",
+        "request_type": "create_user_account_record",
         "account_login_password": string *hashed,
         "last_time_online_timestamp": timestamp,
         "current_device_ip_address": string,
@@ -3013,7 +3099,6 @@ const create_user_account_record = async (
         "physical_address": string,
         "currency_symbol": string,
         "referral_code": string,
-        "created_at": timestamp,
         "email_address": string,
         "country_code": string,
         "phone_number": string,
@@ -3033,88 +3118,75 @@ const create_user_account_record = async (
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 
-  if (user_id == null) {
-    return {
-      "message": "Please signup first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  } else {
-    // encrypts the user's account login password
-    const encrypted_password = await _encrypt_account_login_password(
-      _supabaseClient,
-      {
-        "decrypted_password": _body["account_login_password"],
-      },
-    );
+  // encrypts the user's account login password
+  const encrypted_password = await encrypt(
+    _body["account_login_password"],
+    `${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY_BASE_64")}`,
+  );
 
-    // creates the user's account row
-    await _supabaseClient.from("users").insert({
-      "last_time_online_timestamp": _body["last_time_online_timestamp"],
-      "current_device_ip_address": _body["current_device_ip_address"],
-      "email_address_lowercase": _body["email_address_lowercase"],
-      "number_of_savings_deposits_ever_made_to_nas_accounts": 0,
-      "current_build_version": _body["current_build_version"],
-      "username_searchable": _body["username_searchable"],
-      "current_os_platform": _body["current_os_platform"],
-      "current_activity_level_completion_percentage": 0,
-      "number_of_contacts_uploaded_with_jayben_accs": 0,
-      "notification_token": _body["notification_token"],
-      "physical_address": _body["physical_address"],
-      "account_login_password": encrypted_password,
-      "total_amount_ever_saved_in_nas_accounts": 0,
-      "currency_symbol": _body["currency_symbol"],
-      "timeline_privacy_setting": "All contacts",
-      "number_of_wallet_deposits_ever_made": 0,
-      "referral_code": _body["referral_code"],
-      "email_address": _body["email_address"],
-      "date_of_birth": _body["date_of_birth"],
-      "total_number_of_contacts_uploaded": 0,
-      "country_code": _body["country_code"],
-      "phone_number": _body["phone_number"],
-      "account_type": _body["account_type"],
-      "blocked_peoples_user_details": null,
-      "daily_user_minutes_spent_in_app": 0,
-      "daily_minutes_spent_in_timeline": 0,
-      "created_at": _body["created_at"],
-      "first_name": _body["first_name"],
-      "account_kyc_is_verified": false,
-      "nas_deposits_are_allowed": true,
-      "total_amount_ever_deposted": 0,
-      "withdrawals_are_allowed": true,
-      "last_name": _body["last_name"],
-      "user_code": _body["user_code"],
-      "username": _body["username"],
-      "currency": _body["currency"],
-      "deposits_are_allowed": true,
-      "is_currently_online": true,
-      "black_listed_user_ids": [],
-      "account_is_on_hold": false,
-      "country": _body["country"],
-      "user_monthly_metrics": {},
-      "show_update_alert": false,
-      "account_is_banned": false,
-      "gender": _body["gender"],
-      "user_total_metrics": {},
-      "user_daily_metrics": {},
-      "current_device_id": "",
-      "profile_image_url": "",
-      "city": _body["city"],
-      "activity_level": 1,
-      "user_id": user_id,
-      "pin_code": "",
-      "balance": 0,
-      "points": 0,
-    });
+  // creates the user's account row
+  await _supabaseClient.from("users").insert({
+    "current_device_ip_address": _body["current_device_ip_address"],
+    "email_address_lowercase": _body["email_address_lowercase"],
+    "number_of_savings_deposits_ever_made_to_nas_accounts": 0,
+    "current_build_version": _body["current_build_version"],
+    "username_searchable": _body["username_searchable"],
+    "current_os_platform": _body["current_os_platform"],
+    "current_activity_level_completion_percentage": 0,
+    "number_of_contacts_uploaded_with_jayben_accs": 0,
+    "notification_token": _body["notification_token"],
+    "physical_address": _body["physical_address"],
+    "account_login_password": encrypted_password,
+    "total_amount_ever_saved_in_nas_accounts": 0,
+    "currency_symbol": _body["currency_symbol"],
+    "timeline_privacy_setting": "All contacts",
+    "number_of_wallet_deposits_ever_made": 0,
+    "referral_code": _body["referral_code"],
+    "email_address": _body["email_address"],
+    "date_of_birth": _body["date_of_birth"],
+    "total_number_of_contacts_uploaded": 0,
+    "country_code": _body["country_code"],
+    "phone_number": _body["phone_number"],
+    "account_type": _body["account_type"],
+    "blocked_peoples_user_details": null,
+    "daily_user_minutes_spent_in_app": 0,
+    "daily_minutes_spent_in_timeline": 0,
+    "first_name": _body["first_name"],
+    "account_kyc_is_verified": false,
+    "nas_deposits_are_allowed": true,
+    "total_amount_ever_deposted": 0,
+    "withdrawals_are_allowed": true,
+    "last_name": _body["last_name"],
+    "user_code": _body["user_code"],
+    "username": _body["username"],
+    "currency": _body["currency"],
+    "deposits_are_allowed": true,
+    "is_currently_online": true,
+    "black_listed_user_ids": [],
+    "account_is_on_hold": false,
+    "country": _body["country"],
+    "user_monthly_metrics": {},
+    "show_update_alert": false,
+    "account_is_banned": false,
+    "gender": _body["gender"],
+    "user_total_metrics": {},
+    "user_daily_metrics": {},
+    "current_device_id": "",
+    "profile_image_url": "",
+    "city": _body["city"],
+    "activity_level": 1,
+    "user_id": user_id,
+    "pin_code": "",
+    "balance": 0,
+    "points": 0,
+  });
 
-    return {
-      "message": "successfully created a new user account",
-      "status": "success",
-      "status_code": 200,
-      "data": null,
-    };
-  }
+  return {
+    "message": "successfully created a new user account",
+    "status": "success",
+    "status_code": 200,
+    "data": null,
+  };
 
   // "user_monthly_metrics"
   // "user_daily_metrics"
@@ -3506,11 +3578,9 @@ const _encrypt_tag_pin_code = async (
   */
 
   // encrypts the tag pin code
-  const encrypted_pin_code = await _encrypt_account_login_password(
-    _supabaseClient,
-    {
-      "decrypted_password": _decrypted_pin_code,
-    },
+  const encrypted_pin_code = await encrypt(
+    _decrypted_pin_code,
+    `${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY_BASE_64")}`,
   );
 
   return encrypted_pin_code;
@@ -3528,11 +3598,9 @@ const _decrypt_tag_pin_code = async (
   */
 
   // encrypts the tag pin code
-  const decrypted_pin_code = await _decrypt_account_login_password(
-    _supabaseClient,
-    {
-      "encrypted_password": _encrypted_pin_code,
-    },
+  const decrypted_pin_code = await decrypt(
+    _encrypted_pin_code,
+    `${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY_BASE_64")}`,
   );
 
   return decrypted_pin_code;

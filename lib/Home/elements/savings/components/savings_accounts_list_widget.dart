@@ -36,7 +36,7 @@ class _SavingsAccountsListWidgetState extends State<SavingsAccountsListWidget> {
                 removeTop: true,
                 context: context,
                 removeBottom: true,
-                child: !box("ShowTop20SharedNasAccounts")
+                child: !box("show_app_wide_top_20_nas_accounts")
                     ? allActiveSavingsAccountsWidget(context)
                     : value1.returnCurrentSavingsFilterIndex() == 0
                         ? allActiveSavingsAccountsWidget(context)
@@ -141,7 +141,7 @@ class _SavingsAccountsListWidgetState extends State<SavingsAccountsListWidget> {
   }
 
   Widget top20SharedNasAccountsWidget(BuildContext context) {
-    return !box("ShowTop20SharedNasAccounts")
+    return !box("show_app_wide_top_20_nas_accounts")
         ? nothing()
         : Consumer<HomeProviderFunctions>(
             builder: (_, value, child) {

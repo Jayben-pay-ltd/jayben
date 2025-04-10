@@ -463,7 +463,7 @@ Widget homeSavingsBody(BuildContext context) {
       mainAxisSize: MainAxisSize.min,
       children: [
         createSavingsAccountWidget(context),
-        !box("ShowTop20SharedNasAccounts")
+        !box("show_app_wide_top_20_nas_accounts")
             ? nothing()
             : Padding(
                 padding: const EdgeInsets.only(top: 30.0),
@@ -477,11 +477,11 @@ Widget homeSavingsBody(BuildContext context) {
 
 Widget pageChangerWidget(BuildContext context) {
   return Consumer<HomeProviderFunctions>(builder: (_, value, child) {
-    return box("Timeline") == null
+    return box("enable_timeline_feed") == null
         ? nothing()
         : value.returnCurrentHomeState() == "Savings" ||
                 ["Agent", "Merchant"].contains(box("AccountType")) ||
-                !box("Timeline")
+                !box("enable_timeline_feed")
             ? nothing()
             : Container(
                 width: width(context),

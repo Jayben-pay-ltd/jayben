@@ -408,7 +408,7 @@ Widget floatingSettings(BuildContext context) {
     child: GestureDetector(
       onTap: () async {
         await Clipboard.setData(
-            ClipboardData(text: box("Username_searchable")));
+            ClipboardData(text: box("username_searchable")));
 
         showSnackBar(context, "Referral Code Copied");
       },
@@ -440,7 +440,7 @@ Widget referralCode(BuildContext context) {
       return GestureDetector(
         onTap: () async {
           await Clipboard.setData(
-              ClipboardData(text: box("Username_searchable")));
+              ClipboardData(text: box("username_searchable")));
 
           showSnackBar(context, "Referral Code Copied");
         },
@@ -464,7 +464,7 @@ Widget copyCode(BuildContext context) {
       return GestureDetector(
         onTap: () async {
           await Clipboard.setData(
-              ClipboardData(text: box("Username_searchable")));
+              ClipboardData(text: box("username_searchable")));
 
           showSnackBar(context, "Referral Code Copied");
         },
@@ -473,7 +473,7 @@ Widget copyCode(BuildContext context) {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                box("Username_searchable"),
+                box("username_searchable"),
                 style: TextStyle(
                   fontWeight: FontWeight.w400,
                   color: Colors.grey[800]!,

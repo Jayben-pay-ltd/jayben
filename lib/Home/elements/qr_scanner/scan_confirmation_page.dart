@@ -192,7 +192,7 @@ class _SendMoneyByQRCodeState extends State<SendMoneyByQRCode> {
             double amount = double.parse(value.returnAmountString());
 
             double amount_plus_merchant_fee = double.parse(
-                    box("MerchantCommissionPerTransaction").toString()) +
+                    box("merchant_commission_per_transaction").toString()) +
                 amount;
 
             value.toggleIsLoading();
@@ -206,7 +206,7 @@ class _SendMoneyByQRCodeState extends State<SendMoneyByQRCode> {
               showSnackBar(
                   context,
                   'Your Wallet balance is not enough. Please account for the ${box("Currency")} '
-                  '${(double.parse(box("MerchantCommissionPerTransaction").toString())).toStringAsFixed(2)} fee');
+                  '${(double.parse(box("merchant_commission_per_transaction").toString())).toStringAsFixed(2)} fee');
 
               return;
             }

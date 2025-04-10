@@ -170,7 +170,7 @@ Widget actionButtons(BuildContext context, Map map) {
 
           if (minSavingsDeposit > amountToSave) {
             showSnackBar(context,
-                'Minimum transfer amount that can be saved is ${box("Currency")} ${box("MinimumSavingsDeposit")}');
+                'Minimum transfer amount that can be saved is ${box("Currency")} ${box("minimum_savings_deposit_amount")}');
 
             return;
           }
@@ -192,7 +192,8 @@ Widget actionButtons(BuildContext context, Map map) {
 
             changePage(context, const HomePage(), type: "pr");
           } else {
-            showSnackBar(context, 'Donation failed. Please try again.', color: Colors.red);
+            showSnackBar(context, 'Donation failed. Please try again.',
+                color: Colors.red);
           }
         },
         child: Container(

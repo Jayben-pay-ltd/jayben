@@ -78,7 +78,7 @@ Widget airtimeBody(BuildContext context) {
                   hGap(10),
                   Text(
                     value.current_page_index == 0
-                        ? "*Minimum purchase amount is ${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}${box("AirtimePurchaseMinimum")}"
+                        ? "*Minimum purchase amount is ${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}${box("airtime_purchase_minimum_amount")}"
                         : "*Airtel, MTN & Zamtel Only",
                     maxLines: 1,
                     textAlign: TextAlign.center,
@@ -191,7 +191,7 @@ Widget actionButtons(BuildContext context, String text) {
           double amount = double.parse(value.returnAmountString());
 
           double minAirtimeAmount =
-              double.parse("${box("AirtimePurchaseMinimum")}");
+              double.parse("${box("airtime_purchase_minimum_amount")}");
 
           if (amount < minAirtimeAmount) {
             showSnackBar(context,
@@ -204,7 +204,8 @@ Widget actionButtons(BuildContext context, String text) {
           if (value.returnPaymentMethod() == "Pay With Points") {
             var myPoints = double.parse("${box("Points")}");
 
-            var valuePerPoint = double.parse("${box("ValuePerPointKwacha")}");
+            var valuePerPoint =
+                double.parse("${box("cash_value_per_user_point")}");
 
             var pointNeededToPay = amount / valuePerPoint;
 

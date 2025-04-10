@@ -33,7 +33,7 @@ module.exports = function (e) {
                 "full_names": "${box("FirstName")} ${box("LastName")}",
                 "amount_to_withdraw_plus_fee": paymentInfo['amountPlusFee'],
                 "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
-                "transaction_fee_percentage": box("WithdrawFeePercent").toString(),
+                "transaction_fee_percentage": box("agent_payments_withdraw_fee_percent").toString(),
                 "transaction_fee_amount": paymentInfo['amountPlusFee'] - paymentInfo['amountBeforeFee'],
                 "description": "To ${paymentInfo['phoneNumber']} "
                 "${paymentInfo['reference']}",
@@ -308,7 +308,7 @@ module.exports = function (e) {
                 "full_names": "${box("FirstName")} ${box("LastName")}",
                 "amount_to_withdraw_plus_fee": paymentInfo['amountPlusFee'],
                 "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
-                "transaction_fee_percentage": box("WithdrawFeePercent").toString(),
+                "transaction_fee_percentage": box("agent_payments_withdraw_fee_percent").toString(),
                 "transaction_fee_amount": paymentInfo['amountPlusFee'] - paymentInfo['amountBeforeFee'],
                 "description": "To ${paymentInfo['phoneNumber']} ${paymentInfo['reference']}",
             }
@@ -865,7 +865,7 @@ module.exports = function (e) {
                     // sends notification to the user
                     await admin.messaging().sendToDevice(sender_user_doc.get("NotificationToken"), {
                         notification: {
-                            body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("ContactUs")}.`,
+                            body: `Your account has been flagged. Please contact customer support on ${smsKeys.get("jayben_primary_customer_support_hotline")}.`,
                             icon: "@drawable/ic_stat_jayben_logo_1_044317_copy_3",
                             clickAction: "FLUTTER_NOTIFICATION_CLICK",
                             title: "Account Flagged 🚩",

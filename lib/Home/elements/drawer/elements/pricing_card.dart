@@ -17,12 +17,13 @@ class _PricingCardState extends State<PricingCard> {
   @override
   Widget build(BuildContext context) {
     double withdrawFeeCapAmount =
-        double.parse("${box("WithdrawFeeCapAmount")}");
+        double.parse("${box("withdraw_fee_cap_amount")}");
 
     double WithdrawFeeCapThresholdAmountKwacha =
-        double.parse("${box("WithdrawFeeCapThresholdAmountKwacha")}");
+        double.parse("${box("withdraw_amount_where_to_cap_withdraw_fees")}");
 
-    double withdrawFeePercent = double.parse("${box("WithdrawFeePercent")}");
+    double withdrawFeePercent =
+        double.parse("${box("agent_payments_withdraw_fee_percent")}");
     return SizedBox(
       width: width(context),
       child: Container(

@@ -122,7 +122,7 @@ Widget body(BuildContext context) {
 Widget depositMethodWidget(BuildContext context) {
   List<String> deposit_options = [];
 
-  if (box("EnableInstantDeposits")) {
+  if (box("enable_instant_payments_for_deposits")) {
     deposit_options = [
       "Via Mobile Money",
       // "Via Jayben Agent",
@@ -131,7 +131,7 @@ Widget depositMethodWidget(BuildContext context) {
     // deposit_options.add("Via Jayben Agent");
   }
 
-  if (box("EnableCreditDebitCardDeposits")) {
+  if (box("enable_card_payments_for_deposits")) {
     deposit_options.add("Via Credit/Debit Card");
   }
 

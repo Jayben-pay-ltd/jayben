@@ -362,10 +362,11 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (box("user_id") == null) return;
 
     // gets the user's account row from supabase
-    Map<String, dynamic> res =
-        await callGeneralFunction("get_user_account", {});
+    Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
+      "get_app_wide_settings": false,
+    });
 
-    Map user_row = res["data"];
+    Map user_row = res["data"]["data"]["user_data"];
 
     // if no user has been returned
     if (user_row.isEmpty) return;
@@ -444,7 +445,7 @@ class HomeProviderFunctions extends ChangeNotifier {
       {},
     );
 
-    homeTransactions = res["data"];
+    homeTransactions = res["data"]["data"];
 
     // gets home time limited transactions
     // homeTimeLimitedTransactionsQS = await _fire
@@ -513,31 +514,29 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     // boxPut(
     //     "JaybenSecondaryHotLine", adminDoc.get("SecondaryCustomerSupportLine"));
-    // boxPut("MaximumSavAccsPerPerson", adminDoc.get("MaximumSavAccsPerPerson"));
-    // boxPut("AirtimePurchaseMinimum", adminDoc.get("AirtimePurchaseMinimum"));
+    // boxPut("maximum_number_of_savings_accounts_per_person", adminDoc.get("maximum_number_of_savings_accounts_per_person"));
+    // boxPut("airtime_purchase_minimum_amount", adminDoc.get("airtime_purchase_minimum_amount"));
     // boxPut("SavingsGroupsAvailable", adminDoc.get("SavingsGroupsAvailable"));
-    // boxPut("InterestSavingsAcconts", adminDoc.get("InterestSavingsAcconts"));
-    // boxPut("SendPointsByUsername", adminDoc.get("SendPointsByUsername"));
     // boxPut("PointsPerTransaction", adminDoc.get("PointsPerTransaction"));
-    // boxPut("ValuePerPointKwacha", adminDoc.get("ValuePerPointKwacha"));
-    // boxPut("WithdrawFeePercent", adminDoc.get("WithdrawFeePercent"));
+    // boxPut("cash_value_per_user_point", adminDoc.get("cash_value_per_user_point"));
+    // boxPut("agent_payments_withdraw_fee_percent", adminDoc.get("agent_payments_withdraw_fee_percent"));
     // boxPut("MinimumLoanAmount", adminDoc.get("MinimumLoanAmount"));
-    // boxPut("JaybenEmailAddress", adminDoc.get("EmailAddress"));
-    // boxPut("JaybenWhatsAppLine", adminDoc.get("WhatsAppLine"));
-    // boxPut("WithdrawFeeInternationalBanksInUSD",
-    //     adminDoc.get("WithdrawFeeInternationalBanksInUSD"));
-    // boxPut("WithdrawLimit", adminDoc.get("WithdrawLimit"));
-    // boxPut("TransactionFeePercentToMerchants",
-    //     adminDoc.get("TransactionFeePercentToMerchants"));
+    // boxPut("JaybenEmailAddress", adminDoc.get("jayben_primary_customer_support_email_address"));
+    // boxPut("JaybenWhatsAppLine", adminDoc.get("customer_support_whatsapp_phone_number"));
+    // boxPut("intl_wire_transfer_withdraw_fee_in_usd",
+    //     adminDoc.get("intl_wire_transfer_withdraw_fee_in_usd"));
+    // boxPut("general_withdraw_amount_limit", adminDoc.get("general_withdraw_amount_limit"));
+    // boxPut("transaction_fee_percentage_to_merchants",
+    //     adminDoc.get("transaction_fee_percentage_to_merchants"));
     // boxPut('MinimumSavingsDeposit',
     //     adminDoc.get("MinimumSavingsDeposit").toString());
-    // boxPut("JaybenHotline", adminDoc.get("ContactUs"));
-    // boxPut("SendMerchantTransactionSMSes",
-    //     adminDoc.get("SendMerchantTransactionSMSes"));
+    // boxPut("JaybenHotline", adminDoc.get("jayben_primary_customer_support_hotline"));
+    // boxPut("send_merchant_transaction_smses",
+    //     adminDoc.get("send_merchant_transaction_smses"));
     // boxPut("ReferralCommissionPercentage",
     //     adminDoc.get("ReferrerCommissionPercentage"));
-    // boxPut("WithdrawFeeLocalBanksInUSD",
-    //     adminDoc.get("WithdrawFeeLocalBanksInUSD"));
+    // boxPut("local_wire_transfer_withdraw_fee_in_usd",
+    //     adminDoc.get("local_wire_transfer_withdraw_fee_in_usd"));
 
     notifyListeners();
   }
@@ -547,20 +546,18 @@ class HomeProviderFunctions extends ChangeNotifier {
   // 3). precaches the user's profile image locally
   Future<void> loadDetailsToHive() async {
     // gets this user's account record row
-    Map<String, dynamic> res =
-        await callGeneralFunction("get_user_account", {});
+    Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
+      "get_app_wide_settings": true,
+    });
 
-    Map user_map = res["data"]["data"];
+    Map user_map = res["data"]["data"]["user_data"];
+    Map app_settings = res["data"]["data"]["app_wide_settings"];
 
     if (user_map == null) return;
 
-    // DocumentSnapshot adminDoc =
-    //     await _fire.collection("Admin").doc("Legal").get();
-
-    boxPut("DateOfBirth", user_map["date_of_birth"]);
-    boxPut("CurrentAppBuildVersion", user_map["current_build_version"]);
-    boxPut("Username_searchable", user_map["username_searchable"]);
-    boxPut("NotificationToken", user_map["notification_token"]);
+    boxPut("current_app_build_version", user_map["current_build_version"]);
+    boxPut("username_searchable", user_map["username_searchable"]);
+    boxPut("notification_token", user_map["notification_token"]);
     boxPut("Investments", user_map["nas_deposits_are_allowed"]);
     boxPut("profile_image_url", user_map["profile_image_url"]);
     boxPut("Balance", user_map["balance"].toStringAsFixed(2));
@@ -596,11 +593,11 @@ class HomeProviderFunctions extends ChangeNotifier {
     // boxPut(
     //     '3MonthsInterestRate', adminDoc.get("3MonthsInterestRate").toString());
     // boxPut("VillageBankingAvailable", adminDoc.get("VillageBankingAvailable"));
-    // boxPut("MaximumSavAccsPerPerson", adminDoc.get("MaximumSavAccsPerPerson"));
+    // boxPut("maximum_number_of_savings_accounts_per_person", adminDoc.get("maximum_number_of_savings_accounts_per_person"));
     // boxPut("SavingsGroupsAvailable", adminDoc.get("SavingsGroupsAvailable"));
-    // boxPut("AirtimePurchaseMinimum", adminDoc.get("AirtimePurchaseMinimum"));
+    // boxPut("airtime_purchase_minimum_amount", adminDoc.get("airtime_purchase_minimum_amount"));
     // boxPut("InterestSavingsAcconts", adminDoc.get("InterestSavingsAcconts"));
-    // boxPut("UseFlutterwavePayments", adminDoc.get("UseFlutterwavePayments"));
+    // boxPut("enable_flutterwave_payments_deposits", adminDoc.get("enable_flutterwave_payments_deposits"));
     // boxPut("SavingsAccountClosurePenaltyPencentage",
     //     adminDoc.get("SavingsAccountClosurePenaltyPencentage").toString());
     // boxPut("SavingsAccountClosurePenaltyPencentage",
@@ -608,48 +605,48 @@ class HomeProviderFunctions extends ChangeNotifier {
     // boxPut('EnableInstantDeposits', adminDoc.get("EnableInstantDeposits"));
     // boxPut("SendPointsByUsername", adminDoc.get("SendPointsByUsername"));
     // boxPut("PointsPerTransaction", adminDoc.get("PointsPerTransaction"));
-    // boxPut("WithdrawFeeCapAmount", adminDoc.get("WithdrawFeeCapAmount"));
-    // boxPut("ValuePerPointKwacha", adminDoc.get("ValuePerPointKwacha"));
+    // boxPut("withdraw_fee_cap_amount", adminDoc.get("withdraw_fee_cap_amount"));
+    // boxPut("cash_value_per_user_point", adminDoc.get("cash_value_per_user_point"));
     // boxPut("MerchantCommissionPerTransaction",
     //     adminDoc.get("MerchantCommissionPerTransaction").toString());
-    // boxPut("UsersCanBuyAirtime", adminDoc.get("UsersCanBuyAirtime"));
-    // boxPut("WithdrawFeePercent", adminDoc.get("WithdrawFeePercent"));
+    // boxPut("enable_airtime_utility_purchases", adminDoc.get("enable_airtime_utility_purchases"));
+    // boxPut("agent_payments_withdraw_fee_percent", adminDoc.get("agent_payments_withdraw_fee_percent"));
     // boxPut("MinimumLoanAmount", adminDoc.get("MinimumLoanAmount"));
     // boxPut("RequireDepositIn30DaysForInterestSavAccs",
     //     adminDoc.get("RequireDepositIn30DaysForInterestSavAccs"));
-    // boxPut("VirtualCardsDB", adminDoc.get("TurnOnVirtualCards"));
-    // boxPut("JaybenEmailAddress", adminDoc.get("EmailAddress"));
-    // boxPut("JaybenWhatsAppLine", adminDoc.get("WhatsAppLine"));
+    // boxPut("VirtualCardsDB", adminDoc.get("enable_virtual_cards"));
+    // boxPut("JaybenEmailAddress", adminDoc.get("jayben_primary_customer_support_email_address"));
+    // boxPut("JaybenWhatsAppLine", adminDoc.get("customer_support_whatsapp_phone_number"));
     // boxPut("UsersCapableOfSeeingSecretDashboard",
     //     adminDoc.get("UsersCapableOfSeeingSecretDashboard"));
-    // boxPut("WithdrawFeeCapThresholdAmountKwacha",
-    //     adminDoc.get("WithdrawFeeCapThresholdAmountKwacha"));
-    // boxPut("DocVerification", adminDoc.get("Verification"));
-    // boxPut("WithdrawFeeInternationalBanksInUSD",
-    //     adminDoc.get("WithdrawFeeInternationalBanksInUSD"));
-    // boxPut("WithdrawLimit", adminDoc.get("WithdrawLimit"));
+    // boxPut("withdraw_amount_where_to_cap_withdraw_fees",
+    //     adminDoc.get("withdraw_amount_where_to_cap_withdraw_fees"));
+    // boxPut("enable_account_kyc_verification_requirement", adminDoc.get("enable_account_kyc_verification_requirement"));
+    // boxPut("intl_wire_transfer_withdraw_fee_in_usd",
+    //     adminDoc.get("intl_wire_transfer_withdraw_fee_in_usd"));
+    // boxPut("general_withdraw_amount_limit", adminDoc.get("general_withdraw_amount_limit"));
     // boxPut('MinimumSavingsDeposit',
     //     adminDoc.get("MinimumSavingsDeposit").toString());
-    // boxPut("TransactionFeePercentToMerchants",
-    //     adminDoc.get("TransactionFeePercentToMerchants"));
+    // boxPut("transaction_fee_percentage_to_merchants",
+    //     adminDoc.get("transaction_fee_percentage_to_merchants"));
     // boxPut("MaximumNumberOfLoansActiveLoans",
     //     adminDoc.get("MaximumNumberOfLoansActiveLoans"));
     // boxPut("PayReferrers", adminDoc.get("PayReferrers"));
     // boxPut('12MonthsInterestRate',
     //     adminDoc.get("12MonthsInterestRate").toString());
-    // boxPut("EnableCreditDebitCardDeposits",
-    //     adminDoc.get("EnableCreditDebitCardDeposits"));
-    // boxPut("JaybenHotline", adminDoc.get("ContactUs"));
-    // boxPut("SendMerchantTransactionSMSes",
-    //     adminDoc.get("SendMerchantTransactionSMSes"));
+    // boxPut("enable_card_payments_for_deposits",
+    //     adminDoc.get("enable_card_payments_for_deposits"));
+    // boxPut("JaybenHotline", adminDoc.get("jayben_primary_customer_support_hotline"));
+    // boxPut("send_merchant_transaction_smses",
+    //     adminDoc.get("send_merchant_transaction_smses"));
     // boxPut("ReferralCommissionPercentage",
     //     adminDoc.get("ReferrerCommissionPercentage"));
     // boxPut("SaveWithFriendsInterestRate",
     //     adminDoc.get("SaveWithFriendsInterestRate"));
-    // boxPut("WithdrawFeeLocalBanksInUSD",
-    //     adminDoc.get("WithdrawFeeLocalBanksInUSD"));
-    // boxPut("ShowTop20SharedNasAccounts",
-    //     adminDoc.get("ShowTop20SharedNasAccounts"));
+    // boxPut("local_wire_transfer_withdraw_fee_in_usd",
+    //     adminDoc.get("local_wire_transfer_withdraw_fee_in_usd"));
+    // boxPut("show_app_wide_top_20_nas_accounts",
+    //     adminDoc.get("show_app_wide_top_20_nas_accounts"));
     // boxPut("Timeline", adminDoc.get("Timeline"));
 
     // precaches user's profileimage
@@ -717,12 +714,13 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (box("user_id") == null) return;
 
     // gets user"s row & settings row
-    List<dynamic> results = await Future.wait([
-      callGeneralFunction("get_user_account", {}),
-      // _fire.collection("Admin").doc("Legal").get()
-    ]);
+    Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
+      "get_app_wide_settings": false,
+    });
 
-    Map user_map = results[0].data;
+    Map user_map = res["data"]["data"]["user_data"];
+
+    Map app_wide_settings = res["data"]["data"]["app_wide_settings"];
 
     if (user_map == null) return;
 
@@ -731,7 +729,7 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     // if user is on latest build version, dismiss update reminders
     if (user_map["current_build_version"] ==
-        results[1].get("LatestBuildVersion")) {
+        app_wide_settings["current_most_recent_client_app_build_version"]) {
       // dismisses the update reminder in user"s row
       await callGeneralFunction("update_show_update_alert", {
         "new_value": false,
@@ -807,8 +805,9 @@ class DepositProviderFunctions extends ChangeNotifier {
   }
 
   void clearStrings() {
-    selected_deposit_method =
-        box("EnableInstantDeposits") ? "Via Mobile Money" : "Via Mobile Money";
+    selected_deposit_method = box("enable_instant_payments_for_deposits")
+        ? "Via Mobile Money"
+        : "Via Mobile Money";
     // "Via Jayben Agent";
     phone_number_string = box("PhoneNumber").replaceAll("+26", "");
     current_page_index = 0;
@@ -1121,7 +1120,7 @@ class QRScannerProviderFunctions extends ChangeNotifier {
         await callGeneralFunction("send_money_via_qr_code", {
       "transaction_details": {
         "merchant_commission_per_transaction":
-            double.parse(box("MerchantCommissionPerTransaction").toString()),
+            double.parse(box("merchant_commission_per_transaction").toString()),
         "receiver_user_id": paymentInfo['receiver_map']["user_id"],
         "payment_means": paymentInfo["payment_means"],
         "amount": paymentInfo['amount'],
@@ -1807,6 +1806,23 @@ class AuthProviderFunctions extends ChangeNotifier {
       // boxPut("session", res.session!.toJson());
 
       user_id = res.user!.id;
+
+      // if (res.user!.id != null) {
+      // stores the user's user_id locally
+      // boxPut("user_id", user_id);
+
+      // // marks the account as logged in
+      // boxPut("is_logged_in", "true");
+
+      // // 2).
+      // await createUserAccount(context, {"user_id": user_id, ...user_info});
+
+      // showSnackBar(context, "Account has been created successfully",
+      //     color: Colors.green);
+
+      // // 3).
+      // changePage(context, const HomePage(), type: "pr");
+      // }
     } on AuthException catch (error) {
       if (error.message == "User already registered") {
         showSnackBar(context,
@@ -1815,10 +1831,6 @@ class AuthProviderFunctions extends ChangeNotifier {
     } catch (_) {
       showSnackBar(context, "Unexpected auth error occurred");
     }
-
-    isLoading = false;
-
-    notifyListeners();
 
     // listens for sign up actions
     supabase.auth.onAuthStateChange.listen((AuthState data) async {
@@ -1832,6 +1844,10 @@ class AuthProviderFunctions extends ChangeNotifier {
 
       // 2).
       await createUserAccount(context, {"user_id": user_id, ...user_info});
+
+      isLoading = false;
+
+      notifyListeners();
 
       showSnackBar(context, "Account has been created successfully",
           color: Colors.green);
@@ -1859,8 +1875,6 @@ class AuthProviderFunctions extends ChangeNotifier {
     // gets the device's ip address
     dynamic ip_address = await ipAddress.getIpAddress();
 
-    String date = DateTime.now().toIso8601String();
-
     // creates the user's account row
     Map<String, dynamic> res =
         await callGeneralFunction("create_user_account_record", {
@@ -1870,6 +1884,7 @@ class AuthProviderFunctions extends ChangeNotifier {
       "email_address_lowercase": userInfo["email"].toString().toLowerCase(),
       "username_searchable": userInfo["username"].toString().toLowerCase(),
       "referral_code": userInfo['referral_code'].toString().toLowerCase(),
+      "last_time_online_timestamp": DateTime.now().toIso8601String(),
       "current_os_platform": Platform.isAndroid ? "Android" : "iOS",
       "account_login_password": userInfo["password"],
       'date_of_birth': userInfo["date_of_birth"],
@@ -1879,10 +1894,9 @@ class AuthProviderFunctions extends ChangeNotifier {
       'country': userInfo["selected_country"],
       "current_device_ip_address": ip_address,
       "physical_address": userInfo["address"],
-      "current_build_version": buildVersion,
       "currency_symbol": currency_details[0],
+      "current_build_version": buildVersion,
       'first_name': userInfo["first_name"],
-      "last_time_online_timestamp": date,
       "email_address": userInfo["email"],
       'last_name': userInfo["last_name"],
       "notification_token": notif_token,
@@ -4585,7 +4599,7 @@ class AdminProviderFunctions extends ChangeNotifier {
             "transaction_local_bank_tranfer_fee": user_data["WithdrawInfo"]
                 ["LocalBankTransferFee"],
             "transaction_total_fee_percentage": user_data["WithdrawInfo"]
-                ["WithdrawFeePercent"],
+                ["agent_payments_withdraw_fee_percent"],
             "transaction_fee_amount": user_data["WithdrawInfo"]["TotalFee"],
             "transaction_total_fee_currency": user_data["Currency"],
             "transcation_bank_transfer_fee_currency": "USD",

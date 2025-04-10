@@ -43,7 +43,7 @@ Widget sendMoneyFloatingButton(
         }
 
         double transactionFeePercentMerchants =
-            box("TransactionFeePercentToMerchants");
+            box("transaction_fee_percentage_to_merchants");
 
         double amount = double.parse(
             amountToSendController.text.trim().replaceAll("-", ""));

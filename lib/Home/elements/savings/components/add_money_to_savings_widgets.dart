@@ -169,7 +169,7 @@ Widget actionButtons(BuildContext context, Map map) {
 
           if (minSavingsDeposit > amountToSave) {
             showSnackBar(context,
-                'Minimum transfer amount that can be saved is ${box("Currency")} ${box("MinimumSavingsDeposit")}');
+                'Minimum transfer amount that can be saved is ${box("Currency")} ${box("minimum_savings_deposit_amount")}');
 
             return;
           }

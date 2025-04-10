@@ -164,7 +164,7 @@ class _PaymentConfirmationQrState extends State<PaymentConfirmationQr> {
                                       fontSize: 13,
                                     ),
                                     text:
-                                        "+ ${box("Currency")} ${(double.parse(box("MerchantCommissionPerTransaction").toString())).toStringAsFixed(2)} transaction fee",
+                                        "+ ${box("Currency")} ${(double.parse(box("merchant_commission_per_transaction").toString())).toStringAsFixed(2)} transaction fee",
                                   ),
                                   textAlign: TextAlign.left,
                                 ),
