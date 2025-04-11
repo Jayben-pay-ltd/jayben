@@ -65,8 +65,8 @@ Widget withdrawBody(BuildContext context) {
                 Text(
                   value.current_page_index == 0
                       ? value.returnAmountString().isEmpty
-                          ? "${box("CurrencySymbol")}0"
-                          : "${box("CurrencySymbol")}${value.returnAmountString()}"
+                          ? "${box("currency_symbol")}0"
+                          : "${box("currency_symbol")}${value.returnAmountString()}"
                       : value.returnPhoneNumberString().isEmpty
                           ? "0"
                           : value.returnPhoneNumberString(),
@@ -81,7 +81,7 @@ Widget withdrawBody(BuildContext context) {
                 hGap(10),
                 Text(
                   value.current_page_index == 0
-                      ? "*Minimum withdraw amount is ${box("CurrencySymbol")}2"
+                      ? "*Minimum withdraw amount is ${box("currency_symbol")}2"
                       : "*Airtel, MTN & Zamtel Money Supported",
                   maxLines: 1,
                   textAlign: TextAlign.center,
@@ -163,7 +163,7 @@ Widget actionButtons(BuildContext context, String text) {
           // if amount is out of withdraw limits
           if (amount < 2) {
             showSnackBar(context,
-                "Minimum withdraw amount is ${box("CurrencySymbol")} 2");
+                "Minimum withdraw amount is ${box("currency_symbol")} 2");
 
             return;
           }
@@ -180,7 +180,7 @@ Widget actionButtons(BuildContext context, String text) {
               showSnackBar(
                   context,
                   "Your Wallet balance is not enough. Please account for the "
-                  "${box("CurrencySymbol")} ${(feeAmount).toStringAsFixed(2)} "
+                  "${box("currency_symbol")} ${(feeAmount).toStringAsFixed(2)} "
                   "withdraw fee");
 
               return;
@@ -236,7 +236,7 @@ Widget balanceWidget() {
               color: Colors.grey[800],
             ),
             child: Text(
-              "Wallet bal: ${box("CurrencySymbol")}${double.parse(box("Balance").toString()).toStringAsFixed(2)}",
+              "Wallet bal: ${box("currency_symbol")}${double.parse(box("balance").toString()).toStringAsFixed(2)}",
               style: GoogleFonts.ubuntu(
                 color: Colors.white,
                 fontSize: 15,

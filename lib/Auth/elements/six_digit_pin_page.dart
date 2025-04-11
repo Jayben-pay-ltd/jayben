@@ -42,7 +42,7 @@ class _PasscodePageState extends State<PasscodePage> {
     // 1). decrypts the encrypted user pin
     // 2). pretty much intended to get the reset email and store it
     List<dynamic> result = await Future.wait([
-      // context.read<AuthProviderFunctions>().decryptPin(box("PIN")),
+      // context.read<AuthProviderFunctions>().decryptPin(box("pin_code")),
       context.read<AuthProviderFunctions>().processResetEmail()
     ]);
 
@@ -89,9 +89,9 @@ class _PasscodePageState extends State<PasscodePage> {
                               TextSpan(
                                 children: [
                                   TextSpan(
-                                    text: box("FirstName") == null
+                                    text: box("first_name") == null
                                         ? "Hi there 👋"
-                                        : 'Hi ${box("FirstName")} 👋',
+                                        : 'Hi ${box("first_name")} 👋',
                                     style: GoogleFonts.ubuntu(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.grey[700],
@@ -146,7 +146,7 @@ class _PasscodePageState extends State<PasscodePage> {
                                   }
 
                                   // if account is restricted
-                                  if (box("OnHold")) {
+                                  if (box("account_is_on_hold")) {
                                     changePage(
                                         context, const PendingApprovalPage(),
                                         type: "pr");

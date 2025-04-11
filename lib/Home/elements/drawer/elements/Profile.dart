@@ -40,29 +40,28 @@ class _ProfilePageState extends State<ProfilePage> {
           ? uploadProgressLoadingPage(context)
           : Scaffold(
               backgroundColor: Colors.white,
-              floatingActionButton:
-                  ["Agent"].contains(box("AccountType"))
-                      ? nothing()
-                      : FloatingActionButton.extended(
-                          onPressed: () =>
-                              changePage(context, const UserQRCodePage()),
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.qr_code),
-                              wGap(10),
-                              Text(
-                                "My QR Code",
-                                style: googleStyle(
-                                  weight: FontWeight.w400,
-                                  color: Colors.white,
-                                  size: 15,
-                                ),
-                              ),
-                            ],
+              floatingActionButton: ["Agent"].contains(box("account_type"))
+                  ? nothing()
+                  : FloatingActionButton.extended(
+                      onPressed: () =>
+                          changePage(context, const UserQRCodePage()),
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.qr_code),
+                          wGap(10),
+                          Text(
+                            "My QR Code",
+                            style: googleStyle(
+                              weight: FontWeight.w400,
+                              color: Colors.white,
+                              size: 15,
+                            ),
                           ),
-                          backgroundColor: Colors.black,
-                        ),
+                        ],
+                      ),
+                      backgroundColor: Colors.black,
+                    ),
               body: SafeArea(
                 bottom: false,
                 child: profileBody(

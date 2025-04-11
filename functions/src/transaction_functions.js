@@ -24,13 +24,13 @@ module.exports = function (e) {
             BODY PREVIEW
             {
                 "user_id": box("user_id"),
-                "country": box("Country"),
-                "currency": box("Currency"),
+                "country": box("country"),
+                "currency": box("currency"),
                 "method": paymentInfo['paymentMethod'],
                 "reference": paymentInfo['phoneNumber'],
                 "phone_number": paymentInfo['reference'],
-                "transaction_fee_currency": box("Currency"),
-                "full_names": "${box("FirstName")} ${box("LastName")}",
+                "transaction_fee_currency": box("currency"),
+                "full_names": "${box("first_name")} ${box("last_name")}",
                 "amount_to_withdraw_plus_fee": paymentInfo['amountPlusFee'],
                 "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
                 "transaction_fee_percentage": box("agent_payments_withdraw_fee_percent").toString(),
@@ -299,13 +299,13 @@ module.exports = function (e) {
             BODY PREVIEW
             {
                 "user_id": box("user_id"),
-                "country": box("Country"),
-                "currency": box("Currency"),
+                "country": box("country"),
+                "currency": box("currency"),
                 "method": paymentInfo['paymentMethod'],
                 "reference": paymentInfo['phoneNumber'],
                 "phone_number": paymentInfo['reference'],
-                "transaction_fee_currency": box("Currency"),
-                "full_names": "${box("FirstName")} ${box("LastName")}",
+                "transaction_fee_currency": box("currency"),
+                "full_names": "${box("first_name")} ${box("last_name")}",
                 "amount_to_withdraw_plus_fee": paymentInfo['amountPlusFee'],
                 "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
                 "transaction_fee_percentage": box("agent_payments_withdraw_fee_percent").toString(),
@@ -614,9 +614,9 @@ module.exports = function (e) {
                 "receiver_user_id": paymentInfo['receiverDoc'].get("UserID"),
                 "comment": paymentInfo['comment'],
                 "amount": paymentInfo["amount"],
-                "currency": box("Currency"),
+                "currency": box("currency"),
                 "user_id": box("user_id"),
-                "country": box("Country"),
+                "country": box("country"),
             }
         */
 
@@ -930,9 +930,9 @@ module.exports = function (e) {
                 "receiver_user_id": paymentInfo['receiverDoc'].get("UserID"),
                 "comment": paymentInfo['comment'],
                 "amount": paymentInfo["amount"],
-                "currency": box("Currency"),
+                "currency": box("currency"),
                 "user_id": box("user_id"),
-                "country": box("Country"),
+                "country": box("country"),
                 "post_is_public": boolean,
             }
         */
@@ -1223,9 +1223,9 @@ module.exports = function (e) {
                 ],
                 "comment": postInfo['comment'],
                 "method": "Wallet transfer",
-                "currency": box("Currency"),
+                "currency": box("currency"),
                 "user_id": box("user_id"),
-                "country": box("Country"),
+                "country": box("country"),
                 "post_is_public": bool,
             }
         */

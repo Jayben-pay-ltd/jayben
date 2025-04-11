@@ -73,7 +73,7 @@
 //                         fontSize: 14,
 //                         color: Colors.black)),
 //                 hGap(5),
-//                 Text("For ${box("Currency")} ${amount.toStringAsFixed(2)}",
+//                 Text("For ${box("currency")} ${amount.toStringAsFixed(2)}",
 //                     style: GoogleFonts.ubuntu(
 //                         color: Colors.black, fontWeight: FontWeight.w800)),
 //                 hGap(5),
@@ -102,7 +102,7 @@
 //       ds.get("Amount") * (transactionFeePercentMerchants / 100);
 //   double amountBeforeFee = double.parse(ds.get("Amount").toString());
 //   double amountPlusFee = amountBeforeFee + transactionFee;
-//   double myWalletBal = double.parse(box("Balance").toString());
+//   double myWalletBal = double.parse(box("balance").toString());
 //   return Consumer<PaymentProviderFunctions>(builder: (_, value, child) {
 //     return value.returnPaymentRequestsLoading().contains(ds.id)
 //         ? Container(

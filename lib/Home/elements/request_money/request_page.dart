@@ -44,7 +44,7 @@ class _RequestPageState extends State<RequestPage> with WidgetsBindingObserver {
         floatingActionButton: FloatingActionButton.extended(
             backgroundColor: Colors.green,
             onPressed: () async {
-              var myLine = box("PhoneNumber").replaceAll("+26", '');
+              var myLine = box("phone_number").replaceAll("+26", '');
 
               if (_amountController.text != "" &&
                   _numberController.text != "" &&

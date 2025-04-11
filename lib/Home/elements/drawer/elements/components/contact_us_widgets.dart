@@ -203,10 +203,10 @@ Widget contactWidget(BuildContext context) {
             width: width(context),
             child: Text(
               value.returnCurrentContactType() == "Calls/Text"
-                  ? "${box("JaybenHotline")}\n${box("JaybenSecondaryHotLine")}"
+                  ? "${box("jayben_primary_customer_support_hotline")}\n${box("jayben_secondary_customer_support_hotline")}"
                   : value.returnCurrentContactType() == "WhatsApp"
-                      ? "wa.me/${box("JaybenWhatsAppLine").replaceAll("+", "")}"
-                      : box("JaybenEmailAddress"),
+                      ? "wa.me/${box("customer_support_whatsapp_phone_number").replaceAll("+", "")}"
+                      : box("jayben_primary_customer_support_email_address"),
               textAlign: TextAlign.center,
               style: GoogleFonts.ubuntu(
                 color: Colors.grey[500],
@@ -227,7 +227,7 @@ Widget contactWidget(BuildContext context) {
             onPressed: () async {
               if (value.returnCurrentContactType() == "WhatsApp") {
                 final _url = Uri.parse(
-                    "https://wa.me/${box("JaybenWhatsAppLine").replaceAll("+", "")}");
+                    "https://wa.me/${box("customer_support_whatsapp_phone_number").replaceAll("+", "")}");
                 if (!await launchUrl(_url,
                     mode: LaunchMode.externalApplication)) {
                   showSnackBar(context, 'Could not open $_url');
@@ -239,8 +239,9 @@ Widget contactWidget(BuildContext context) {
                   value.returnCurrentContactType() == "Email") {
                 await Clipboard.setData(ClipboardData(
                     text: value.returnCurrentContactType() == "Calls/Text"
-                        ? "${box("JaybenSecondaryHotLine")} ${box("JaybenHotline")}"
-                        : box("JaybenEmailAddress")));
+                        ? "${box("jayben_secondary_customer_support_hotline")} ${box("jayben_primary_customer_support_hotline")}"
+                        : box(
+                            "jayben_primary_customer_support_email_address")));
 
                 showSnackBar(context, "Copied", color: Colors.green);
 
@@ -354,7 +355,7 @@ Widget faqBody(BuildContext context) {
               context,
               "What is the maximum and minimum deposit amount for NAS accounts?",
               "There is no maximum amount you can deposit into a No Access Savings (NAS) account. \n\nHowever, the "
-                  "minimum amount that can be deposited into a No Access Savings (NAS) account is ${box("Currency") ?? "ZMW"} 1"),
+                  "minimum amount that can be deposited into a No Access Savings (NAS) account is ${box("currency") ?? "ZMW"} 1"),
           questionWidget(
               context,
               "What is the maximum and minimum period for NAS accounts?",

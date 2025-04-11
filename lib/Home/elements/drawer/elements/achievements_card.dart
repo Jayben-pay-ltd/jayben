@@ -75,7 +75,7 @@ class _AchievementsCardState extends State<AchievementsCard> {
                             "achievement_value": value
                                 .returnTotalAmountEverDeposited()!
                                 .toStringAsFixed(2),
-                            "achievement_unit": box("Currency"),
+                            "achievement_unit": box("currency"),
                           }),
                           wGap(10),
                           achievementWidget(context, {
@@ -83,7 +83,7 @@ class _AchievementsCardState extends State<AchievementsCard> {
                             "achievement_value": value
                                 .returnTotalAmountEverSaved()!
                                 .toStringAsFixed(2),
-                            "achievement_unit": box("Currency"),
+                            "achievement_unit": box("currency"),
                           }),
                         ],
                       ),
@@ -101,8 +101,7 @@ class _AchievementsCardState extends State<AchievementsCard> {
                           wGap(10),
                           achievementWidget(context, {
                             "achievement_type": "Days Since Joined",
-                            "achievement_value":
-                                value.returnNumOfDaysAsAUser(),
+                            "achievement_value": value.returnNumOfDaysAsAUser(),
                             "achievement_unit": "days",
                           }),
                         ],

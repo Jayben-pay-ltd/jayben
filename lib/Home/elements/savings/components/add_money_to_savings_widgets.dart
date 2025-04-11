@@ -58,8 +58,8 @@ Widget addMoneyToSavingsBody(BuildContext context, Map map) {
               children: [
                 Text(
                   value.returnAmountString().isEmpty
-                      ? "${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}0"
-                      : "${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}${value.returnAmountString()}",
+                      ? "${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}0"
+                      : "${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}${value.returnAmountString()}",
                   maxLines: 3,
                   textAlign: TextAlign.center,
                   style: googleStyle(
@@ -70,7 +70,7 @@ Widget addMoneyToSavingsBody(BuildContext context, Map map) {
                 ),
                 hGap(10),
                 Text(
-                  "*Minimum amount to save is ${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}1",
+                  "*Minimum amount to save is ${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}1",
                   maxLines: 1,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.ubuntu(
@@ -120,7 +120,7 @@ Widget balanceWidget() {
                 color: Colors.grey[800],
               ),
               child: Text(
-                "Wallet bal: ${box("CurrencySymbol")}${double.parse(box("Balance").toString()).toStringAsFixed(2)}",
+                "Wallet bal: ${box("currency_symbol")}${double.parse(box("balance").toString()).toStringAsFixed(2)}",
                 style: GoogleFonts.ubuntu(
                   fontWeight: FontWeight.w400,
                   color: Colors.white,
@@ -159,7 +159,8 @@ Widget actionButtons(BuildContext context, Map map) {
           value.toggleIsLoading();
 
           // min amount that can be saved
-          double minSavingsDeposit = double.parse(box('MinimumSavingsDeposit'));
+          double minSavingsDeposit =
+              double.parse(box('minimum_savings_deposit_amount'));
 
           if (walletBal < amountToSave) {
             showSnackBar(context, 'Wallet balance not enough.');
@@ -169,7 +170,7 @@ Widget actionButtons(BuildContext context, Map map) {
 
           if (minSavingsDeposit > amountToSave) {
             showSnackBar(context,
-                'Minimum transfer amount that can be saved is ${box("Currency")} ${box("minimum_savings_deposit_amount")}');
+                'Minimum transfer amount that can be saved is ${box("currency")} ${box("minimum_savings_deposit_amount")}');
 
             return;
           }
@@ -184,7 +185,7 @@ Widget actionButtons(BuildContext context, Map map) {
             value.toggleIsLoading();
 
             showSnackBar(
-                context, 'You have saved ${box("Currency")} $amountToSave! 💰');
+                context, 'You have saved ${box("currency")} $amountToSave! 💰');
 
             changePage(context, const HomePage(), type: "pr");
           } else {

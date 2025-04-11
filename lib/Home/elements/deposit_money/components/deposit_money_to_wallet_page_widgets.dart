@@ -64,8 +64,8 @@ Widget body(BuildContext context) {
                 Text(
                   value.current_page_index == 0
                       ? value.returnAmountString().isEmpty
-                          ? "${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}0"
-                          : "${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}${value.returnAmountString()}"
+                          ? "${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}0"
+                          : "${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}${value.returnAmountString()}"
                       : value.returnPhoneNumberString().isEmpty
                           ? "0"
                           : value.returnPhoneNumberString(),
@@ -80,7 +80,7 @@ Widget body(BuildContext context) {
                 hGap(10),
                 Text(
                   value.current_page_index == 0
-                      ? "*Minimum deposit amount is ${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}1"
+                      ? "*Minimum deposit amount is ${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}1"
                       : "*Airtel, MTN & Zamtel Money Supported",
                   maxLines: 1,
                   textAlign: TextAlign.center,
@@ -211,7 +211,7 @@ Widget actionButtons(BuildContext context, String text) {
 
           if (amount < 1) {
             showSnackBar(context,
-                'Minimum deposit amount is ${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}1');
+                'Minimum deposit amount is ${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}1');
 
             return;
           }

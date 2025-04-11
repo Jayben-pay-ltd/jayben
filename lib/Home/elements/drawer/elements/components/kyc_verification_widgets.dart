@@ -554,7 +554,9 @@ Widget floatingStatusBar(BuildContext context) {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          box("isVerified") ? "Verified" : "Not Verified",
+                          box("account_kyc_is_verified")
+                              ? "Verified"
+                              : "Not Verified",
                           style: TextStyle(
                             fontWeight: FontWeight.w400,
                             color: Colors.grey[800]!,
@@ -562,7 +564,7 @@ Widget floatingStatusBar(BuildContext context) {
                           ),
                         ),
                         const SizedBox(width: 5),
-                        box("isVerified")
+                        box("account_kyc_is_verified")
                             ? const Icon(
                                 Icons.verified,
                                 color: Colors.blue,

@@ -62,8 +62,8 @@ Widget airtimeBody(BuildContext context) {
                   Text(
                     value.current_page_index == 0
                         ? value.returnAmountString().isEmpty
-                            ? "${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}0"
-                            : "${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}${value.returnAmountString()}"
+                            ? "${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}0"
+                            : "${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}${value.returnAmountString()}"
                         : value.returnPhoneNumberString().isEmpty
                             ? "0"
                             : value.returnPhoneNumberString(),
@@ -78,7 +78,7 @@ Widget airtimeBody(BuildContext context) {
                   hGap(10),
                   Text(
                     value.current_page_index == 0
-                        ? "*Minimum purchase amount is ${box("CurrencySymbol") != "Zambia" ? box("CurrencySymbol") : box("Currency")}${box("airtime_purchase_minimum_amount")}"
+                        ? "*Minimum purchase amount is ${box("currency_symbol") != "Zambia" ? box("currency_symbol") : box("currency")}${box("airtime_purchase_minimum_amount")}"
                         : "*Airtel, MTN & Zamtel Only",
                     maxLines: 1,
                     textAlign: TextAlign.center,
@@ -195,14 +195,14 @@ Widget actionButtons(BuildContext context, String text) {
 
           if (amount < minAirtimeAmount) {
             showSnackBar(context,
-                'Minimum airtime amount is ${box("Currency")} $minAirtimeAmount');
+                'Minimum airtime amount is ${box("currency")} $minAirtimeAmount');
 
             return;
           }
 
           // checks if points are enough
           if (value.returnPaymentMethod() == "Pay With Points") {
-            var myPoints = double.parse("${box("Points")}");
+            var myPoints = double.parse("${box("points")}");
 
             var valuePerPoint =
                 double.parse("${box("cash_value_per_user_point")}");
@@ -214,7 +214,7 @@ Widget actionButtons(BuildContext context, String text) {
               showSnackBar(
                   context,
                   'Points not enough. You need ${pointNeededToPay.toStringAsFixed(0)}'
-                  ' Points to cover ${box("Currency")} ${amount.toStringAsFixed(2)} airtime');
+                  ' Points to cover ${box("currency")} ${amount.toStringAsFixed(2)} airtime');
 
               return;
             }
@@ -285,7 +285,7 @@ Widget balanceWidget() {
               color: Colors.grey[800],
             ),
             child: Text(
-              "Wallet bal: ${box("CurrencySymbol")}${double.parse(box("Balance").toString()).toStringAsFixed(2)}",
+              "Wallet bal: ${box("currency_symbol")}${double.parse(box("balance").toString()).toStringAsFixed(2)}",
               style: GoogleFonts.ubuntu(
                 fontWeight: FontWeight.w400,
                 color: Colors.white,

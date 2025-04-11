@@ -228,8 +228,8 @@ class UserProviderFunctions extends ChangeNotifier {
           "current_build_version": box("CurrentBuildVersion"),
           "date_upvoted": DateTime.now().toIso8601String(),
           "profile_image_url": box("profile_image_url"),
-          "first_name": box("FirstName"),
-          "last_name": box("LastName"),
+          "first_name": box("first_name"),
+          "last_name": box("last_name"),
           "user_id": box("user_id"),
         }
       ],
@@ -237,8 +237,8 @@ class UserProviderFunctions extends ChangeNotifier {
       "creator_current_build_version": box("CurrentBuildVersion"),
       "creator_details": {
         "profile_image_url": box("profile_image_url"),
-        "first_name": box("FirstName"),
-        "last_name": box("LastName"),
+        "first_name": box("first_name"),
+        "last_name": box("last_name"),
         "user_id": box("user_id"),
       },
       "user_id": box("user_id"),
@@ -469,8 +469,6 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     notifyListeners();
 
-    getInitiatedPaymentsStream();
-
     await updatePlatformLastSeenAndBuildVersion();
   }
 
@@ -509,34 +507,47 @@ class HomeProviderFunctions extends ChangeNotifier {
 
   // gets the app's contact us info
   Future<void> getContactUsDetails() async {
-    // DocumentSnapshot adminDoc =
-    //     await _fire.collection("Admin").doc("Legal").get();
+    // gets this user's account record row
+    Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
+      "get_app_wide_settings": true,
+    });
 
-    // boxPut(
-    //     "JaybenSecondaryHotLine", adminDoc.get("SecondaryCustomerSupportLine"));
-    // boxPut("maximum_number_of_savings_accounts_per_person", adminDoc.get("maximum_number_of_savings_accounts_per_person"));
-    // boxPut("airtime_purchase_minimum_amount", adminDoc.get("airtime_purchase_minimum_amount"));
-    // boxPut("SavingsGroupsAvailable", adminDoc.get("SavingsGroupsAvailable"));
-    // boxPut("PointsPerTransaction", adminDoc.get("PointsPerTransaction"));
-    // boxPut("cash_value_per_user_point", adminDoc.get("cash_value_per_user_point"));
-    // boxPut("agent_payments_withdraw_fee_percent", adminDoc.get("agent_payments_withdraw_fee_percent"));
-    // boxPut("MinimumLoanAmount", adminDoc.get("MinimumLoanAmount"));
-    // boxPut("JaybenEmailAddress", adminDoc.get("jayben_primary_customer_support_email_address"));
-    // boxPut("JaybenWhatsAppLine", adminDoc.get("customer_support_whatsapp_phone_number"));
-    // boxPut("intl_wire_transfer_withdraw_fee_in_usd",
-    //     adminDoc.get("intl_wire_transfer_withdraw_fee_in_usd"));
-    // boxPut("general_withdraw_amount_limit", adminDoc.get("general_withdraw_amount_limit"));
-    // boxPut("transaction_fee_percentage_to_merchants",
-    //     adminDoc.get("transaction_fee_percentage_to_merchants"));
-    // boxPut('MinimumSavingsDeposit',
-    //     adminDoc.get("MinimumSavingsDeposit").toString());
-    // boxPut("JaybenHotline", adminDoc.get("jayben_primary_customer_support_hotline"));
-    // boxPut("send_merchant_transaction_smses",
-    //     adminDoc.get("send_merchant_transaction_smses"));
-    // boxPut("ReferralCommissionPercentage",
-    //     adminDoc.get("ReferrerCommissionPercentage"));
-    // boxPut("local_wire_transfer_withdraw_fee_in_usd",
-    //     adminDoc.get("local_wire_transfer_withdraw_fee_in_usd"));
+    Map app_settings = res["data"]["data"]["app_wide_settings"];
+
+    boxPut("jayben_secondary_customer_support_hotline",
+        app_settings["jayben_secondary_customer_support_hotline"]);
+    boxPut("maximum_number_of_savings_accounts_per_person",
+        app_settings["maximum_number_of_savings_accounts_per_person"]);
+    boxPut("airtime_purchase_minimum_amount",
+        app_settings["airtime_purchase_minimum_amount"]);
+    boxPut("enable_saving_with_friends",
+        app_settings["enable_saving_with_friends"]);
+    boxPut("number_of_user_points_given_per_transaction",
+        app_settings["number_of_user_points_given_per_transaction"]);
+    boxPut(
+        "cash_value_per_user_point", app_settings["cash_value_per_user_point"]);
+    boxPut("agent_payments_withdraw_fee_percent",
+        app_settings["agent_payments_withdraw_fee_percent"]);
+    boxPut("jayben_primary_customer_support_email_address",
+        app_settings["jayben_primary_customer_support_email_address"]);
+    boxPut("customer_support_whatsapp_phone_number",
+        app_settings["customer_support_whatsapp_phone_number"]);
+    boxPut("intl_wire_transfer_withdraw_fee_in_usd",
+        app_settings["intl_wire_transfer_withdraw_fee_in_usd"]);
+    boxPut("general_withdraw_amount_limit",
+        app_settings["general_withdraw_amount_limit"]);
+    boxPut("transaction_fee_percentage_to_merchants",
+        app_settings["transaction_fee_percentage_to_merchants"]);
+    boxPut("minimum_savings_deposit_amount",
+        app_settings["minimum_savings_deposit_amount"].toString());
+    boxPut("jayben_primary_customer_support_hotline",
+        app_settings["jayben_primary_customer_support_hotline"]);
+    boxPut("send_merchant_transaction_smses",
+        app_settings["send_merchant_transaction_smses"]);
+    boxPut("user_referral_commission_percentage",
+        app_settings["user_referral_commission_percentage"]);
+    boxPut("local_wire_transfer_withdraw_fee_in_usd",
+        app_settings["local_wire_transfer_withdraw_fee_in_usd"]);
 
     notifyListeners();
   }
@@ -555,99 +566,71 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     if (user_map == null) return;
 
+    boxPut("nas_deposits_are_allowed", user_map["nas_deposits_are_allowed"]);
     boxPut("current_app_build_version", user_map["current_build_version"]);
+    boxPut("account_kyc_is_verified", user_map["account_kyc_is_verified"]);
+    boxPut("email_address_lowercase", user_map["email_address_lowercase"]);
     boxPut("username_searchable", user_map["username_searchable"]);
     boxPut("notification_token", user_map["notification_token"]);
-    boxPut("Investments", user_map["nas_deposits_are_allowed"]);
+    boxPut("account_is_on_hold", user_map["account_is_on_hold"]);
     boxPut("profile_image_url", user_map["profile_image_url"]);
-    boxPut("Balance", user_map["balance"].toStringAsFixed(2));
-    boxPut("isVerified", user_map["account_kyc_is_verified"]);
-    boxPut("CurrencySymbol", user_map["currency_symbol"]);
-    boxPut("Email", user_map["email_address_lowercase"]);
-    boxPut("ReferralCode", user_map["referral_code"]);
-    boxPut("OnHold", user_map["account_is_on_hold"]);
-    boxPut("CountryCode", user_map["country_code"]);
-    boxPut("AccountType", user_map["account_type"]);
-    boxPut("PhoneNumber", user_map["phone_number"]);
-    boxPut("FirstName", user_map["first_name"]);
-    boxPut("UserCode", user_map["user_code"]);
-    boxPut("LastName", user_map["last_name"]);
-    boxPut("Currency", user_map["currency"]);
-    boxPut("Username", user_map["username"]);
+    boxPut("balance", user_map["balance"].toStringAsFixed(2));
+    boxPut("currency_symbol", user_map["currency_symbol"]);
+    boxPut("referral_code", user_map["referral_code"]);
+    boxPut("country_code", user_map["country_code"]);
+    boxPut("account_type", user_map["account_type"]);
+    boxPut("phone_number", user_map["phone_number"]);
+    boxPut("first_name", user_map["first_name"]);
+    boxPut("created_at", user_map["created_at"]);
+    boxPut("user_code", user_map["user_code"]);
+    boxPut("last_name", user_map["last_name"]);
+    boxPut("currency", user_map["currency"]);
+    boxPut("username", user_map["username"]);
+    boxPut('pin_code', user_map["pin_code"]);
     boxPut("user_id", user_map["user_id"]);
-    boxPut("Country", user_map["country"]);
-    boxPut("Address", user_map["address"]);
-    boxPut("created_at", user_map["city"]);
-    boxPut("Points", user_map["points"]);
-    boxPut("Gender", user_map["gender"]);
-    boxPut('PIN', user_map["pin_code"]);
-    boxPut("City", user_map["city"]);
+    boxPut("country", user_map["country"]);
+    boxPut("address", user_map["address"]);
+    boxPut("points", user_map["points"]);
+    boxPut("gender", user_map["gender"]);
+    boxPut("city", user_map["city"]);
     boxPut("user_map", user_map);
 
     // =========== Saves admin settings to Hive
 
-    // boxPut(
-    //     "JaybenSecondaryHotLine", adminDoc.get("SecondaryCustomerSupportLine"));
-    // boxPut(
-    //     "DefaultTransactionPrivacy", adminDoc.get("DefaultTransactionPrivacy"));
-    // boxPut(
-    //     '3MonthsInterestRate', adminDoc.get("3MonthsInterestRate").toString());
-    // boxPut("VillageBankingAvailable", adminDoc.get("VillageBankingAvailable"));
-    // boxPut("maximum_number_of_savings_accounts_per_person", adminDoc.get("maximum_number_of_savings_accounts_per_person"));
-    // boxPut("SavingsGroupsAvailable", adminDoc.get("SavingsGroupsAvailable"));
-    // boxPut("airtime_purchase_minimum_amount", adminDoc.get("airtime_purchase_minimum_amount"));
-    // boxPut("InterestSavingsAcconts", adminDoc.get("InterestSavingsAcconts"));
-    // boxPut("enable_flutterwave_payments_deposits", adminDoc.get("enable_flutterwave_payments_deposits"));
-    // boxPut("SavingsAccountClosurePenaltyPencentage",
-    //     adminDoc.get("SavingsAccountClosurePenaltyPencentage").toString());
-    // boxPut("SavingsAccountClosurePenaltyPencentage",
-    //     adminDoc.get("SavingsAccountClosurePenaltyPencentage").toString());
-    // boxPut('EnableInstantDeposits', adminDoc.get("EnableInstantDeposits"));
-    // boxPut("SendPointsByUsername", adminDoc.get("SendPointsByUsername"));
-    // boxPut("PointsPerTransaction", adminDoc.get("PointsPerTransaction"));
-    // boxPut("withdraw_fee_cap_amount", adminDoc.get("withdraw_fee_cap_amount"));
-    // boxPut("cash_value_per_user_point", adminDoc.get("cash_value_per_user_point"));
-    // boxPut("MerchantCommissionPerTransaction",
-    //     adminDoc.get("MerchantCommissionPerTransaction").toString());
-    // boxPut("enable_airtime_utility_purchases", adminDoc.get("enable_airtime_utility_purchases"));
-    // boxPut("agent_payments_withdraw_fee_percent", adminDoc.get("agent_payments_withdraw_fee_percent"));
-    // boxPut("MinimumLoanAmount", adminDoc.get("MinimumLoanAmount"));
-    // boxPut("RequireDepositIn30DaysForInterestSavAccs",
-    //     adminDoc.get("RequireDepositIn30DaysForInterestSavAccs"));
-    // boxPut("VirtualCardsDB", adminDoc.get("enable_virtual_cards"));
-    // boxPut("JaybenEmailAddress", adminDoc.get("jayben_primary_customer_support_email_address"));
-    // boxPut("JaybenWhatsAppLine", adminDoc.get("customer_support_whatsapp_phone_number"));
-    // boxPut("UsersCapableOfSeeingSecretDashboard",
-    //     adminDoc.get("UsersCapableOfSeeingSecretDashboard"));
-    // boxPut("withdraw_amount_where_to_cap_withdraw_fees",
-    //     adminDoc.get("withdraw_amount_where_to_cap_withdraw_fees"));
-    // boxPut("enable_account_kyc_verification_requirement", adminDoc.get("enable_account_kyc_verification_requirement"));
-    // boxPut("intl_wire_transfer_withdraw_fee_in_usd",
-    //     adminDoc.get("intl_wire_transfer_withdraw_fee_in_usd"));
-    // boxPut("general_withdraw_amount_limit", adminDoc.get("general_withdraw_amount_limit"));
-    // boxPut('MinimumSavingsDeposit',
-    //     adminDoc.get("MinimumSavingsDeposit").toString());
-    // boxPut("transaction_fee_percentage_to_merchants",
-    //     adminDoc.get("transaction_fee_percentage_to_merchants"));
-    // boxPut("MaximumNumberOfLoansActiveLoans",
-    //     adminDoc.get("MaximumNumberOfLoansActiveLoans"));
-    // boxPut("PayReferrers", adminDoc.get("PayReferrers"));
-    // boxPut('12MonthsInterestRate',
-    //     adminDoc.get("12MonthsInterestRate").toString());
-    // boxPut("enable_card_payments_for_deposits",
-    //     adminDoc.get("enable_card_payments_for_deposits"));
-    // boxPut("JaybenHotline", adminDoc.get("jayben_primary_customer_support_hotline"));
-    // boxPut("send_merchant_transaction_smses",
-    //     adminDoc.get("send_merchant_transaction_smses"));
-    // boxPut("ReferralCommissionPercentage",
-    //     adminDoc.get("ReferrerCommissionPercentage"));
-    // boxPut("SaveWithFriendsInterestRate",
-    //     adminDoc.get("SaveWithFriendsInterestRate"));
-    // boxPut("local_wire_transfer_withdraw_fee_in_usd",
-    //     adminDoc.get("local_wire_transfer_withdraw_fee_in_usd"));
-    // boxPut("show_app_wide_top_20_nas_accounts",
-    //     adminDoc.get("show_app_wide_top_20_nas_accounts"));
-    // boxPut("Timeline", adminDoc.get("Timeline"));
+    boxPut("jayben_secondary_customer_support_hotline",
+        app_settings["jayben_secondary_customer_support_hotline"]);
+    boxPut("maximum_number_of_savings_accounts_per_person",
+        app_settings["maximum_number_of_savings_accounts_per_person"]);
+    boxPut("airtime_purchase_minimum_amount",
+        app_settings["airtime_purchase_minimum_amount"]);
+    boxPut("enable_saving_with_friends",
+        app_settings["enable_saving_with_friends"]);
+    boxPut("number_of_user_points_given_per_transaction",
+        app_settings["number_of_user_points_given_per_transaction"]);
+    boxPut(
+        "cash_value_per_user_point", app_settings["cash_value_per_user_point"]);
+    boxPut("agent_payments_withdraw_fee_percent",
+        app_settings["agent_payments_withdraw_fee_percent"]);
+    boxPut("jayben_primary_customer_support_email_address",
+        app_settings["jayben_primary_customer_support_email_address"]);
+    boxPut("customer_support_whatsapp_phone_number",
+        app_settings["customer_support_whatsapp_phone_number"]);
+    boxPut("intl_wire_transfer_withdraw_fee_in_usd",
+        app_settings["intl_wire_transfer_withdraw_fee_in_usd"]);
+    boxPut("general_withdraw_amount_limit",
+        app_settings["general_withdraw_amount_limit"]);
+    boxPut("transaction_fee_percentage_to_merchants",
+        app_settings["transaction_fee_percentage_to_merchants"]);
+    boxPut("minimum_savings_deposit_amount",
+        app_settings["minimum_savings_deposit_amount"].toString());
+    boxPut("jayben_primary_customer_support_hotline",
+        app_settings["jayben_primary_customer_support_hotline"]);
+    boxPut("send_merchant_transaction_smses",
+        app_settings["send_merchant_transaction_smses"]);
+    boxPut("user_referral_commission_percentage",
+        app_settings["user_referral_commission_percentage"]);
+    boxPut("local_wire_transfer_withdraw_fee_in_usd",
+        app_settings["local_wire_transfer_withdraw_fee_in_usd"]);
 
     // precaches user's profileimage
     await cacheImage(box("profile_image_url"));
@@ -688,7 +671,7 @@ class HomeProviderFunctions extends ChangeNotifier {
     }
 
     // saves token to hive
-    boxPut("NotificationToken", token);
+    boxPut("notification_token", token);
 
     if (box("user_map") != null) {
       if (box("user_map")["notification_token"] == token) return;
@@ -774,9 +757,9 @@ class HomeProviderFunctions extends ChangeNotifier {
 
 // converted to RLS
 class DepositProviderFunctions extends ChangeNotifier {
-  String phone_number_string = box("PhoneNumber") == null
+  String phone_number_string = box("phone_number") == null
       ? ""
-      : "${box("PhoneNumber").replaceAll("+26", "")}";
+      : "${box("phone_number").replaceAll("+26", "")}";
   String selected_deposit_method = "";
   Timer? delete_character_timer;
   int current_page_index = 0;
@@ -809,7 +792,7 @@ class DepositProviderFunctions extends ChangeNotifier {
         ? "Via Mobile Money"
         : "Via Mobile Money";
     // "Via Jayben Agent";
-    phone_number_string = box("PhoneNumber").replaceAll("+26", "");
+    phone_number_string = box("phone_number").replaceAll("+26", "");
     current_page_index = 0;
     amount_string = "";
   }
@@ -1292,14 +1275,14 @@ class SavingsProviderFunctions extends ChangeNotifier {
     //   body: json.encode(
     //     {
     //       "post_is_public": box("DefaultTransactionPrivacy") == "Public",
-    //       "full_names": "${box("FirstName")} ${box("LastName")}",
+    //       "full_names": "${box("first_name")} ${box("last_name")}",
     //       "account_id": transfer_info["account_id"],
     //       "request_type": "add_money_nas_account",
     //       "comment": transfer_info['comment'],
     //       "amount": transfer_info["amount"],
-    //       "currency": box("Currency"),
+    //       "currency": box("currency"),
     //       "user_id": box("user_id"),
-    //       "country": box("Country"),
+    //       "country": box("country"),
     //       "media_details": [
     //         {
     //           "media_caption": "",
@@ -1596,7 +1579,7 @@ class AuthProviderFunctions extends ChangeNotifier {
       // makes sure the user also knows the passowrd
       // final userCredential =
       //     await FirebaseAuth.instance.signInWithEmailAndPassword(
-      //   email: box("Email").toString(),
+      //   email: box("email_address_lowercase").toString(),
       //   password: password,
       // );
 
@@ -1608,7 +1591,7 @@ class AuthProviderFunctions extends ChangeNotifier {
       // // updates the user's email in their user document
       // await _fire.collection("Users").doc(box("user_id")).update({
       //   "Email_lowercase": email.toLowerCase(),
-      //   "PreviousEmailAddress": box("Email"),
+      //   "PreviousEmailAddress": box("email_address_lowercase"),
       //   "Email": email,
       // });
 
@@ -1878,7 +1861,7 @@ class AuthProviderFunctions extends ChangeNotifier {
     // creates the user's account row
     Map<String, dynamic> res =
         await callGeneralFunction("create_user_account_record", {
-      "user_code": ["Agent"].contains(box("AccountType"))
+      "user_code": ["Agent"].contains(box("account_type"))
           ? null
           : box("user_id").substring(box("user_id").length - 6).toLowerCase(),
       "email_address_lowercase": userInfo["email"].toString().toLowerCase(),
@@ -2110,7 +2093,7 @@ class AuthProviderFunctions extends ChangeNotifier {
             context,
             box("enable_six_digit_pin") == null
                 ? HomePage()
-                : box("enable_six_digit_pin") && box("PIN") != ""
+                : box("enable_six_digit_pin") && box("pin_code") != ""
                     ? const PasscodePage()
                     : HomePage(),
             type: "pr");
@@ -2234,9 +2217,9 @@ class PaymentProviderFunctions extends ChangeNotifier {
         "comment": paymentInfo['comment'],
         "amount": paymentInfo["amount"],
         "method": "Wallet transfer",
-        "currency": box("Currency"),
+        "currency": box("currency"),
         "user_id": box("user_id"),
-        "country": box("Country"),
+        "country": box("country"),
         "media_details": [
           {
             "media_caption": "",
@@ -2279,9 +2262,9 @@ class GiftProviderFunctions extends ChangeNotifier {
 
 // converted to RLS
 class AirtimeProviderFunctions extends ChangeNotifier {
-  String phone_number_string = box("PhoneNumber") == null
+  String phone_number_string = box("phone_number") == null
       ? ""
-      : "${box("PhoneNumber").replaceAll("+26", "")}";
+      : "${box("phone_number").replaceAll("+26", "")}";
   String payment_method = "Pay With Wallet";
   Timer? delete_character_timer;
   int current_page_index = 0;
@@ -2310,7 +2293,7 @@ class AirtimeProviderFunctions extends ChangeNotifier {
   }
 
   void clearStrings() {
-    phone_number_string = box("PhoneNumber").replaceAll("+26", "");
+    phone_number_string = box("phone_number").replaceAll("+26", "");
     payment_method = "Pay With Wallet";
     current_page_index = 0;
     amount_string = "";
@@ -2475,9 +2458,9 @@ class AirtimeProviderFunctions extends ChangeNotifier {
 
 // converted to RLS
 class WithdrawProviderFunctions extends ChangeNotifier {
-  String phone_number_string = box("PhoneNumber") == null
+  String phone_number_string = box("phone_number") == null
       ? ""
-      : "${box("PhoneNumber").replaceAll("+26", "")}";
+      : "${box("phone_number").replaceAll("+26", "")}";
   Timer? delete_character_timer;
   int current_page_index = 0;
   String amount_string = "";
@@ -2503,7 +2486,7 @@ class WithdrawProviderFunctions extends ChangeNotifier {
   }
 
   void clearStrings() {
-    phone_number_string = box("PhoneNumber").replaceAll("+26", "");
+    phone_number_string = box("phone_number").replaceAll("+26", "");
     current_page_index = 0;
     amount_string = "";
   }
@@ -2622,7 +2605,7 @@ class WithdrawProviderFunctions extends ChangeNotifier {
         "amount_to_withdraw_minus_fee": paymentInfo['amountBeforeFee'],
         "amount_to_withdraw_plus_fee": paymentInfo['amountPlusFee'],
         "transaction_fee_amount": transaction_fee_amount,
-        "transaction_fee_currency": box("Currency"),
+        "transaction_fee_currency": box("currency"),
         "phone_number": paymentInfo['phoneNumber'],
         "method": paymentInfo['paymentMethod'],
         "reference": paymentInfo['reference'],
@@ -2743,11 +2726,11 @@ class UssdProviderFunctions extends ChangeNotifier {
       "number_times_used": 0,
       "number_of_edits_made": 0,
       "user_id": box("user_id"),
-      "country": box("Country"),
+      "country": box("country"),
       "shortcut_name": shortcut_name,
       "shortcut_creator_details": {
-        "last_name": box("LastName"),
-        "first_name": box("FirstName"),
+        "last_name": box("last_name"),
+        "first_name": box("first_name"),
         "profile_image_url": box("profile_image_url"),
       }
     });
@@ -2904,16 +2887,16 @@ class UssdProviderFunctions extends ChangeNotifier {
   Future<void> recordSession(Map shortcut) async {
     await await supabase.from("ussd_shortcut_run_sessions").insert({
       "user_id": box("user_id"),
-      "country": box("Country"),
+      "country": box("country"),
       "shortcut": shortcut["shortcut"],
       "shortcut_id": shortcut["shortcut_id"],
       "shortcut_name": shortcut["shortcut_name"],
       "list_of_responses": shortcut["list_of_responses"],
       "user_details": {
-        "gender": box("Gender"),
-        "last_name": box("LastName"),
-        "first_name": box("FirstName"),
-        "phone_number": box("PhoneNumber"),
+        "gender": box("gender"),
+        "last_name": box("last_name"),
+        "first_name": box("first_name"),
+        "phone_number": box("phone_number"),
         "sim_number": shortcut["sim_number"],
         "carrier_name": shortcut["carrier_name"],
         "country_code": shortcut["country_code"],
@@ -3059,12 +3042,12 @@ class KycProviderFunctions extends ChangeNotifier {
       supabase.from("account_kyc_verification_requests").insert({
         "user_information": {
           "date_of_birth": box("DateOfBirth"),
-          "profile_image_url": box("Country"),
-          "physical_address": box("Address"),
-          "first_name": box("FirstName"),
-          "last_name": box("LastName"),
-          "country": box("Country"),
-          "city": box("City"),
+          "profile_image_url": box("country"),
+          "physical_address": box("address"),
+          "first_name": box("first_name"),
+          "last_name": box("last_name"),
+          "country": box("country"),
+          "city": box("city"),
         },
         "identification_type": selected_document_type,
         "document_photo_2_url": image_urls![2],
@@ -3320,8 +3303,8 @@ class FeedProviderFunctions extends ChangeNotifier {
     await supabase.from("liked_posts").insert({
       "profile_image_url": box("profile_image_url"),
       "post_id": post_info["original_post_id"],
-      "first_name": box("FirstName"),
-      "last_name": box("LastName"),
+      "first_name": box("first_name"),
+      "last_name": box("last_name"),
       "user_id": box("user_id"),
     });
   }
@@ -3405,8 +3388,8 @@ class FeedProviderFunctions extends ChangeNotifier {
       "report_type": report_map["report_info"]["report_type"],
       "reporter_details": {
         "profile_image_url": box("profile_image_url"),
-        "first_name": box("FirstName"),
-        "last_name": box("LastName"),
+        "first_name": box("first_name"),
+        "last_name": box("last_name"),
         "user_id": box("user_id"),
       },
       "post_id": report_map["post_info"]["post_id"],
@@ -3898,8 +3881,8 @@ class MessageProviderFunctions extends ChangeNotifier {
       "message_type": messageInfo["message_type"],
       "chatroom_id": messageInfo["chatroom_id"],
       "last_message": tempMessageStorage,
-      "first_name": box("FirstName"),
-      "last_name": box("LastName"),
+      "first_name": box("first_name"),
+      "last_name": box("last_name"),
       "user_id": box("user_id"),
     });
 
@@ -3916,15 +3899,14 @@ class MessageProviderFunctions extends ChangeNotifier {
           "reply_message_id": messageInfo["reply_message_id"],
           "reply_message_thumbnail_url":
               messageInfo["reply_message_thumbnail_url"],
-          "reply_message": messageInfo["reply_message"],
+          "reply_message": tempMessageStorage,
           "reply_caption": messageInfo["reply_caption"],
         },
         "other_person_user_id": messageInfo["other_person_user_id"],
         "message_details": {
           "message_extension": messageInfo["message_extension"],
           "message_type": messageInfo["message_type"],
-          "caption": messageInfo["caption"],
-          "message": tempMessageStorage,
+          "caption": tempMessageStorage,
           "thumbnail_url": null,
           "aspect_ratio": null,
           "media_url": null,
@@ -3932,8 +3914,8 @@ class MessageProviderFunctions extends ChangeNotifier {
         "profile_image_url": box("profile_image_url"),
         "message_type": messageInfo["message_type"],
         "last_message": tempMessageStorage,
-        "first_name": box("FirstName"),
-        "last_name": box("LastName"),
+        "first_name": box("first_name"),
+        "last_name": box("last_name"),
         "user_id": box("user_id"),
       });
     } on FunctionException catch (e) {
@@ -3987,8 +3969,8 @@ class MessageProviderFunctions extends ChangeNotifier {
       "message_type": messageInfo["message_type"],
       "profile_image_url": box("profile_image_url"),
       "last_message": tempMessageStorage,
-      "first_name": box("FirstName"),
-      "last_name": box("LastName"),
+      "first_name": box("first_name"),
+      "last_name": box("last_name"),
       "user_id": box("user_id"),
     });
   }
@@ -5165,7 +5147,7 @@ class AdminProviderFunctions extends ChangeNotifier {
     await supabase.from("transactions").update({
       "status": transaction_info["status"],
       "withdrawal_details": {
-        "fulfilled_by_full_names": "${box("FirstName")} ${box("LastName")}",
+        "fulfilled_by_full_names": "${box("first_name")} ${box("last_name")}",
         "fulfilled_at_timestamp": DateTime.now().toIso8601String(),
         "fulfilled_by_user_id": box("user_id"),
         ...transaction_info["withdrawal_details"]
@@ -5587,7 +5569,7 @@ class NfcProviderFunctions extends ChangeNotifier {
     }
 
     NdefMessage text_to_write_to_tag = NdefMessage([
-      NdefRecord.createText(box("UserCode")),
+      NdefRecord.createText(box("user_code")),
     ]);
 
     try {

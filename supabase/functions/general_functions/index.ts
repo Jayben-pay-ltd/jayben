@@ -1164,6 +1164,13 @@ const get_users_home_page_transactions = async (
   _supabaseClient: any,
   _req: Request,
 ): Promise<any> => {
+  /*
+  body preview
+  {
+    "request_type": "get_users_home_page_transactions",
+  }
+  */
+
   // gets the user's id from the request
   const user_id = await get_auth_user_id(_req, _supabaseClient);
 

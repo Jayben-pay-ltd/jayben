@@ -29,7 +29,7 @@ class _ChangePINPageState extends State<ChangePINPage> {
   Future<void> decryptExistingPin() async {
     // decrypts the encrypted user pin
     // String? decrypted_pin =
-        // await context.read<AuthProviderFunctions>().decryptPin(box("PIN"));
+    // await context.read<AuthProviderFunctions>().decryptPin(box("pin_code"));
 
     // if (!mounted || decrypted_pin == null) return;
 
@@ -90,7 +90,8 @@ class _ChangePINPageState extends State<ChangePINPage> {
                       value.toggleIsLoading();
 
                       // encrypts and then updates the user's pin
-                      await value.changePIN(passcodeController.text.trim(), "1234");
+                      await value.changePIN(
+                          passcodeController.text.trim(), "1234");
 
                       value.toggleIsLoading();
 

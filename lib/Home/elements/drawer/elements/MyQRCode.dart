@@ -32,7 +32,7 @@ class _UserQRCodePageState extends State<UserQRCodePage> {
                 onTap: () async {
                   await Clipboard.setData(
                     ClipboardData(
-                      text: box("UserCode"),
+                      text: box("user_code"),
                     ),
                   );
 
@@ -65,7 +65,7 @@ class _UserQRCodePageState extends State<UserQRCodePage> {
                       hGap(20),
                       QrImageView(
                         version: QrVersions.auto,
-                        data: box("UserCode"),
+                        data: box("user_code"),
                         size: 300.0,
                       ),
                       hGap(20),
@@ -78,7 +78,7 @@ class _UserQRCodePageState extends State<UserQRCodePage> {
                       ),
                       hGap(10),
                       Text(
-                        '${box("FirstName")} ${box("LastName")}',
+                        '${box("first_name")} ${box("last_name")}',
                         style: GoogleFonts.ubuntu(
                           fontWeight: FontWeight.w900,
                           color: Colors.grey[800],
@@ -112,7 +112,7 @@ class _UserQRCodePageState extends State<UserQRCodePage> {
                           ),
                         ),
                         child: Text(
-                          box("UserCode"),
+                          box("user_code"),
                           style: GoogleFonts.ubuntu(
                             fontWeight: FontWeight.w700,
                             color: Colors.grey[800],

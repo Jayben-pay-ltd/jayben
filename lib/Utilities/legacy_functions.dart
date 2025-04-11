@@ -54,7 +54,7 @@
 //     //     .doc(postID)
 //     //     .set({
 //     //   "DateCreated": Timestamp.now(),
-//     //   "SenderNames": "${box("FirstName")} ${box("LastName")}",
+//     //   "SenderNames": "${box("first_name")} ${box("last_name")}",
 //     //   "ReceiverNames": receiverNames,
 //     //   "Comment": comment,
 //     //   "Privacy": privacy,
@@ -112,7 +112,7 @@
 //   //   "UserID": box("user_id"),
 //   //   "PostOwnerUID": postOwnerID,
 //   //   "DateCreated": Timestamp.now(),
-//   //   "FullNames": "${box("FirstName")} ${box("LastName")}",
+//   //   "FullNames": "${box("first_name")} ${box("last_name")}",
 //   //   "PostOwnerNotifToken": notifToken.get("NotificationToken")
 //   // });
 //   // records who liked the post & used to send notification
@@ -150,7 +150,7 @@
 //       "UserID": box("user_id"),
 //       "PostOwnerUID": postOwnerID,
 //       "DateCreated": Timestamp.now(),
-//       "FullNames": "${box("FirstName")} ${box("LastName")}",
+//       "FullNames": "${box("first_name")} ${box("last_name")}",
 //       "PostOwnerNotifToken": notifToken.get("NotificationToken")
 //     });
 //   }
@@ -196,7 +196,7 @@
 //     "Comment": comment,
 //     "isLiked": false,
 //     "Likes": 0,
-//     "FullNames": "${box("FirstName")} ${box("LastName")}",
+//     "FullNames": "${box("first_name")} ${box("last_name")}",
 //     "PostOwnerNotifToken": notifToken.get("NotificationToken")
 //   });
 //   // records who liked the post & used to send notification
@@ -437,7 +437,7 @@
 //           'MemberUsername': memberUsername.toLowerCase(),
 //           'GroupID': groupID,
 //           'GroupName': groupName,
-//           'InviterUsername': box("Username"),
+//           'InviterUsername': box("username"),
 //           'InviterUserID': box("user_id")
 //         }));
 
@@ -463,9 +463,9 @@
 //           "MemberUsername": memberUsername,
 //           'GroupID': groupID,
 //           "GroupName": groupName,
-//           'AdminUsername': box("Username"),
+//           'AdminUsername': box("username"),
 //           'AdminUserID': box("user_id"),
-//           'AdminNotificationToken': box("NotificationToken")
+//           'AdminNotificationToken': box("notification_token")
 //         }));
 
 //     if (res.body == "Success") {
@@ -486,7 +486,7 @@
 //           'MemberUserID': memberUID,
 //           'GroupID': groupID,
 //           'GroupName': groupName,
-//           'InviterUsername': box("Username"),
+//           'InviterUsername': box("username"),
 //           'InviterUserID': box("user_id")
 //         }));
 
@@ -507,7 +507,7 @@
 //         body: json.encode({
 //           'UserID': box("user_id"),
 //           'GroupID': groupID,
-//           'Username': box("Username"),
+//           'Username': box("username"),
 //         }));
 
 //     if (res.body == "Success") {

@@ -74,7 +74,8 @@ class _AddMoneyToSavingsConfirmationPageState
                 value.toggleIsLoading();
 
                 // adds money to savings & creates a text only timeline post
-                bool isSuccessful = await value.saveMoneyToSharedNasAccWithTextOnlyPost({
+                bool isSuccessful =
+                    await value.saveMoneyToSharedNasAccWithTextOnlyPost({
                   "account_id": widget.transfer_info["accountID"],
                   "comment": _commentController.text.trim(),
                   "amount": widget.transfer_info["amount"],
@@ -137,7 +138,7 @@ class _AddMoneyToSavingsConfirmationPageState
                                       children: [
                                         TextSpan(
                                           text:
-                                              'Transfer \n${box("Currency")} ${widget.transfer_info["amount"]} to',
+                                              'Transfer \n${box("currency")} ${widget.transfer_info["amount"]} to',
                                           style: GoogleFonts.ubuntu(
                                             fontWeight: FontWeight.bold,
                                             color: Colors.grey[600],

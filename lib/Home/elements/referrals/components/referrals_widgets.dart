@@ -180,7 +180,7 @@ Widget myReferralCodePage(BuildContext context) {
             ),
             hGap(20),
             Text(
-              "Earn upto ${box("ReferralCommissionPercentage")}% from each deposit"
+              "Earn upto ${box("user_referral_commission_percentage")}% from each deposit"
               "\nyour friends make starting today!",
               textAlign: TextAlign.center,
               style: googleStyle(

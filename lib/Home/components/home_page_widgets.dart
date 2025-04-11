@@ -126,14 +126,14 @@ Widget walletBalanceWidget(BuildContext context) {
                           children: [
                             Text.rich(
                               TextSpan(
-                                text: box("Balance") == null
+                                text: box("balance") == null
                                     ? "..."
-                                    : "${box("Currency")} ",
+                                    : "${box("currency")} ",
                                 children: [
                                   TextSpan(
-                                    text: box("Balance") == null
+                                    text: box("balance") == null
                                         ? "0"
-                                        : "${box("Balance")}",
+                                        : "${box("balance")}",
                                     style: GoogleFonts.ubuntu(
                                       color: Colors.black,
                                       fontSize: 40,
@@ -156,9 +156,9 @@ Widget walletBalanceWidget(BuildContext context) {
                                   text: "Points ",
                                   children: [
                                     TextSpan(
-                                      text: box("Points") == null
+                                      text: box("points") == null
                                           ? "0"
-                                          : box("Points").toStringAsFixed(0),
+                                          : box("points").toStringAsFixed(0),
                                       style: GoogleFonts.ubuntu(
                                         fontWeight: FontWeight.bold,
                                         color: Colors.grey[100],
@@ -267,7 +267,7 @@ Widget savingsButton() {
       return Expanded(
         child: GestureDetector(
           onTap: () async {
-            if (["Agent", "Merchant"].contains(box("AccountType"))) {
+            if (["Agent", "Merchant"].contains(box("account_type"))) {
               showSnackBar(
                   context, "Savings not available for Agents & Merchants");
               return;
@@ -427,7 +427,7 @@ Widget homeTransactionsBody(BuildContext context) {
   return Consumer<HomeProviderFunctions>(
     builder: (_, value, child) {
       return value.returnHomeTransactions() == null
-          ? ["Agent", "Merchant"].contains(box("AccountType"))
+          ? ["Agent", "Merchant"].contains(box("account_type"))
               ? Container(
                   alignment: Alignment.center,
                   height: height(context) * 0.31,
@@ -480,7 +480,7 @@ Widget pageChangerWidget(BuildContext context) {
     return box("enable_timeline_feed") == null
         ? nothing()
         : value.returnCurrentHomeState() == "Savings" ||
-                ["Agent", "Merchant"].contains(box("AccountType")) ||
+                ["Agent", "Merchant"].contains(box("account_type")) ||
                 !box("enable_timeline_feed")
             ? nothing()
             : Container(
@@ -659,7 +659,7 @@ Widget floatingCashierWidget(
   return Consumer<HomeProviderFunctions>(
     builder: (_, value, child) {
       return value.returnCurrentHomeState() == "Savings" ||
-              ["Agent", "Merchant"].contains(box("AccountType"))
+              ["Agent", "Merchant"].contains(box("account_type"))
           ? nothing()
           : Positioned(
               bottom: Platform.isIOS ? 35 : 20,

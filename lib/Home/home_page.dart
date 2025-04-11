@@ -87,7 +87,9 @@ class _HomePageState extends State<HomePage>
 
   Future<void> onPageLoad() async {
     // if user's account is restricted
-    if (box("OnHold") != null && box("OnHold") && mounted) {
+    if (box("account_is_on_hold") != null &&
+        box("account_is_on_hold") &&
+        mounted) {
       changePage(context, const PendingApprovalPage(), type: "pr");
 
       return;
@@ -134,7 +136,7 @@ class _HomePageState extends State<HomePage>
     ]);
 
     // if user's account is restricted
-    if (box("OnHold") && mounted) {
+    if (box("account_is_on_hold") && mounted) {
       changePage(context, const PendingApprovalPage(), type: "pr");
     }
 

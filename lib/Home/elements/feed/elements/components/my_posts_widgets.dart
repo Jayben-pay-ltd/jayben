@@ -147,7 +147,7 @@ Widget noContactsUploadedWidget(BuildContext context) {
                   ),
                 ),
                 backgroundColor: MaterialStateProperty.all(
-                  !box("Investments") ? Colors.grey : Colors.green,
+                  !box("nas_deposits_are_allowed") ? Colors.grey : Colors.green,
                 ),
               ),
               onPressed: () async {

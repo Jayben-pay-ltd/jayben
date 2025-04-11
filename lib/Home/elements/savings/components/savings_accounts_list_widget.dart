@@ -98,11 +98,13 @@ class _SavingsAccountsListWidgetState extends State<SavingsAccountsListWidget> {
                         ),
                       ),
                       backgroundColor: MaterialStateProperty.all(
-                        !box("Investments") ? Colors.grey : Colors.green,
+                        !box("nas_deposits_are_allowed")
+                            ? Colors.grey
+                            : Colors.green,
                       ),
                     ),
                     onPressed: () async {
-                      if (!box("Investments")) {
+                      if (!box("nas_deposits_are_allowed")) {
                         showSnackBar(context,
                             'You\'re not allowed to create savings accounts. Contact support.');
 
@@ -212,11 +214,11 @@ class _SavingsAccountsListWidgetState extends State<SavingsAccountsListWidget> {
 //                         ),
 //                       ),
 //                       backgroundColor: MaterialStateProperty.all(
-//                         !box("Investments") ? Colors.grey : Colors.green,
+//                         !box("nas_deposits_are_allowed") ? Colors.grey : Colors.green,
 //                       ),
 //                     ),
 //                     onPressed: () async {
-//                       if (!box("Investments")) {
+//                       if (!box("nas_deposits_are_allowed")) {
 //                         showSnackBar(context,
 //                             'You\'re not allowed to create savings accounts. Contact support.');
 

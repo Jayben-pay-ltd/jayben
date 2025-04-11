@@ -72,8 +72,8 @@ class _AppDrawerState extends State<AppDrawer> {
                         fullNamesWidget(),
                         hGap(4),
                         Text(
-                          ["Agent", "Merchant"].contains(box("AccountType"))
-                              ? '${box("AccountType")} account'
+                          ["Agent", "Merchant"].contains(box("account_type"))
+                              ? '${box("account_type")} account'
                               : '@${box('Username_searchable')}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w300,
@@ -84,7 +84,7 @@ class _AppDrawerState extends State<AppDrawer> {
                       ],
                     ),
                     const Spacer(),
-                    ["Agent"].contains(box("AccountType"))
+                    ["Agent"].contains(box("account_type"))
                         ? nothing()
                         : GestureDetector(
                             onTap: () =>
@@ -100,7 +100,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 ),
               ),
             ),
-            ["Agent", "Merchant"].contains(box("AccountType"))
+            ["Agent", "Merchant"].contains(box("account_type"))
                 ? nothing()
                 : ListTile(
                     horizontalTitleGap: 0,
@@ -110,7 +110,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     onTap: () =>
                         showBottomCard(context, const AchievementsCard()),
                   ),
-            box("isVerified")
+            box("account_kyc_is_verified")
                 ? nothing()
                 : ListTile(
                     horizontalTitleGap: 0,
@@ -120,7 +120,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     onTap: () =>
                         changePage(context, const KycVerificationPage()),
                   ),
-            ["Agent", "Merchant"].contains(box("AccountType"))
+            ["Agent", "Merchant"].contains(box("account_type"))
                 ? nothing()
                 : ListTile(
                     horizontalTitleGap: 0,
@@ -145,7 +145,7 @@ class _AppDrawerState extends State<AppDrawer> {
                         Text('Admin', style: GoogleFonts.ubuntu(fontSize: 15)),
                     onTap: () => changePage(context, const AdminPage())),
             const Spacer(),
-            ["Agent", "Merchant"].contains(box("AccountType"))
+            ["Agent", "Merchant"].contains(box("account_type"))
                 ? nothing()
                 : ListTile(
                     title: Text('Give us feedback',
@@ -156,7 +156,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 title:
                     Text('Need Help?', style: GoogleFonts.ubuntu(fontSize: 15)),
                 onTap: () => changePage(context, const HelpPage())),
-            ["Agent", "Merchant"].contains(box("AccountType"))
+            ["Agent", "Merchant"].contains(box("account_type"))
                 ? nothing()
                 : ListTile(
                     title: Text('Our Fees',
@@ -171,7 +171,7 @@ class _AppDrawerState extends State<AppDrawer> {
   }
 
   Widget fullNamesWidget() {
-    return box("isVerified")
+    return box("account_kyc_is_verified")
         ? Row(
             mainAxisSize: MainAxisSize.min,
             children: [

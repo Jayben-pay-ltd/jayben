@@ -134,7 +134,7 @@ class _PaymentConfirmationQrState extends State<PaymentConfirmationQr> {
                                     children: [
                                       TextSpan(
                                         text:
-                                            'Send \n${box("Currency")} ${widget.paymentInfo["amount"]} to',
+                                            'Send \n${box("currency")} ${widget.paymentInfo["amount"]} to',
                                         style: GoogleFonts.ubuntu(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.grey[600],
@@ -164,7 +164,7 @@ class _PaymentConfirmationQrState extends State<PaymentConfirmationQr> {
                                       fontSize: 13,
                                     ),
                                     text:
-                                        "+ ${box("Currency")} ${(double.parse(box("merchant_commission_per_transaction").toString())).toStringAsFixed(2)} transaction fee",
+                                        "+ ${box("currency")} ${(double.parse(box("merchant_commission_per_transaction").toString())).toStringAsFixed(2)} transaction fee",
                                   ),
                                   textAlign: TextAlign.left,
                                 ),

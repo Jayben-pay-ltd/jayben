@@ -37,7 +37,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage> {
             hGap(70),
             Center(
               child: Text(
-                ["Agent", "Merchant"].contains(box("AccountType"))
+                ["Agent", "Merchant"].contains(box("account_type"))
                     ? "Account is under review"
                     : "Account is on hold!",
                 style: googleStyle(
@@ -54,15 +54,15 @@ class _PendingApprovalPageState extends State<PendingApprovalPage> {
 
                 await context.read<HomeProviderFunctions>().loadDetailsToHive();
 
-                if (!box("OnHold")) {
+                if (!box("account_is_on_hold")) {
                   changePage(context, const HomePage(), type: "pr");
-                } else if (box("OnHold")) {
+                } else if (box("account_is_on_hold")) {
                   showSnackBar(
                       context,
-                      ["Agent", "Merchant"].contains(box("AccountType"))
-                          ? "Account is under review, please contact customer support on ${box("JaybenHotline")} for more information"
+                      ["Agent", "Merchant"].contains(box("account_type"))
+                          ? "Account is under review, please contact customer support on ${box("jayben_primary_customer_support_hotline")} for more information"
                           : 'Your account is still restricted. If you think we made a mistake, '
-                              'please contact customer support on ${box("JaybenHotline")}');
+                              'please contact customer support on ${box("jayben_primary_customer_support_hotline")}');
                 }
 
                 setState(() {

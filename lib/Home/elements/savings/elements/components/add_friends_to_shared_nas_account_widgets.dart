@@ -503,8 +503,8 @@ Widget inviteContactTileWidget(BuildContext context, Map contact_map) {
           ),
           const Spacer(),
           GestureDetector(
-          //   onTap: () async => Share.share(
-          //       "Hi, have you tried out this app called Jayben? I've been using it to save money and its really cool."),
+            //   onTap: () async => Share.share(
+            //       "Hi, have you tried out this app called Jayben? I've been using it to save money and its really cool."),
             child: SizedBox(
               child: Text(
                 "INVITE",
@@ -532,7 +532,7 @@ Widget joinAccountLinkWidget(BuildContext context) {
           ),
         ),
         backgroundColor: MaterialStateProperty.all(
-          !box("Investments") ? Colors.grey : Colors.green,
+          !box("nas_deposits_are_allowed") ? Colors.grey : Colors.green,
         ),
       ),
       onPressed: () async {

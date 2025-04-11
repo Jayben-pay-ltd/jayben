@@ -71,7 +71,7 @@ class _SendMoneyReceiptPageState extends State<SendMoneyReceiptPage> {
                     width: width(context),
                     child: Text.rich(
                       TextSpan(
-                        text: "${box("Currency")}\n",
+                        text: "${box("currency")}\n",
                         children: [
                           TextSpan(
                             text: widget.amount.toString(),

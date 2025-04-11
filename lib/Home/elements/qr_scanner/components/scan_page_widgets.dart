@@ -22,7 +22,7 @@ Widget flashButton(QRViewController? qr_controller) {
           child: GestureDetector(
             onTap: () async {
               value.toggleFlashLight();
-              
+
               await qr_controller!.toggleFlash();
             },
             child: value.returnIsFlashActive()
@@ -256,7 +256,7 @@ Widget vendorCodeTextField(
 
               hideKeyboard();
 
-              if (box("UserCode") == controller.text) {
+              if (box("user_code") == controller.text) {
                 showSnackBar(context,
                     "You cannot pay yourself. Use another Payment Code");
                 return;

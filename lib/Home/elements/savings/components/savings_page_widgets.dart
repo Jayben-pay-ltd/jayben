@@ -34,7 +34,7 @@ Widget createSavingsAccountWidget(BuildContext context) {
                 const SizedBox(height: 10),
                 Text.rich(
                   TextSpan(
-                    text: "${box("Currency")} ",
+                    text: "${box("currency")} ",
                     children: [
                       TextSpan(
                         text: amount < 100000.0

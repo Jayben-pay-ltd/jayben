@@ -44,7 +44,7 @@ class _WithdrawMoneyConfirmationPageState
                 hideKeyboard();
 
                 // if the user's account isn't KYC verified
-                if (!box("isVerified")) {
+                if (!box("account_kyc_is_verified")) {
                   showSnackBar(
                     context,
                     "Your account must be KYC Verified first",
@@ -132,7 +132,7 @@ class _WithdrawMoneyConfirmationPageState
                                     children: [
                                       TextSpan(
                                         text:
-                                            'Withdraw \n${box("Currency")} ${widget.paymentInfo['amountBeforeFee']} to',
+                                            'Withdraw \n${box("currency")} ${widget.paymentInfo['amountBeforeFee']} to',
                                         style: GoogleFonts.ubuntu(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
@@ -163,7 +163,7 @@ class _WithdrawMoneyConfirmationPageState
                                       fontSize: 13,
                                     ),
                                     text:
-                                        "+ ${box("Currency")} ${widget.paymentInfo["feeAmount"].toStringAsFixed(2)} transaction fee",
+                                        "+ ${box("currency")} ${widget.paymentInfo["feeAmount"].toStringAsFixed(2)} transaction fee",
                                   ),
                                   textAlign: TextAlign.left,
                                 ),

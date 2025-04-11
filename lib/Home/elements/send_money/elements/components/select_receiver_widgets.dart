@@ -52,7 +52,7 @@ Widget selectReceiversAppBar(BuildContext context, controller) {
                 ),
                 const Spacer(),
                 Text(
-                  "${box("CurrencySymbol")}${double.parse(value.returnAmountString()).toStringAsFixed(2)}",
+                  "${box("currency_symbol")}${double.parse(value.returnAmountString()).toStringAsFixed(2)}",
                   style: googleStyle(
                     color: Colors.green,
                     size: 20,
@@ -537,7 +537,7 @@ Widget noContactsUploadedWidget(BuildContext context) {
                   ),
                 ),
                 backgroundColor: MaterialStateProperty.all(
-                  !box("Investments") ? Colors.grey : Colors.green,
+                  !box("nas_deposits_are_allowed") ? Colors.grey : Colors.green,
                 ),
               ),
               onPressed: () async {
