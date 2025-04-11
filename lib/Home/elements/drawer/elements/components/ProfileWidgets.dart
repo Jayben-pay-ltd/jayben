@@ -1,13 +1,13 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:jayben/Utilities/constants.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:jayben/Utilities/provider_functions.dart';
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:io';
+import "package:cached_network_image/cached_network_image.dart";
+import "package:jayben/Utilities/constants.dart";
+import "package:permission_handler/permission_handler.dart";
+import "package:jayben/Utilities/provider_functions.dart";
+import "package:device_info_plus/device_info_plus.dart";
+import "package:google_fonts/google_fonts.dart";
+import "package:provider/provider.dart";
+import "package:flutter/material.dart";
+import "package:flutter/services.dart";
+import "dart:io";
 
 Widget customAppBar(BuildContext context, Function() onSaveChanges) {
   return Positioned(
@@ -73,29 +73,29 @@ Widget profileBody(BuildContext context, File? image, Function() getImage,
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(top: 70, bottom: 130),
           shrinkWrap: true,
-          children: [
+            children: [
             profileImageWidget(image, getImage),
             const SizedBox(height: 10),
             Divider(color: Colors.grey[300], thickness: 0.5),
             const SizedBox(height: 15),
-            textField(context, "@${box('Username_searchable')}",
-                'Username (also your referral code)', true),
+            textField(context, "@${box("username_searchable")}",
+              "Username (also your referral code)", true),
             const SizedBox(height: 30),
-            textField(context, box('PhoneNumber'), 'Phone Number', true),
+            textField(context, box("phone_number"), "Phone Number", true),
             const SizedBox(height: 30),
-            textField(context, box('FirstName'), 'First Name', true),
+            textField(context, box("first_name"), "First Name", true),
             const SizedBox(height: 30),
-            textField(context, box('LastName'), 'Last Name', true),
+            textField(context, box("last_name"), "Last Name", true),
             const SizedBox(height: 30),
-            textField(context, box('Email'), 'Email', true),
+            textField(context, box("email"), "Email", true),
             const SizedBox(height: 30),
-            textField(context, box('Address'), 'Address', true),
+            textField(context, box("address"), "Address", true),
             const SizedBox(height: 30),
-            textField(context, box('Gender'), 'Gender', true),
+            textField(context, box("gender"), "Gender", true),
             const SizedBox(height: 30),
-            textField(context, box('Country'), 'Country', true),
+            textField(context, box("country"), "Country", true),
             const SizedBox(height: 30),
-            textField(context, box('City'), 'City', true),
+            textField(context, box("city"), "City", true),
           ],
         ),
         customAppBar(context, onSaveChanges)
@@ -278,7 +278,7 @@ Widget textField(BuildContext context, hintText, labelText, readOnly) {
               onTap: () async {
                 if (labelText == "Username (also your referral code)") {
                   await Clipboard.setData(
-                      ClipboardData(text: box('Username_searchable')));
+                      ClipboardData(text: box("username_searchable")));
 
                   showSnackBar(context, "Username has been copied!",
                       color: Colors.green[600]!);
@@ -333,7 +333,7 @@ Widget textField(BuildContext context, hintText, labelText, readOnly) {
                     child: GestureDetector(
                       onTap: () async {
                         await Clipboard.setData(
-                            ClipboardData(text: box('Username_searchable')));
+                            ClipboardData(text: box("username_searchable")));
 
                         showSnackBar(context, "Username has been copied!",
                             color: Colors.green[600]!);

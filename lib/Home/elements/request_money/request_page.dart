@@ -178,8 +178,7 @@ class _RequestPageState extends State<RequestPage> with WidgetsBindingObserver {
                                         decoration: InputDecoration(
                                           floatingLabelBehavior:
                                               FloatingLabelBehavior.always,
-                                          labelText: Hive.box("userInfo")
-                                              .get('Currency')
+                                          labelText: box('currency')
                                               .toLowerCase(),
                                           labelStyle: const TextStyle(
                                               color: Colors.black87,

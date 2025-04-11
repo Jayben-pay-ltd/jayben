@@ -43,9 +43,9 @@ class _SendMoneyToMerchantConfirmationPageState
 
   @override
   Widget build(BuildContext context) {
-    String currency = Hive.box("userInfo").get("Currency");
+    String currency = box("currency");
     double transactionFeePercentMerchants =
-        Hive.box('userInfo').get("transaction_fee_percentage_to_merchants");
+        box("transaction_fee_percentage_to_merchants");
     double transactionFee =
         widget.paymentInfo['amount'] * (transactionFeePercentMerchants / 100);
     return Consumer<PaymentProviderFunctions>(
@@ -130,7 +130,7 @@ class _SendMoneyToMerchantConfirmationPageState
                                     children: [
                                       TextSpan(
                                         text:
-                                            'Send \n${Hive.box('userInfo').get("Currency")} ${widget.paymentInfo['amount']} to',
+                                            'Send \n${box("currency")} ${widget.paymentInfo['amount']} to',
                                         style: GoogleFonts.ubuntu(
                                           color: Colors.grey[600],
                                           fontWeight: FontWeight.bold,
@@ -233,12 +233,12 @@ class _SendMoneyToMerchantConfirmationPageState
     //       "MerchantCode": paymentInfo['merchantCode'],
     //     },
     //     "AmountPlusFee": paymentInfo['amountPlusFee'],
-    //     "Currency": Hive.box('userInfo').get("Currency"),
+    //     "Currency": box("currency"),
     //     "PhoneNumber": 'To ${paymentInfo['merchantName']}',
     //     "TransactionFeePercent": paymentInfo['transactionFeePercent'],
     //     "TransactionFeeInKwacha": paymentInfo['transactionFeeInKwacha'],
     //     "FullNames":
-    //         "${Hive.box('userInfo').get("FirstName")} ${Hive.box('userInfo').get("LastName")}",
+    //         "${box("FirstName")} ${box("LastName")}",
     //   }),
     //   _fire
     //       .collection("Merchants")
@@ -258,14 +258,14 @@ class _SendMoneyToMerchantConfirmationPageState
     //     "Amount": paymentInfo['amount'],
     //     "AccountID": paymentInfo['merchantUID'],
     //     "MerchantCode": paymentInfo['merchantCode'],
-    //     "Currency": Hive.box('userInfo').get("Currency"),
+    //     "Currency": box("currency"),
     //     "Customer": {
     //       "FullNames":
-    //           "${Hive.box('userInfo').get("FirstName")} ${Hive.box('userInfo').get("LastName")}",
-    //       "PhoneNumber": Hive.box('userInfo').get("PhoneNumber"),
-    //       "Username": Hive.box('userInfo').get("Username"),
-    //       "Country": Hive.box('userInfo').get("Country"),
-    //       "City": Hive.box('userInfo').get("City"),
+    //           "${box("FirstName")} ${box("LastName")}",
+    //       "PhoneNumber": box("PhoneNumber"),
+    //       "Username": box("Username"),
+    //       "Country": box("Country"),
+    //       "City": box("City"),
     //       "UserID": box("user_id"),
     //     },
     //   }),

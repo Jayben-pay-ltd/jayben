@@ -22,8 +22,8 @@ class _WithdrawMoneyConfirmationPageState
     extends State<WithdrawMoneyConfirmationPage> {
   @override
   void initState() {
-    if (box("lastEnteredReference") != null) {
-      setState(() => referenceController.text = box("lastEnteredReference"));
+    if (box("last_entered_reference") != null) {
+      setState(() => referenceController.text = box("last_entered_reference"));
     }
     super.initState();
   }
@@ -72,7 +72,7 @@ class _WithdrawMoneyConfirmationPageState
                 }
 
                 // stores the last entered mobile money names / reference
-                boxPut("lastEnteredReference", referenceController.text.trim());
+                boxPut("last_entered_reference", referenceController.text.trim());
 
                 value.toggleIsLoading();
 

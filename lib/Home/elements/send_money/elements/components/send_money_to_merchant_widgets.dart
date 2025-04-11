@@ -30,7 +30,7 @@ Widget sendMoneyFloatingButton(
     double amountInDollars,
     TextEditingController amountToSendController,
     TextEditingController merchantCodeController) {
-  String currency = Hive.box("userInfo").get("Currency");
+  String currency = box("currency");
 
   return Consumer<PaymentProviderFunctions>(builder: (_, value, child) {
     return FloatingActionButton.extended(
@@ -303,7 +303,7 @@ Widget amountTextField(BuildContext context, TextEditingController controller,
       ),
       decoration: InputDecoration(
         floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelText: Hive.box("userInfo").get('Currency').toLowerCase(),
+        labelText: box('currency').toLowerCase(),
         labelStyle: const TextStyle(
             color: Colors.black87, fontSize: 20, fontFamily: 'AvenirLight'),
         hintText: 'Amount',

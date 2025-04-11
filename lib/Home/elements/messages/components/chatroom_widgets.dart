@@ -96,7 +96,7 @@ Widget chatInputsField(BuildContext context, Map body_info) {
                   child: Column(
                     children: [
                       value.returnIsReplyState()
-                          ? replyMessageBody(context)
+                          ? reply_messageBody(context)
                           : nothing(),
                       messageTextfield(context, body_info),
                     ],
@@ -127,7 +127,7 @@ Widget chatInputsFieldBLANK(BuildContext context, messageController) {
         child: Column(
           children: [
             value.returnIsReplyState()
-                ? replyMessageBodyBLANK(context)
+                ? reply_messageBodyBLANK(context)
                 : nothing(),
             textFormFieldBLANK(context, messageController),
           ],
@@ -167,14 +167,14 @@ Widget temporaryMessageBubbles(BuildContext context, String chatroom_id) {
   );
 }
 
-Widget replyMessageBody(BuildContext context) {
+Widget reply_messageBody(BuildContext context) {
   return Stack(
     children: [
       Container(
         width: width(context) * 0.83,
         alignment: Alignment.topCenter,
         padding: const EdgeInsets.only(top: 5, left: 5, right: 5, bottom: 5),
-        decoration: customReplyMessageBodyStyle(),
+        decoration: customReply_messageBodyStyle(),
         child: Container(
           padding: const EdgeInsets.only(left: 5),
           alignment: Alignment.centerLeft,
@@ -188,13 +188,13 @@ Widget replyMessageBody(BuildContext context) {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 replyPreviewColorWidget(context),
-                box("replyMessageType") == "photo" ||
-                        box("replyMessageType") == "video"
+                box("reply_message_type") == "photo" ||
+                        box("reply_message_type") == "video"
                     ? Container(
                         color: Colors.black,
                         width: 50,
                         child: Image.network(
-                          box("replyMessage"),
+                          box("reply_message"),
                           fit: BoxFit.cover,
                         ),
                       )
@@ -229,7 +229,7 @@ Widget replyMessageBody(BuildContext context) {
   );
 }
 
-Widget replyMessageBodyBLANK(BuildContext context) {
+Widget reply_messageBodyBLANK(BuildContext context) {
   return Container(
     color: Colors.transparent,
     width: width(context) * 0.83,
@@ -346,17 +346,17 @@ Widget sendMessageButton(BuildContext context, Map body_info) {
 
               // creates the no access sav acc
               await value.sendMessage({
-                "reply_message_thumbnail_url": box("replySentByThumbnailUrl"),
-                "reply_message_first_name": box("replySentByFirstName"),
+                "reply_message_thumbnail_url": box("reply_sent_by_thumbnail_url"),
+                "reply_message_first_name": box("reply_sent_by_first_name"),
+                "reply_message_last_name": box("reply_sent_by_last_name"),
                 "chatroom_id": body_info["chatroom_map"]["chatroom_id"],
-                "reply_message_last_name": box("replySentByLastName"),
                 "message_controller": body_info["message_controller"],
+                "reply_message_type": box("reply_message_type"),
                 "other_person_user_id": members[0]["user_id"],
-                "reply_message_type": box("replyMessageType"),
-                "reply_message_uid": box("replySentByUID"),
-                "reply_message_id": box("replyMessageID"),
-                "reply_message": box("replyMessage"),
-                "reply_caption": box("replyCaption"),
+                "reply_message_uid": box("reply_sent_by_uid"),
+                "reply_message_id": box("reply_message_id"),
+                "reply_message": box("reply_message"),
+                "reply_caption": box("reply_caption"),
                 "message_extension": null,
                 "message_type": "text",
                 "caption": null,
@@ -461,8 +461,8 @@ Widget closeReplyWidget(BuildContext context) {
 Widget replyPreviewTextWidget(BuildContext context) {
   return ConstrainedBox(
     constraints: BoxConstraints(
-      maxWidth: box("replyMessageType") == "photo" ||
-              box("replyMessageType") == "video"
+      maxWidth: box("reply_message_type") == "photo" ||
+              box("reply_message_type") == "video"
           ? width(context) * 0.52
           : width(context) * 0.68,
       minWidth: width(context) * 0.07,
@@ -472,9 +472,9 @@ Widget replyPreviewTextWidget(BuildContext context) {
     child: Container(
       padding: const EdgeInsets.only(right: 5),
       child: Text(
-        box("replyMessageType") == "text"
-            ? box("replyMessage")
-            : box("replyCaption"),
+        box("reply_message_type") == "text"
+            ? box("reply_message")
+            : box("reply_caption"),
         overflow: TextOverflow.ellipsis,
         maxLines: 2,
         style: const TextStyle(
@@ -486,9 +486,9 @@ Widget replyPreviewTextWidget(BuildContext context) {
 }
 
 Widget replyPreviewIconWidget(BuildContext context) {
-  return box("replyMessageType") == "text"
+  return box("reply_message_type") == "text"
       ? nothing()
-      : box("replyMessageType") == "photo"
+      : box("reply_message_type") == "photo"
           ? const Padding(
               padding: EdgeInsets.only(right: 5.0),
               child: Icon(
@@ -497,7 +497,7 @@ Widget replyPreviewIconWidget(BuildContext context) {
                 size: 15,
               ),
             )
-          : box("replyMessageType") == "video"
+          : box("reply_message_type") == "video"
               ? const Padding(
                   padding: EdgeInsets.only(right: 5.0),
                   child: Icon(
@@ -506,7 +506,7 @@ Widget replyPreviewIconWidget(BuildContext context) {
                     size: 15,
                   ),
                 )
-              : box("replyMessageType") == "document"
+              : box("reply_message_type") == "document"
                   ? const Padding(
                       padding: EdgeInsets.only(right: 5.0),
                       child: Icon(
@@ -519,15 +519,15 @@ Widget replyPreviewIconWidget(BuildContext context) {
 }
 
 Widget replyPreviewFirstNameWidget(BuildContext context) {
-  return box("replySentByUID") == null
+  return box("reply_sent_by_uid") == null
       ? nothing()
       : Text(
-          box("replySentByUID") == box("user_id")
+          box("reply_sent_by_uid") == box("user_id")
               ? "You"
-              : box("replySentByFirstName"),
+              : box("reply_sent_by_first_name"),
           style: GoogleFonts.ubuntu(
             fontWeight: FontWeight.bold,
-            color: box("replySentByUID") == box("user_id")
+            color: box("reply_sent_by_uid") == box("user_id")
                 ? Colors.teal[300]
                 : Colors.pink[300],
           ),
@@ -540,7 +540,7 @@ Widget replyPreviewColorWidget(BuildContext context) {
     width: 5,
     height: 62.5,
     decoration: BoxDecoration(
-      color: box("replySentByUID") == box("user_id")
+      color: box("reply_sent_by_uid") == box("user_id")
           ? Colors.teal[300]
           : Colors.pink[300],
       borderRadius: const BorderRadius.all(
@@ -648,7 +648,7 @@ BoxDecoration customReplyPreviewAccent() {
   );
 }
 
-BoxDecoration customReplyMessageBodyStyle() {
+BoxDecoration customReply_messageBodyStyle() {
   return BoxDecoration(
     color: Colors.grey[900],
     borderRadius: const BorderRadius.only(

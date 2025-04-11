@@ -79,18 +79,14 @@ class _SendMoneyToMerchantReceiptPageState
                               horizontal: 20, vertical: 50),
                           width: width(context),
                           child: Text.rich(
-                              TextSpan(
-                                  text:
-                                      "${Hive.box('userInfo').get("Currency")} ",
-                                  children: [
-                                    TextSpan(
-                                        text:
-                                            "\n${widget.paymentInfo['amount']}",
-                                        style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 50,
-                                            color: Colors.white))
-                                  ]),
+                              TextSpan(text: "${box("currency")} ", children: [
+                                TextSpan(
+                                    text: "\n${widget.paymentInfo['amount']}",
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 50,
+                                        color: Colors.white))
+                              ]),
                               textAlign: TextAlign.left,
                               style: GoogleFonts.ubuntu(
                                   fontSize: 30, color: Colors.grey[100])),

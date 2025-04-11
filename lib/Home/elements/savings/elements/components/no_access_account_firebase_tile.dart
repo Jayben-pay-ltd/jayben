@@ -68,7 +68,7 @@
 //               ),
 //               child: Text.rich(
 //                 TextSpan(
-//                   text: "${Hive.box('userInfo').get("Currency")} ",
+//                   text: "${box("currency")} ",
 //                   children: [
 //                     TextSpan(
 //                       text: amount.toStringAsFixed(2),

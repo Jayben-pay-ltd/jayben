@@ -23,11 +23,11 @@ class _PaymentConfirmationUsernamePageState
     extends State<PaymentConfirmationUsernamePage> {
   @override
   void initState() {
-    if (box("DefaultTransactionPrivacy") == "Public") {
+    if (box("default_transaction_visibility") == "Public") {
       setState(() {
         postToFeed = true;
       });
-    } else if (box("DefaultTransactionPrivacy") == "Private") {
+    } else if (box("default_transaction_visibility") == "Private") {
       setState(() {
         postToFeed = false;
       });

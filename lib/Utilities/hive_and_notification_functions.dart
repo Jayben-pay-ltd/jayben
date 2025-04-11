@@ -307,6 +307,6 @@ class HiveFunctions {
       Directory document = await getApplicationDocumentsDirectory();
       Hive.init(document.path);
     }
-    await Hive.openBox('userInfo');
+    await Hive.openBox('user_information');
   }
 }

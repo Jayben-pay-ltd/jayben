@@ -109,7 +109,7 @@ class _RequestConfirmationState extends State<RequestConfirmation> {
                                             children: [
                                               TextSpan(
                                                 text:
-                                                    'Request \n${Hive.box('userInfo').get("Currency")} ${widget.amount} from',
+                                                    'Request \n${box("currency")} ${widget.amount} from',
                                                 style: GoogleFonts.ubuntu(
                                                     color: Colors.grey[600],
                                                     fontWeight: FontWeight.bold,

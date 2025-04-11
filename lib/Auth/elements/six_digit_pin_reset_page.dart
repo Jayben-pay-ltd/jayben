@@ -91,7 +91,7 @@ class _PinResetPageState extends State<PinResetPage> {
                                 ),
                                 TextSpan(
                                   text:
-                                      Hive.box("userInfo").get("ObscuredEmail"),
+                                      box("obscured_email"),
                                   style: GoogleFonts.ubuntu(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.green[400],

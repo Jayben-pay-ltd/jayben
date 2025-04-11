@@ -20,11 +20,11 @@ class PaymentConfirmationQr extends StatefulWidget {
 class _PaymentConfirmationQrState extends State<PaymentConfirmationQr> {
   @override
   void initState() {
-    if (box("DefaultTransactionPrivacy") == "Public") {
+    if (box("default_transaction_visibility") == "Public") {
       setState(() {
         postToFeed = true;
       });
-    } else if (box("DefaultTransactionPrivacy") == "Private") {
+    } else if (box("default_transaction_visibility") == "Private") {
       setState(() {
         postToFeed = false;
       });

@@ -73,7 +73,7 @@ class _RequestTileWidgetState extends State<RequestTileWidget> {
                                 ))),
                             onPressed: () async {
                               var walletBalance = double.parse(
-                                  Hive.box("userInfo").get("Balance"));
+                                  box("balance"));
 
                               var requestAmount =
                                   double.parse(widget.amount.toString());

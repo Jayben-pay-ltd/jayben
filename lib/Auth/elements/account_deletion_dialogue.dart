@@ -143,7 +143,7 @@ class _AccountDeletionDialogueState extends State<AccountDeletionDialogue> {
 
                             await value.deleteAccount(deletion_reason);
 
-                            await Hive.box('userInfo').clear();
+                            await Hive.box('user_info').clear();
                           },
                           child: Container(
                             alignment: Alignment.center,

@@ -12,8 +12,8 @@ class MyPostsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return post_map["is_published"]
-        ? box("BlockedPeople") != null &&
-                box("BlockedPeople").contains(post_map['user_id'])
+        ? box("blocked_people") != null &&
+                box("blocked_people").contains(post_map['user_id'])
             ? const SizedBox()
             : myPostTileBody(context, post_map)
         : nothing();

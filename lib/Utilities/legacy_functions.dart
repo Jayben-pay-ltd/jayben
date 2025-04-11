@@ -43,7 +43,7 @@
 //   }
 
 //   addToTimeline(receiverNames, receiverUID, comment, privacy) async {
-//     // if (box("TransactionPrivacy") == "Public") {
+//     // if (box("default_transaction_visibility") == "Public") {
 //     // if timelines privacy is public
 //     var postID = id.v4();
 
@@ -237,12 +237,12 @@
 //         body: json.encode({
 //           'UserID': box("user_id"),
 //           'GroupID': groupID,
-//           "Currency": Hive.box('userInfo').get("Currency"),
+//           "Currency": box("currency"),
 //           "PhoneNumber": _auth.currentUser!.phoneNumber,
-//           "NotificationToken": Hive.box('userInfo').get("NotificationToken"),
-//           "ProfileIconUrl": Hive.box('userInfo').get("profile_image_url"),
+//           "NotificationToken": box("NotificationToken"),
+//           "ProfileIconUrl": box("profile_image_url"),
 //           "GroupName": groupName,
-//           'Username': Hive.box('userInfo').get("Username"),
+//           'Username': box("Username"),
 //         }));
 
 //     if (res.body == "Success") {
@@ -288,9 +288,9 @@
 //           "ReplySentByUID": replySentByUID,
 //           "ReplyMessageType": replyMessageType,
 //           "VideoReplyMessage": videoReplyMessage,
-//           "NotificationToken": Hive.box('userInfo').get("NotificationToken"),
-//           "OwnerProfileImage": Hive.box('userInfo').get("profile_image_url"),
-//           'OwnerUsername': Hive.box('userInfo').get("Username"),
+//           "NotificationToken": box("NotificationToken"),
+//           "OwnerProfileImage": box("profile_image_url"),
+//           'OwnerUsername': box("Username"),
 //           'OwnerUserID': box("user_id"),
 //         }));
 //   }
@@ -306,8 +306,8 @@
 //           'UserID': box("user_id"),
 //           'GroupID': groupID,
 //           'Amount': amount,
-//           'Username': Hive.box('userInfo').get("Username"),
-//           'Currency': Hive.box('userInfo').get("Currency"),
+//           'Username': box("Username"),
+//           'Currency': box("currency"),
 //         }));
 
 //     if (res.body == "Success") {
@@ -328,8 +328,8 @@
 //           'UserID': box("user_id"),
 //           'GroupID': groupID,
 //           'Amount': amount,
-//           'Username': Hive.box('userInfo').get("Username"),
-//           'Currency': Hive.box('userInfo').get("Currency"),
+//           'Username': box("Username"),
+//           'Currency': box("currency"),
 //         }));
 
 //     if (res.body.toString().substring(11, 18) == "Success") {
@@ -559,9 +559,9 @@
 //           'GroupID': groupID,
 //           'NewAdminUserID': newAdminUserID,
 //           'NewAdminUsername': newAdminUsername,
-//           'AdminUsername': Hive.box('userInfo').get('Username'),
+//           'AdminUsername': box('Username'),
 //           'AdminNotificationToken':
-//               Hive.box('userInfo').get('NotificationToken')
+//               box('NotificationToken')
 //         }));
 //   }
 
@@ -578,9 +578,9 @@
 //           'GroupID': groupID,
 //           'RemoveAdminUserID': removeAdminUserID,
 //           'RemoveAdminUsername': removeAdminUsername,
-//           'AdminUsername': Hive.box('userInfo').get('Username'),
+//           'AdminUsername': box('Username'),
 //           'AdminNotificationToken':
-//               Hive.box('userInfo').get('NotificationToken')
+//               box('NotificationToken')
 //         }));
 //   }
 

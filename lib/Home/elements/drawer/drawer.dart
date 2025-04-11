@@ -1,19 +1,19 @@
 // ignore_for_file: non_constant_identifier_names
-import 'package:jayben/Home/elements/drawer/elements/achievements_card.dart';
-import 'package:jayben/Home/elements/drawer/elements/kyc_verification.dart';
-import 'package:jayben/Home/elements/drawer/elements/pricing_card.dart';
-import 'package:jayben/Home/elements/drawer/elements/feedback.dart';
-import 'package:jayben/Home/elements/drawer/elements/help.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:jayben/Home/elements/referrals/referrals.dart';
-import 'package:jayben/Home/elements/admin/admin_page.dart';
-import 'package:jayben/Utilities/provider_functions.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/material.dart';
-import 'elements/MyQRCode.dart';
-import 'elements/Settings.dart';
-import 'elements/Profile.dart';
-import 'dart:io';
+import "package:jayben/Home/elements/drawer/elements/achievements_card.dart";
+import "package:jayben/Home/elements/drawer/elements/kyc_verification.dart";
+import "package:jayben/Home/elements/drawer/elements/pricing_card.dart";
+import "package:jayben/Home/elements/drawer/elements/feedback.dart";
+import "package:jayben/Home/elements/drawer/elements/help.dart";
+import "package:cached_network_image/cached_network_image.dart";
+import "package:jayben/Home/elements/referrals/referrals.dart";
+import "package:jayben/Home/elements/admin/admin_page.dart";
+import "package:jayben/Utilities/provider_functions.dart";
+import "package:google_fonts/google_fonts.dart";
+import "package:flutter/material.dart";
+import "elements/MyQRCode.dart";
+import "elements/Settings.dart";
+import "elements/Profile.dart";
+import "dart:io";
 
 class AppDrawer extends StatefulWidget {
   const AppDrawer({Key? key}) : super(key: key);
@@ -73,8 +73,8 @@ class _AppDrawerState extends State<AppDrawer> {
                         hGap(4),
                         Text(
                           ["Agent", "Merchant"].contains(box("account_type"))
-                              ? '${box("account_type")} account'
-                              : '@${box('Username_searchable')}',
+                              ? "${box("account_type")} account"
+                              : "@${box("Username_searchable")}",
                           style: const TextStyle(
                             fontWeight: FontWeight.w300,
                             color: Colors.black87,
@@ -105,7 +105,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 : ListTile(
                     horizontalTitleGap: 0,
                     leading: const Icon(Icons.emoji_events),
-                    title: Text('Achievements',
+                    title: Text("Achievements",
                         style: GoogleFonts.ubuntu(fontSize: 15)),
                     onTap: () =>
                         showBottomCard(context, const AchievementsCard()),
@@ -115,7 +115,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 : ListTile(
                     horizontalTitleGap: 0,
                     leading: const Icon(Icons.verified_sharp),
-                    title: Text('Verification',
+                    title: Text("Verification",
                         style: GoogleFonts.ubuntu(fontSize: 15)),
                     onTap: () =>
                         changePage(context, const KycVerificationPage()),
@@ -125,7 +125,7 @@ class _AppDrawerState extends State<AppDrawer> {
                 : ListTile(
                     horizontalTitleGap: 0,
                     leading: const Icon(Icons.monetization_on_rounded),
-                    title: Text('Earn Cash',
+                    title: Text("Earn Cash",
                         style: GoogleFonts.ubuntu(fontSize: 15)),
                     onTap: () => changePage(context, const ReferralsPage()),
                   ),
@@ -133,33 +133,33 @@ class _AppDrawerState extends State<AppDrawer> {
                 horizontalTitleGap: 0,
                 leading: const Icon(Icons.settings),
                 title:
-                    Text('Settings', style: GoogleFonts.ubuntu(fontSize: 15)),
+                    Text("Settings", style: GoogleFonts.ubuntu(fontSize: 15)),
                 onTap: () => changePage(context, const SettingsPage())),
-            ![...box("UsersCapableOfSeeingSecretDashboard")]
+            ![...box("admin_users_that_can_see_secret_dashboard")]
                     .contains(box("user_id"))
                 ? nothing()
                 : ListTile(
                     horizontalTitleGap: 0,
                     leading: const Icon(Icons.space_dashboard),
                     title:
-                        Text('Admin', style: GoogleFonts.ubuntu(fontSize: 15)),
+                        Text("Admin", style: GoogleFonts.ubuntu(fontSize: 15)),
                     onTap: () => changePage(context, const AdminPage())),
             const Spacer(),
             ["Agent", "Merchant"].contains(box("account_type"))
                 ? nothing()
                 : ListTile(
-                    title: Text('Give us feedback',
+                    title: Text("Give us feedback",
                         style: GoogleFonts.ubuntu(fontSize: 15)),
                     onTap: () => changePage(context, const FeedbackPage()),
                   ),
             ListTile(
                 title:
-                    Text('Need Help?', style: GoogleFonts.ubuntu(fontSize: 15)),
+                    Text("Need Help?", style: GoogleFonts.ubuntu(fontSize: 15)),
                 onTap: () => changePage(context, const HelpPage())),
             ["Agent", "Merchant"].contains(box("account_type"))
                 ? nothing()
                 : ListTile(
-                    title: Text('Our Fees',
+                    title: Text("Our Fees",
                         style: GoogleFonts.ubuntu(fontSize: 15)),
                     onTap: () => showBottomCard(context, const PricingCard()),
                   ),
@@ -176,7 +176,7 @@ class _AppDrawerState extends State<AppDrawer> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${box('FirstName')} ${box('LastName')}',
+                "${box("first_name")} ${box("last_name")}",
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   color: Colors.black,
@@ -188,7 +188,7 @@ class _AppDrawerState extends State<AppDrawer> {
             ],
           )
         : Text(
-            '${box('FirstName')} ${box('LastName')}',
+            "${box("first_name")} ${box("last_name")}",
             style: const TextStyle(
               fontWeight: FontWeight.w700,
               color: Colors.black,

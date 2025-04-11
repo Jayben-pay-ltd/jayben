@@ -70,7 +70,7 @@ class _PostTransferState extends State<PostTransfer> {
                           child: Text.rich(
                               TextSpan(
                                   text:
-                                      "${Hive.box('userInfo').get("Currency")} ",
+                                      "${box("currency")} ",
                                   children: [
                                     TextSpan(
                                         text: "\n${widget.amount}",

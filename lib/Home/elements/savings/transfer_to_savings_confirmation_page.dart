@@ -93,7 +93,7 @@ class _TransferConfirmationState extends State<TransferConfirmation> {
                                     children: [
                                       TextSpan(
                                         text:
-                                            'Transfer \n${Hive.box('userInfo').get("Currency")} ${widget.amount} to',
+                                            'Transfer \n${box("currency")} ${widget.amount} to',
                                         style: GoogleFonts.ubuntu(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.grey[600],

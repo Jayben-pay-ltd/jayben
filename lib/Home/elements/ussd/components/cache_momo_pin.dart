@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
+import 'package:jayben/Utilities/provider_functions.dart';
 
 class CacheMomoPINDialogue extends StatefulWidget {
   const CacheMomoPINDialogue({Key? key}) : super(key: key);
@@ -108,8 +109,8 @@ class _CacheMomoPINDialogueState extends State<CacheMomoPINDialogue> {
                     InkWell(
                       onTap: () async {
                         if (pinController.text.isNotEmpty) {
-                          Hive.box("userInfo").put(
-                              "MomoPIN",
+                          boxPut(
+                              "mobile_money_pin",
                               pinController.text
                                   .replaceAll(" ", "")
                                   .replaceAll("-", "")

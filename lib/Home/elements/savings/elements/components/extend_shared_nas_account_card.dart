@@ -204,7 +204,7 @@ class _ExtendSharedNasAccountCardState
       decoration: deco(),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Text(
-        "${box('Currency')} $price",
+        "${box('currency')} $price",
         style: GoogleFonts.ubuntu(color: Colors.white),
       ),
     );

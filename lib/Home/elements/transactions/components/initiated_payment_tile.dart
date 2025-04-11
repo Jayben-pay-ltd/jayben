@@ -296,7 +296,7 @@
 //           "MerchantLogoUrl": merchantDoc.get("ProfileLogoUrl"),
 //         },
 //         "AmountPlusFee": paymentInfo['AmountPlusFee'],
-//         "Currency": Hive.box('userInfo').get("Currency"),
+//         "Currency": box("currency"),
 //         "PhoneNumber": 'To ${merchantDoc.get("CompanyName")}',
 //         "TransactionFeePercent": paymentInfo['TransactionFeePercent'],
 //         "TransactionFeeInKwacha": paymentInfo['TransactionFeeInKwacha'],

@@ -15,7 +15,7 @@ class TemporaryMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<MessageProviderFunctions>(
       builder: (_, value, child) {
-        return box("showTempMsg") == false
+        return box("show_temp_msg") == false
             ? nothing()
             : Container(
                 width: width(context),

@@ -225,7 +225,7 @@ class UserProviderFunctions extends ChangeNotifier {
       "users_who_upvoted": [
         {
           "current_platform_os": Platform.isAndroid ? "Android" : "iOS",
-          "current_build_version": box("CurrentBuildVersion"),
+          "current_build_version": box("current_build_version"),
           "date_upvoted": DateTime.now().toIso8601String(),
           "profile_image_url": box("profile_image_url"),
           "first_name": box("first_name"),
@@ -234,7 +234,7 @@ class UserProviderFunctions extends ChangeNotifier {
         }
       ],
       "creator_platform_os": Platform.isAndroid ? "Android" : "iOS",
-      "creator_current_build_version": box("CurrentBuildVersion"),
+      "creator_current_build_version": box("current_build_version"),
       "creator_details": {
         "profile_image_url": box("profile_image_url"),
         "first_name": box("first_name"),
@@ -422,7 +422,7 @@ class HomeProviderFunctions extends ChangeNotifier {
     await supabase.rpc("increase_daily_user_minutes_spent_in_app", params: {
       "last_time_online_timestamp": DateTime.now().toIso8601String(),
       "current_os_platform": Platform.isAndroid ? "Android" : "iOS",
-      "current_build_version": box("CurrentBuildVersion"),
+      "current_build_version": box("current_build_version"),
       "row_id": box("user_id"),
       "x": 1,
     });
@@ -481,7 +481,7 @@ class HomeProviderFunctions extends ChangeNotifier {
     await callGeneralFunction("update_last_time_seen_and_build_version", {
       "last_time_online_timestamp": DateTime.now().toIso8601String(),
       "current_os_platform": Platform.isAndroid ? "Android" : "iOS",
-      "current_build_version": box("CurrentBuildVersion"),
+      "current_build_version": box("current_build_version"),
     });
   }
 
@@ -524,6 +524,8 @@ class HomeProviderFunctions extends ChangeNotifier {
         app_settings["enable_saving_with_friends"]);
     boxPut("number_of_user_points_given_per_transaction",
         app_settings["number_of_user_points_given_per_transaction"]);
+    boxPut("default_transaction_visibility",
+        app_settings["default_transaction_visibility"]);
     boxPut(
         "cash_value_per_user_point", app_settings["cash_value_per_user_point"]);
     boxPut("agent_payments_withdraw_fee_percent",
@@ -599,6 +601,10 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     boxPut("jayben_secondary_customer_support_hotline",
         app_settings["jayben_secondary_customer_support_hotline"]);
+    boxPut("default_transaction_visibility",
+        app_settings["default_transaction_visibility"]);
+    boxPut("admin_users_that_can_see_secret_dashboard",
+        app_settings["admin_users_that_can_see_secret_dashboard"]);
     boxPut("maximum_number_of_savings_accounts_per_person",
         app_settings["maximum_number_of_savings_accounts_per_person"]);
     boxPut("airtime_purchase_minimum_amount",
@@ -1274,7 +1280,7 @@ class SavingsProviderFunctions extends ChangeNotifier {
     //   },
     //   body: json.encode(
     //     {
-    //       "post_is_public": box("DefaultTransactionPrivacy") == "Public",
+    //       "post_is_public": box("default_transaction_visibility") == "Public",
     //       "full_names": "${box("first_name")} ${box("last_name")}",
     //       "account_id": transfer_info["account_id"],
     //       "request_type": "add_money_nas_account",
@@ -1544,7 +1550,7 @@ class AuthProviderFunctions extends ChangeNotifier {
     packageInfo = await PackageInfo.fromPlatform();
     buildVersion = packageInfo!.version;
 
-    boxPut("CurrentBuildVersion", packageInfo!.version);
+    boxPut("current_build_version", packageInfo!.version);
 
     notifyListeners();
   }
@@ -2058,7 +2064,7 @@ class AuthProviderFunctions extends ChangeNotifier {
     // if (emailPrefix.length > 1 && emailPrefix != null) {
     //   String lastLetter = emailPrefix[0].substring(emailPrefix[0].length - 1);
 
-    //   boxPut("ObscuredEmail",
+    //   boxPut("obscured_email",
     //       "${emailPrefix[0][0].toString().toUpperCase()}****${lastLetter.toString().toLowerCase()}@${emailPrefix[1]}");
     // }
     // returns an email eg J****a@gmail.com for Justinkaunda@gmail.com
@@ -2212,7 +2218,7 @@ class PaymentProviderFunctions extends ChangeNotifier {
     Map<String, dynamic> res = await callGeneralFunction(
       "send_money_p2p",
       {
-        "post_is_public": box("DefaultTransactionPrivacy") == "Public",
+        "post_is_public": box("default_transaction_visibility") == "Public",
         "receiver_user_id": paymentInfo['receiver_user_id'],
         "comment": paymentInfo['comment'],
         "amount": paymentInfo["amount"],
@@ -2795,7 +2801,7 @@ class UssdProviderFunctions extends ChangeNotifier {
     // // excuted the steps after dialing code
     // for (var i = 0; i < steps.length - 1; i++) {
     //   if (steps[i + 1] == "pin") {
-    //     String? res_2 = await sendOption(box("MomoPIN"));
+    //     String? res_2 = await sendOption(box("mobile_money_pin"));
 
     //     if (res_2 == null) {
     //       await cancelSession();
@@ -3041,7 +3047,7 @@ class KycProviderFunctions extends ChangeNotifier {
     await Future.wait([
       supabase.from("account_kyc_verification_requests").insert({
         "user_information": {
-          "date_of_birth": box("DateOfBirth"),
+          "date_of_birth": box("date_of_birth"),
           "profile_image_url": box("country"),
           "physical_address": box("address"),
           "first_name": box("first_name"),
@@ -3509,9 +3515,9 @@ class FeedProviderFunctions extends ChangeNotifier {
   // loads the locally stored contacts
   void loadLocallyStoredContacts() {
     my_uploaded_contacts_without_jayben_accounts =
-        box("ContactsWithoutJaybenAccounts");
+        box("contacts_without_jayben_accounts");
 
-    my_uploaded_contacts_with_jayben_accs = box("ContactsWithJaybenAccounts");
+    my_uploaded_contacts_with_jayben_accs = box("contacts_without_jayben_accounts");
   }
 
   // gets a list of the user's uploaded contacts
@@ -3563,7 +3569,7 @@ class FeedProviderFunctions extends ChangeNotifier {
       boxPut(
           "ContactsWithJaybenAccounts", my_uploaded_contacts_with_jayben_accs);
 
-      boxPut("ContactsWithoutJaybenAccounts",
+      boxPut("contacts_without_jayben_accounts",
           my_uploaded_contacts_without_jayben_accounts);
 
       getSelectedAllContactsExcept();
@@ -3818,7 +3824,7 @@ class MessageProviderFunctions extends ChangeNotifier {
         .from("chatrooms")
         .stream(primaryKey: ["chatroom_id"]).eq("chatroom_id", chatroom_id);
 
-    boxPut("showTempMsg", false);
+    boxPut("show_temp_msg", false);
   }
 
   void getTemporaryMessages(String chatroom) {}
@@ -3840,7 +3846,7 @@ class MessageProviderFunctions extends ChangeNotifier {
   // 1), Calls an api to send the message
   // 2). Gets member notification token and sends notifications
   Future<void> sendMessage(Map messageInfo) async {
-    boxPut("showTempMsg", true);
+    boxPut("show_temp_msg", true);
     tempMessageStorage = messageInfo["message_controller"].text;
     messageInfo["message_controller"].text = "";
     showMessageTemp = true;
@@ -3931,7 +3937,7 @@ class MessageProviderFunctions extends ChangeNotifier {
 
   // sends a message that has a photo or video
   Future<void> sendMediaMessage(Map messageInfo) async {
-    boxPut("showTempMsg", true);
+    boxPut("show_temp_msg", true);
     tempMessageStorage = messageInfo["caption_controller"].text;
     messageInfo["caption_controller"].text = "";
     showMessageTemp = true;
@@ -3947,14 +3953,14 @@ class MessageProviderFunctions extends ChangeNotifier {
     // Sends the messgae to the chatroom
     await supabase.functions.invoke('send_chatroom_message_v1', body: {
       "reply_message_details": {
-        "reply_message_thumbnail_url": box("replySentByThumbnailUrl") ?? '',
-        "reply_message_first_name": box("replySentByFirstName") ?? '',
-        "reply_message_last_name": box("replySentByLastName") ?? '',
+        "reply_message_thumbnail_url": box("reply_sent_by_thumbnail_url") ?? '',
+        "reply_message_first_name": box("reply_sent_by_first_name") ?? '',
+        "reply_message_last_name": box("reply_sent_by_last_name") ?? '',
         "reply_message_id": messageInfo["reply_message_id"],
-        "reply_message_type": box("replyMessageType") ?? '',
-        "reply_message_uid": box("replySentByUID") ?? '',
-        "reply_message": box("replyMessage") ?? '',
-        "reply_caption": box("replyCaption") ?? '',
+        "reply_message_type": box("reply_message_type") ?? '',
+        "reply_message_uid": box("reply_sent_by_uid") ?? '',
+        "reply_message": box("reply_message") ?? '',
+        "reply_caption": box("reply_caption") ?? '',
       },
       "other_person_user_id": messageInfo["other_person_user_id"],
       "message_details": {
@@ -4069,15 +4075,15 @@ class MessageProviderFunctions extends ChangeNotifier {
   void removeTemporaryMessage() {
     showMessageTemp = false;
     tempMessageStorage = "";
-    boxDelete("replyMessage");
-    boxDelete("replyCaption");
-    boxDelete("replyMessageID");
-    boxDelete("replySentByUID");
-    boxPut("showTempMsg", false);
-    boxDelete("replyMessageType");
-    boxDelete("replySentByLastName");
-    boxDelete("replySentByFirstName");
-    boxDelete("replySentByThumbnailUrl");
+    boxDelete("reply_message");
+    boxDelete("reply_caption");
+    boxDelete("reply_messageID");
+    boxDelete("reply_sent_by_uid");
+    boxPut("show_temp_msg", false);
+    boxDelete("reply_message_type");
+    boxDelete("reply_sent_by_last_name");
+    boxDelete("reply_sent_by_first_name");
+    boxDelete("reply_sent_by_thumbnail_url");
 
     notifyListeners();
   }
@@ -4091,28 +4097,31 @@ class MessageProviderFunctions extends ChangeNotifier {
     showReplyBody = true;
 
     // stores the reply details locally
-    boxPut("replySentByUID", messageInfo["user_id"]);
-    boxPut("replyMessageID", messageInfo["message_id"]);
-    boxPut("replyMessage", messageInfo["message_details"]["message"]);
-    boxPut("replyCaption", messageInfo["message_details"]["caption"]);
+    boxPut("reply_sent_by_uid", messageInfo["user_id"]);
+    boxPut("reply_message_id", messageInfo["message_id"]);
+    boxPut("reply_message", messageInfo["message_details"]["message"]);
+    boxPut("reply_caption", messageInfo["message_details"]["caption"]);
+    boxPut("reply_sent_by_thumbnail_url",
+        messageInfo["message_details"]["message"]);
     boxPut(
-        "replySentByThumbnailUrl", messageInfo["message_details"]["message"]);
-    boxPut("replySentByLastName", messageInfo["sender_details"]["first_name"]);
-    boxPut("replySentByFirstName", messageInfo["sender_details"]["last_name"]);
-    boxPut("replyMessageType", messageInfo["message_details"]["message_type"]);
+        "reply_sent_by_last_name", messageInfo["sender_details"]["first_name"]);
+    boxPut(
+        "reply_sent_by_first_name", messageInfo["sender_details"]["last_name"]);
+    boxPut(
+        "reply_message_type", messageInfo["message_details"]["message_type"]);
     notifyListeners();
   }
 
   // clears the reply message info stored locally
   void removeReplyWidget() {
     showReplyBody = false;
-    boxDelete("replyMessage");
-    boxDelete("replyCaption");
-    boxDelete("replySentByUID");
-    boxDelete("replyMessageType");
-    boxDelete("replySentByLastName");
-    boxDelete("replySentByFirstName");
-    boxDelete("replySentByThumbnailUrl");
+    boxDelete("reply_message");
+    boxDelete("reply_caption");
+    boxDelete("reply_sent_by_uid");
+    boxDelete("reply_message_type");
+    boxDelete("reply_sent_by_last_name");
+    boxDelete("reply_sent_by_first_name");
+    boxDelete("reply_sent_by_thumbnail_url");
 
     notifyListeners();
   }
@@ -4261,7 +4270,7 @@ class AttachProviderFunctions extends ChangeNotifier {
 
     Map<String, dynamic> res =
         await callGeneralFunction("add_money_to_shared_nas_account", {
-      "post_is_public": box("DefaultTransactionPrivacy") == "Public",
+      "post_is_public": box("default_transaction_visibility") == "Public",
       "media_details": [
         {
           "aspect_ratio": transfer_info['aspect_ratio'],
@@ -4304,7 +4313,7 @@ class AttachProviderFunctions extends ChangeNotifier {
     List<String>? urls = await uploadMedia(postInfo["media_type"]);
 
     Map<String, dynamic> res = await callGeneralFunction("send_money_p2p", {
-      "post_is_public": box("DefaultTransactionPrivacy") == "Public",
+      "post_is_public": box("default_transaction_visibility") == "Public",
       "receiver_user_id": postInfo["payment_info"]["receiver_map"]["user_id"],
       "amount": postInfo["payment_info"]["amount"],
       "media_details": [
@@ -6129,17 +6138,17 @@ Widget nothing() {
 // Gets the value of key
 // from the hive box locally
 dynamic box(String key) {
-  return Hive.box("userInfo").get(key);
+  return Hive.box("user_information").get(key);
 }
 
 // Stores values using their keys in hive
 dynamic boxPut(String key_name, dynamic value) {
-  Hive.box("userInfo").put(key_name, value);
+  Hive.box("user_information").put(key_name, value);
 }
 
 // deletes box values using their keys in hive
 dynamic boxDelete(String key_name) {
-  Hive.box("userInfo").delete(key_name);
+  Hive.box("user_information").delete(key_name);
 }
 
 // Shows bottom card

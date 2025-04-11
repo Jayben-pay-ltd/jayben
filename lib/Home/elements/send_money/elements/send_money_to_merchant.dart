@@ -30,7 +30,7 @@ class _SendMoneyToMerchantState extends State<SendMoneyToMerchant> {
 
   @override
   Widget build(BuildContext context) {
-    double dollarRate = double.parse(box("DollarRate").toString());
+    double dollarRate = double.parse(box("dollar_rate").toString());
     return Consumer<PaymentProviderFunctions>(
       builder: (context, value, child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
