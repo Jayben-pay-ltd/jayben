@@ -110,7 +110,7 @@ Widget accountTypeFilterWidget(BuildContext context) {
                 value.changeSavingsFilterIndex(0);
 
                 await Future.wait([
-                  value1.loadDetailsToHive(),
+                  value1.loadDetailsToHive(context),
                   value1.getHomeTransactions(),
                   value1.getHomeSavingsAccounts(),
                   value1.updateNotificationToken(),
@@ -140,7 +140,7 @@ Widget accountTypeFilterWidget(BuildContext context) {
                 value.changeSavingsFilterIndex(1);
 
                 await Future.wait([
-                  value1.loadDetailsToHive(),
+                  value1.loadDetailsToHive(context),
                   value1.getHomeTransactions(),
                   value1.getHomeSavingsAccounts(),
                   value1.updateNotificationToken(),

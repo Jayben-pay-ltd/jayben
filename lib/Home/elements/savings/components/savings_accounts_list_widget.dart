@@ -21,7 +21,7 @@ class _SavingsAccountsListWidgetState extends State<SavingsAccountsListWidget> {
     return Consumer2<HomeProviderFunctions, SavingsProviderFunctions>(
       builder: (_, value, value1, child) {
         bool state2 = value.returnMySharedNasAccounts() == null;
-        return state2
+        return state2 || box("show_app_wide_top_20_nas_accounts") == null
             ? SizedBox(
                 width: width(context),
                 height: height(context) * 0.55,

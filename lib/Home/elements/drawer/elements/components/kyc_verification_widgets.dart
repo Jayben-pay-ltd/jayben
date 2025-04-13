@@ -61,7 +61,7 @@ Widget customAppBar(BuildContext context) {
                         value.getVerficationRequests(),
                         context
                             .read<HomeProviderFunctions>()
-                            .loadDetailsToHive()
+                            .loadDetailsToHive(context)
                       ]);
 
                       value.toggleIsLoading();
@@ -494,7 +494,7 @@ Widget submitButtonWidget(BuildContext context) {
 
         await Future.wait([
           value.getVerficationRequests(),
-          context.read<HomeProviderFunctions>().loadDetailsToHive()
+          context.read<HomeProviderFunctions>().loadDetailsToHive(context)
         ]);
 
         value.toggleIsSubmittingFile();

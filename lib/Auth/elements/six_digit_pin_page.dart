@@ -31,13 +31,13 @@ class _PasscodePageState extends State<PasscodePage> {
     //   showSnackBar(context, "An error ocurred trying to open link");
     // });
 
-    onPageLaunch();
+    onPageLaunch(context);
     super.initState();
   }
 
-  Future<void> onPageLaunch() async {
+  Future<void> onPageLaunch(BuildContext context) async {
     // queries the user's PIN and OnHold values
-    await context.read<HomeProviderFunctions>().loadDetailsToHive();
+    await context.read<HomeProviderFunctions>().loadDetailsToHive(context);
 
     // 1). decrypts the encrypted user pin
     // 2). pretty much intended to get the reset email and store it

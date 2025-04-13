@@ -129,10 +129,10 @@ class _HomePageState extends State<HomePage>
     await Future.wait([
       context.read<FeedProviderFunctions>().getUploadedContacts(),
       context.read<FeedProviderFunctions>().getFeedTransactions(),
+      prov.loadDetailsToHive(context),
       prov.updateNotificationToken(),
       prov.getHomeSavingsAccounts(),
       prov.getHomeTransactions(),
-      prov.loadDetailsToHive(),
     ]);
 
     // if user's account is restricted
@@ -141,14 +141,12 @@ class _HomePageState extends State<HomePage>
     }
 
     _timer = Timer.periodic(const Duration(minutes: 1), (timer) async {
-      await prov.updateDeviceIDAndIPAddress(context);
+      await prov.updateDeviceIDAndIPAddress(context, null);
       await prov.updateTimeSpentInTimeline();
       await prov.updateUserLastSeen();
     });
 
     _scroll_controller.addListener(_onScroll);
-
-    context.read<HomeProviderFunctions>().checkAppVersion(context);
   }
 
   void _onScroll() {

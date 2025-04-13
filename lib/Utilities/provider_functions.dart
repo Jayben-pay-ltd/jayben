@@ -358,13 +358,21 @@ class HomeProviderFunctions extends ChangeNotifier {
   }
 
   // updates the user's current device id & ip address
-  Future<void> updateDeviceIDAndIPAddress(BuildContext context) async {
+  Future<void> updateDeviceIDAndIPAddress(
+    BuildContext context,
+    Map<String, dynamic>? user_data_res,
+  ) async {
     if (box("user_id") == null) return;
 
-    // gets the user's account row from supabase
-    Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
-      "get_app_wide_settings": false,
-    });
+    Map<String, dynamic>? res = user_data_res;
+
+    if (user_data_res == null) {
+      res = await callGeneralFunction("get_user_account", {
+        "get_app_wide_settings": true,
+      });
+    }
+
+    if (res == null) return;
 
     Map user_row = res["data"]["data"]["user_data"];
 
@@ -386,20 +394,18 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (user_row["current_device_ip_address"] == "" ||
         user_row["current_device_id"] == "") {
       // updates the ip address field
-      Map<String, dynamic> res =
+      Map<String, dynamic> response =
           await callGeneralFunction("update_device_id_and_ip_address", {
         "new_device_ip_address": ip_address,
         "new_device_id": device_id,
       });
-
-      return;
     }
 
     // if the user is logged in on another device
     if (user_row["current_device_id"] != device_id) {
       // await _auth.signOut();
 
-      if (box("user_id") == null) return;
+      if (box("user_id") == null) return null;
 
       changePage(context, const PreLoginPage(), type: "pr");
 
@@ -409,9 +415,40 @@ class HomeProviderFunctions extends ChangeNotifier {
 
       showSnackBar(context, "You have been Logged Out By Another Device",
           color: Colors.grey[700]!);
+    }
+  }
+
+  // Checks if user is on latest build version and dismisses update reminders
+  Future<void> checkAppVersion(
+    BuildContext context,
+    Map<String, dynamic> res,
+  ) async {
+    if (box("user_id") == null) return;
+
+    if (res == null) return;
+
+    Map user_map = res["data"]["data"]["user_data"];
+
+    Map app_wide_settings = res["data"]["data"]["app_wide_settings"];
+
+    if (user_map == null) return;
+
+    // if no reminders are present
+    if (!user_map["show_update_alert"]) return;
+
+    // if user is on latest build version, dismiss update reminders
+    if (user_map["current_build_version"] ==
+        app_wide_settings["current_most_recent_client_app_build_version"]) {
+      // dismisses the update reminder in user"s row
+      await callGeneralFunction("update_show_update_alert", {
+        "new_value": false,
+      });
 
       return;
     }
+
+    // routes user to update app page
+    changePage(context, const UpdateAppPage(), type: "pr");
   }
 
   // Upates build version, last seen and platform
@@ -419,13 +456,17 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (box("user_id") == null) return;
 
     // updates the user's row
-    await supabase.rpc("increase_daily_user_minutes_spent_in_app", params: {
-      "last_time_online_timestamp": DateTime.now().toIso8601String(),
-      "current_os_platform": Platform.isAndroid ? "Android" : "iOS",
-      "current_build_version": box("current_build_version"),
+    FunctionResponse res = await supabase.rpc("increase_daily_user_minutes_spent_in_app", params: {
+      "last_seen_timestamp": DateTime.now().toIso8601String(),
+      "platform_os": Platform.isAndroid ? "Android" : "iOS",
+      "build_version": box("current_build_version"),
       "row_id": box("user_id"),
       "x": 1,
     });
+
+    Map<String, dynamic> response = res.data as Map<String, dynamic>();
+
+    print(response);
   }
 
   // 1). Gets normal treasnactions
@@ -435,9 +476,6 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (box("user_id") == null) return;
 
     loadPreviousHomeTransactions();
-
-    // updates hive values
-    await loadDetailsToHive();
 
     // gets home transactions
     Map<String, dynamic> res = await callGeneralFunction(
@@ -557,7 +595,7 @@ class HomeProviderFunctions extends ChangeNotifier {
   // 1). gets user's details & admin's settings
   // 2). saves the details & settings locally in device
   // 3). precaches the user's profile image locally
-  Future<void> loadDetailsToHive() async {
+  Future<void> loadDetailsToHive(BuildContext context) async {
     // gets this user's account record row
     Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
       "get_app_wide_settings": true,
@@ -637,14 +675,19 @@ class HomeProviderFunctions extends ChangeNotifier {
         app_settings["user_referral_commission_percentage"]);
     boxPut("local_wire_transfer_withdraw_fee_in_usd",
         app_settings["local_wire_transfer_withdraw_fee_in_usd"]);
+    boxPut("show_app_wide_top_20_nas_accounts",
+        app_settings["show_app_wide_top_20_nas_accounts"]);
 
     // precaches user's profileimage
     await cacheImage(box("profile_image_url"));
 
     // initializes dynmaic links
-    // await initDynamicLinks();
 
     notifyListeners();
+
+    await updateDeviceIDAndIPAddress(context, res);
+
+    await checkAppVersion(context, res);
   }
 
   Future<void> initDynamicLinks() async {
@@ -696,41 +739,6 @@ class HomeProviderFunctions extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Checks if user is on latest build version and dismisses update reminders
-  Future<void> checkAppVersion(BuildContext context) async {
-    await updateDeviceIDAndIPAddress(context);
-
-    if (box("user_id") == null) return;
-
-    // gets user"s row & settings row
-    Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
-      "get_app_wide_settings": false,
-    });
-
-    Map user_map = res["data"]["data"]["user_data"];
-
-    Map app_wide_settings = res["data"]["data"]["app_wide_settings"];
-
-    if (user_map == null) return;
-
-    // if no reminders are present
-    if (!user_map["show_update_alert"]) return;
-
-    // if user is on latest build version, dismiss update reminders
-    if (user_map["current_build_version"] ==
-        app_wide_settings["current_most_recent_client_app_build_version"]) {
-      // dismisses the update reminder in user"s row
-      await callGeneralFunction("update_show_update_alert", {
-        "new_value": false,
-      });
-
-      return;
-    }
-
-    // routes user to update app page
-    changePage(context, const UpdateAppPage(), type: "pr");
-  }
-
   // ======== Home Savings functions
 
   // 1). Gets no access accounts (firebase & supabase)
@@ -742,8 +750,10 @@ class HomeProviderFunctions extends ChangeNotifier {
       {},
     );
 
-    top_20_shared_nas_accounts = res["data"]["top_20_nas_accounts"];
-    my_shared_nas_accounts = res["data"]["my_shared_nas_accounts"];
+    print(res["data"]);
+
+    top_20_shared_nas_accounts = res["data"]["data"]["top_20_nas_accounts"];
+    my_shared_nas_accounts = res["data"]["data"]["shared_nas_acocounts"];
 
     double temp_balance = 0.0;
 
@@ -3517,7 +3527,8 @@ class FeedProviderFunctions extends ChangeNotifier {
     my_uploaded_contacts_without_jayben_accounts =
         box("contacts_without_jayben_accounts");
 
-    my_uploaded_contacts_with_jayben_accs = box("contacts_without_jayben_accounts");
+    my_uploaded_contacts_with_jayben_accs =
+        box("contacts_without_jayben_accounts");
   }
 
   // gets a list of the user's uploaded contacts
@@ -6149,6 +6160,10 @@ dynamic boxPut(String key_name, dynamic value) {
 // deletes box values using their keys in hive
 dynamic boxDelete(String key_name) {
   Hive.box("user_information").delete(key_name);
+}
+
+dynamic boxClear() {
+  Hive.box("user_information").clear();
 }
 
 // Shows bottom card

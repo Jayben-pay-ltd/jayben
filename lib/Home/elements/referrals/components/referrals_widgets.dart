@@ -70,7 +70,7 @@ Widget customAppBar(BuildContext context) {
                         value.getMyReferralCommissions(),
                         context
                             .read<HomeProviderFunctions>()
-                            .loadDetailsToHive()
+                            .loadDetailsToHive(context)
                       ]);
 
                       value.toggleIsLoading();

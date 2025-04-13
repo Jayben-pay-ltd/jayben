@@ -5,7 +5,7 @@ import { serve } from "https://deno.land/std@0.210.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.2&no-check";
 
 serve(async (req: Request) => {
-  const body = await req.json();
+  const payload = await req.json();
 
   // Create a Supabase client with the Auth context of the logged in user.
   const supabaseClient = createClient(
@@ -34,6 +34,9 @@ serve(async (req: Request) => {
 
   // gets the user's id from the request
   const user_id = await get_auth_user_id(req, supabaseClient);
+
+  // adds the user's id to body
+  const body = { ...payload, "user_id": user_id };
 
   // if the user isn't logged in & the type of request isn't permitted to bypass login
   if (
@@ -329,6 +332,7 @@ serve(async (req: Request) => {
         data_to_return_in_response = await get_home_saving_accounts(
           supabaseClient,
           req,
+          body
         );
         break;
 
@@ -556,6 +560,8 @@ const get_auth_user_id = async (
   const { data } = await _supabaseClient.auth.getUser(token);
 
   const user = data.user;
+
+  console.log("The user's information from the DB is: ", user);
 
   if (user != null) {
     return user.id;
@@ -1091,7 +1097,7 @@ const get_user_account = async (
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // gets the user's account row
   const user_data = await _supabaseClient.from("users").select().eq(
@@ -1099,7 +1105,7 @@ const get_user_account = async (
     user_id,
   );
 
-  if (_body["get_app_wide_settings"]) {
+  if (_body["get_app_wide_settings"] == true) {
     const settings_data = await _supabaseClient.from(
       "appwide_admin_settings_private",
     )
@@ -1109,23 +1115,25 @@ const get_user_account = async (
 
     console.log(user_id);
 
+    console.log(settings_data);
+
     return {
-      "message": "successfully got the user's account row",
+      "message": "successfully got the user's account row &&&&",
       "status": "success",
       "status_code": 200,
       "data": {
-        "app_wide_settings": settings_data[0],
-        "user_data": user_data[0],
+        "app_wide_settings": settings_data["data"][0],
+        "user_data": user_data["data"][0],
       },
     };
   } else {
     return {
-      "message": "successfully got the user's account row",
+      "message": "successfully got the user's account row...",
       "status": "success",
       "status_code": 200,
       "data": {
         "app_wide_settings": null,
-        "user_data": user_data[0],
+        "user_data": user_data["data"][0],
       },
     };
   }
@@ -1206,16 +1214,18 @@ const get_users_home_page_transactions = async (
 const get_home_saving_accounts = async (
   _supabaseClient: any,
   _req: Request,
+  _body: any,
 ): Promise<any> => {
   /*
     body preview
     {
       "request_type": "get_home_saving_accounts",
+      "user_id": string,
     }
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // gets the shared supabase no access accounts
   const shared_nas_acocounts = await _supabaseClient

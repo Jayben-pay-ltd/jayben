@@ -52,7 +52,7 @@ class _PendingApprovalPageState extends State<PendingApprovalPage> {
                   isChecking = true;
                 });
 
-                await context.read<HomeProviderFunctions>().loadDetailsToHive();
+                await context.read<HomeProviderFunctions>().loadDetailsToHive(context);
 
                 if (!box("account_is_on_hold")) {
                   changePage(context, const HomePage(), type: "pr");

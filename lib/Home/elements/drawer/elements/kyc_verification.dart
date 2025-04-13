@@ -16,7 +16,7 @@ class _KycVerificationPageState extends State<KycVerificationPage> {
   @override
   void initState() {
     context.read<KycProviderFunctions>().getVerficationRequests();
-    context.read<HomeProviderFunctions>().loadDetailsToHive();
+    context.read<HomeProviderFunctions>().loadDetailsToHive(context);
     context.read<KycProviderFunctions>().nullifyPhotoFile(3);
 
     super.initState();

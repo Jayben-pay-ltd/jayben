@@ -45,9 +45,8 @@ Widget homeBodyWidget(BuildContext context, scaffoldKey, _scroll_controller) {
                           .getFeedTransactions(),
                       value.updateNotificationToken(),
                       value.getHomeSavingsAccounts(),
-                      value.checkAppVersion(context),
                       value.getHomeTransactions(),
-                      value.loadDetailsToHive(),
+                      value.loadDetailsToHive(context),
                     ]);
 
                     value.toggleIsLoading();
@@ -107,11 +106,10 @@ Widget walletBalanceWidget(BuildContext context) {
                         await playSound('refresh.mp3');
 
                         await Future.wait([
-                          value.loadDetailsToHive(),
+                          value.loadDetailsToHive(context),
                           value.getHomeTransactions(),
                           value.getHomeSavingsAccounts(),
                           value.updateNotificationToken(),
-                          value.checkAppVersion(context),
                         ]);
 
                         value.toggleIsLoading();
@@ -187,9 +185,8 @@ Widget walletBalanceWidget(BuildContext context) {
                                       .getFeedTransactions(),
                                   value.updateNotificationToken(),
                                   value.getHomeSavingsAccounts(),
-                                  value.checkAppVersion(context),
                                   value.getHomeTransactions(),
-                                  value.loadDetailsToHive(),
+                                  value.loadDetailsToHive(context),
                                 ]);
 
                                 value.toggleIsLoading();
@@ -276,11 +273,10 @@ Widget savingsButton() {
             value.changeHomeState("Savings");
 
             await Future.wait([
-              value.loadDetailsToHive(),
+              value.loadDetailsToHive(context),
               value.getHomeTransactions(),
               value.getHomeSavingsAccounts(),
               value.updateNotificationToken(),
-              value.checkAppVersion(context),
             ]);
           },
           child: Container(
@@ -463,12 +459,14 @@ Widget homeSavingsBody(BuildContext context) {
       mainAxisSize: MainAxisSize.min,
       children: [
         createSavingsAccountWidget(context),
-        !box("show_app_wide_top_20_nas_accounts")
+        box("show_app_wide_top_20_nas_accounts") == null
             ? nothing()
-            : Padding(
-                padding: const EdgeInsets.only(top: 30.0),
-                child: accountTypeFilterWidget(context),
-              ),
+            : !box("show_app_wide_top_20_nas_accounts")
+                ? nothing()
+                : Padding(
+                    padding: const EdgeInsets.only(top: 30.0),
+                    child: accountTypeFilterWidget(context),
+                  ),
         const SavingsAccountsListWidget(),
       ],
     ),
