@@ -3442,19 +3442,11 @@ const get_my_referral_commissions = async (
     "request_type": "get_my_referral_commissions",
     "get_number_of_people_user_referred": bool,
     "number_of_rows_to_query": string,
+    "user_id": string
   }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
-
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  }
+  const user_id = _body["user_id"];
 
   // gets the user's referral commissions rows
   const my_referral_commissions = await _supabaseClient.from(

@@ -1,9 +1,7 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'package:flutter/cupertino.dart';
 import 'package:jayben/Auth/enter_details_step2_page.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
-import 'package:jayben/Utilities/general_widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';

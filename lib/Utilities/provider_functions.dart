@@ -429,7 +429,7 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     Map user_map = res["data"]["data"]["user_data"];
 
-    Map app_wide_settings = res["data"]["data"]["app_wide_settings"];
+    Map app_wide_settings = res["data"]["data"]["app_wide_settings"]["record_contents"];
 
     if (user_map == null) return;
 
@@ -456,7 +456,8 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (box("user_id") == null) return;
 
     // updates the user's row
-    FunctionResponse res = await supabase.rpc("increase_daily_user_minutes_spent_in_app", params: {
+    FunctionResponse? res = await supabase
+        .rpc("increase_daily_user_minutes_spent_in_app_version_2", params: {
       "last_seen_timestamp": DateTime.now().toIso8601String(),
       "platform_os": Platform.isAndroid ? "Android" : "iOS",
       "build_version": box("current_build_version"),
@@ -464,7 +465,11 @@ class HomeProviderFunctions extends ChangeNotifier {
       "x": 1,
     });
 
-    Map<String, dynamic> response = res.data as Map<String, dynamic>();
+    Map<String, dynamic>? response;
+
+    if (res != null) {
+      response = res.data as Map<String, dynamic>;
+    }
 
     print(response);
   }
@@ -550,7 +555,7 @@ class HomeProviderFunctions extends ChangeNotifier {
       "get_app_wide_settings": true,
     });
 
-    Map app_settings = res["data"]["data"]["app_wide_settings"];
+    Map app_settings = res["data"]["data"]["app_wide_settings"]["record_contents"];
 
     boxPut("jayben_secondary_customer_support_hotline",
         app_settings["jayben_secondary_customer_support_hotline"]);
@@ -602,7 +607,9 @@ class HomeProviderFunctions extends ChangeNotifier {
     });
 
     Map user_map = res["data"]["data"]["user_data"];
-    Map app_settings = res["data"]["data"]["app_wide_settings"];
+    Map app_settings = res["data"]["data"]["app_wide_settings"]["record_contents"];
+
+    print("The app settings gotten are: ${app_settings}");
 
     if (user_map == null) return;
 
@@ -677,6 +684,9 @@ class HomeProviderFunctions extends ChangeNotifier {
         app_settings["local_wire_transfer_withdraw_fee_in_usd"]);
     boxPut("show_app_wide_top_20_nas_accounts",
         app_settings["show_app_wide_top_20_nas_accounts"]);
+
+    print(
+        "show_app_wide_top_20_nas_accounts: ${app_settings["show_app_wide_top_20_nas_accounts"]}");
 
     // precaches user's profileimage
     await cacheImage(box("profile_image_url"));
@@ -2669,19 +2679,19 @@ class ReferralProviderFunctions extends ChangeNotifier {
     );
 
     List<dynamic>? commissions_rows =
-        res["data"].data.data.referral_commissions;
+        res["data"]["data"]["referral_commissions"];
 
     List<dynamic>? people_invited_rows =
-        res["data"].data.data.people_user_has_referred;
+        res["data"]["data"]["people_user_has_referred"];
 
     referral_commissions = commissions_rows;
 
     number_of_people_referred =
-        res["data"].data.data.people_user_has_referred_count;
+        res["data"]["data"]["people_user_has_referred_count"];
 
     notifyListeners();
 
-    return res["data"].data.status == "success";
+    return res["data"]["status"] == "success";
   }
 
   // opens the message app and gets ready to send sms
