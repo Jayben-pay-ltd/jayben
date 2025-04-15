@@ -118,32 +118,37 @@ class _AccountDeletionDialogueState extends State<AccountDeletionDialogue> {
 
                             value.toggleIsLoading();
 
-                            Future.delayed(const Duration(seconds: 3)); 
+                            Future.delayed(const Duration(seconds: 3));
 
-                            // bool user_has_money = await value.moneyCheckBeforeDeletion();
+                            bool user_has_money = await value
+                                .checkIfUserHasMoneyInSystemBeforeAccountDeletion();
 
                             value.toggleIsLoading();
 
-                            // if (user_has_money) {
-                            //   showSnackBar(
-                            //     context, "Your account has money in it. Please withdraw all of it first.",
-                            //     color: Colors.red, duration: 10);
+                            if (user_has_money) {
+                              showSnackBar(
+                                  context,
+                                  "Your account has money in it. Please withdraw all of it first or send it "
+                                  "to another account. If you have an active savings account, you need to first "
+                                  "transfer ownership to another Jayben user and then you can close this account.",
+                                  color: Colors.red,
+                                  duration: 10);
 
-                            //   return;
-                            // }
+                              return;
+                            }
 
-                            boxDelete("is_logged_in");
+                            goBack(context);
 
                             showSnackBar(
                                 context, "Your account is being deleted",
                                 color: Colors.red, duration: 10);
 
-                            changePage(context, const PreLoginPage(),
-                                type: "pr");
+                            // changePage(context, const PreLoginPage(),
+                            //     type: "pr");
 
-                            await value.deleteAccount(deletion_reason);
+                            // await value.deleteAccount(deletion_reason);
 
-                            await Hive.box('user_info').clear();
+                            // await boxClear();
                           },
                           child: Container(
                             alignment: Alignment.center,

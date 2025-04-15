@@ -1,9 +1,11 @@
 // ignore_for_file: non_constant_identifier_names, unnecessary_null_comparison, unnecessary_string_interpolations
 // import 'dart:html';
 
+import 'package:dart_ipify/dart_ipify.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:http/http.dart';
 import 'package:jayben/Home/elements/deposit_money/elements/card_payments_deposit_webview.dart';
+import 'package:jayben/Home/elements/nfc/tap_to_pay_page.dart';
 import 'package:jayben/Home/elements/withdraw_money/withdraw_money_confirmation_page.dart';
 import 'package:jayben/Home/elements/messages/elements/send_media_message.dart';
 import 'package:jayben/Home/elements/qr_scanner/scan_confirmation_page.dart';
@@ -19,7 +21,6 @@ import 'package:jayben/Auth/elements/update_app_page.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_vibrate/flutter_vibrate.dart';
-import 'package:get_ip_address/get_ip_address.dart';
 import 'package:video_compress/video_compress.dart';
 import '../Auth/elements/six_digit_pin_page.dart';
 import 'package:fast_contacts/fast_contacts.dart';
@@ -107,10 +108,12 @@ class UserProviderFunctions extends ChangeNotifier {
   // gets user's account achievements
   Future<void> getUserAchievements() async {
     // gets a list of all this user's transactions
-    Map<String, dynamic> res =
-        await callGeneralFunction("get_all_users_transactions", {});
+    Map<String, dynamic> res = await callGeneralFunction(
+      "get_all_users_transactions",
+      {},
+    );
 
-    List<dynamic> transactions = res["data"];
+    List<dynamic> transactions = res["data"]["data"];
 
     double temp_total_amount_ever_withdrawn = 0.0;
     double temp_total_amount_ever_deposited = 0.0;
@@ -161,14 +164,14 @@ class UserProviderFunctions extends ChangeNotifier {
   }
 
   // updates the user's new profile image
-  Future<void> updateProfileImage(File? image) async {
-    if (image == null) return;
+  Future<String?> updateProfileImage(File? image) async {
+    if (image == null) return null;
 
     UploadTask? task = uploadImageToFirebase(
         'UserProfileImages/${basename(image.path)}', image);
     //task to upload the image
 
-    if (task == null) return;
+    if (task == null) return null;
 
     task.snapshotEvents.listen((event) {
       upload_progress =
@@ -195,6 +198,8 @@ class UserProviderFunctions extends ChangeNotifier {
       }),
       cacheImage(imageUrl),
     ]);
+
+    return imageUrl;
   }
 
   // gets a list of all active submissions
@@ -263,7 +268,6 @@ class UserProviderFunctions extends ChangeNotifier {
 // converted to RLS
 class HomeProviderFunctions extends ChangeNotifier {
   // Stream<QuerySnapshot<Object>?>? initiatedPaymentsStream;
-  IpAddress ipAddress = IpAddress(type: RequestType.text);
   // QuerySnapshot<Object?>? homeTimeLimitedTransactionsQS;
   List<dynamic>? top_20_shared_nas_accounts;
   List<dynamic>? my_shared_nas_accounts;
@@ -273,12 +277,14 @@ class HomeProviderFunctions extends ChangeNotifier {
   int current_home_body_index = 0;
   List<dynamic>? homeTransactions;
   List<dynamic>? allTransactions;
+  String profile_image_url = "";
   bool isLoading = false;
 
   // ============== returners
 
   bool returnIsLoading() => isLoading;
   String returnCurrentHomeState() => currentHomeState;
+  String returnProfileImageUrl() => profile_image_url;
   List<dynamic>? returnAllTransactions() => allTransactions;
   List<dynamic>? returnHomeTransactions() => homeTransactions;
   bool returnShowBackToTopButton() => show_back_to_top_button;
@@ -344,6 +350,11 @@ class HomeProviderFunctions extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateProfilePhotoLocally(String image_url) {
+    profile_image_url = image_url;
+    notifyListeners();
+  }
+
   // adds 1 minute to the user's total time spent
   Future<void> updateTimeSpentInTimeline() async {
     // only if the home page is set to timeline
@@ -380,7 +391,9 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (user_row.isEmpty) return;
 
     // gets the current device's ip address
-    dynamic ip_address = await ipAddress.getIpAddress();
+    // dynamic ip_address = await ipAddress.getIpAddress();
+
+    final ip_address = await Ipify.ipv4();
 
     String? device_id;
 
@@ -405,13 +418,13 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (user_row["current_device_id"] != device_id) {
       // await _auth.signOut();
 
-      if (box("user_id") == null) return null;
+      if (box("user_id") == null) return;
 
       changePage(context, const PreLoginPage(), type: "pr");
 
-      boxDelete("is_logged_in");
+      await supabase.auth.signOut();
 
-      boxDelete("user_id");
+      boxClear();
 
       showSnackBar(context, "You have been Logged Out By Another Device",
           color: Colors.grey[700]!);
@@ -429,7 +442,8 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     Map user_map = res["data"]["data"]["user_data"];
 
-    Map app_wide_settings = res["data"]["data"]["app_wide_settings"]["record_contents"];
+    Map app_wide_settings =
+        res["data"]["data"]["app_wide_settings"]["record_contents"];
 
     if (user_map == null) return;
 
@@ -470,8 +484,6 @@ class HomeProviderFunctions extends ChangeNotifier {
     if (res != null) {
       response = res.data as Map<String, dynamic>;
     }
-
-    print(response);
   }
 
   // 1). Gets normal treasnactions
@@ -535,7 +547,7 @@ class HomeProviderFunctions extends ChangeNotifier {
       {},
     );
 
-    allTransactions = res["data"];
+    allTransactions = res["data"]["data"];
 
     // gets home time limited transactions
     // homeTimeLimitedTransactionsQS = await _fire
@@ -544,55 +556,6 @@ class HomeProviderFunctions extends ChangeNotifier {
     //     .where("NumberOfDaysLeft", isGreaterThan: 0)
     //     .orderBy("NumberOfDaysLeft", descending: true)
     //     .get();
-
-    notifyListeners();
-  }
-
-  // gets the app's contact us info
-  Future<void> getContactUsDetails() async {
-    // gets this user's account record row
-    Map<String, dynamic> res = await callGeneralFunction("get_user_account", {
-      "get_app_wide_settings": true,
-    });
-
-    Map app_settings = res["data"]["data"]["app_wide_settings"]["record_contents"];
-
-    boxPut("jayben_secondary_customer_support_hotline",
-        app_settings["jayben_secondary_customer_support_hotline"]);
-    boxPut("maximum_number_of_savings_accounts_per_person",
-        app_settings["maximum_number_of_savings_accounts_per_person"]);
-    boxPut("airtime_purchase_minimum_amount",
-        app_settings["airtime_purchase_minimum_amount"]);
-    boxPut("enable_saving_with_friends",
-        app_settings["enable_saving_with_friends"]);
-    boxPut("number_of_user_points_given_per_transaction",
-        app_settings["number_of_user_points_given_per_transaction"]);
-    boxPut("default_transaction_visibility",
-        app_settings["default_transaction_visibility"]);
-    boxPut(
-        "cash_value_per_user_point", app_settings["cash_value_per_user_point"]);
-    boxPut("agent_payments_withdraw_fee_percent",
-        app_settings["agent_payments_withdraw_fee_percent"]);
-    boxPut("jayben_primary_customer_support_email_address",
-        app_settings["jayben_primary_customer_support_email_address"]);
-    boxPut("customer_support_whatsapp_phone_number",
-        app_settings["customer_support_whatsapp_phone_number"]);
-    boxPut("intl_wire_transfer_withdraw_fee_in_usd",
-        app_settings["intl_wire_transfer_withdraw_fee_in_usd"]);
-    boxPut("general_withdraw_amount_limit",
-        app_settings["general_withdraw_amount_limit"]);
-    boxPut("transaction_fee_percentage_to_merchants",
-        app_settings["transaction_fee_percentage_to_merchants"]);
-    boxPut("minimum_savings_deposit_amount",
-        app_settings["minimum_savings_deposit_amount"].toString());
-    boxPut("jayben_primary_customer_support_hotline",
-        app_settings["jayben_primary_customer_support_hotline"]);
-    boxPut("send_merchant_transaction_smses",
-        app_settings["send_merchant_transaction_smses"]);
-    boxPut("user_referral_commission_percentage",
-        app_settings["user_referral_commission_percentage"]);
-    boxPut("local_wire_transfer_withdraw_fee_in_usd",
-        app_settings["local_wire_transfer_withdraw_fee_in_usd"]);
 
     notifyListeners();
   }
@@ -607,9 +570,8 @@ class HomeProviderFunctions extends ChangeNotifier {
     });
 
     Map user_map = res["data"]["data"]["user_data"];
-    Map app_settings = res["data"]["data"]["app_wide_settings"]["record_contents"];
-
-    print("The app settings gotten are: ${app_settings}");
+    Map app_settings =
+        res["data"]["data"]["app_wide_settings"]["record_contents"];
 
     if (user_map == null) return;
 
@@ -623,10 +585,12 @@ class HomeProviderFunctions extends ChangeNotifier {
     boxPut("profile_image_url", user_map["profile_image_url"]);
     boxPut("balance", user_map["balance"].toStringAsFixed(2));
     boxPut("currency_symbol", user_map["currency_symbol"]);
+    boxPut("email", user_map["email_address_lowercase"]);
     boxPut("referral_code", user_map["referral_code"]);
     boxPut("country_code", user_map["country_code"]);
     boxPut("account_type", user_map["account_type"]);
     boxPut("phone_number", user_map["phone_number"]);
+    boxPut("address", user_map["physical_address"]);
     boxPut("first_name", user_map["first_name"]);
     boxPut("created_at", user_map["created_at"]);
     boxPut("user_code", user_map["user_code"]);
@@ -636,7 +600,6 @@ class HomeProviderFunctions extends ChangeNotifier {
     boxPut('pin_code', user_map["pin_code"]);
     boxPut("user_id", user_map["user_id"]);
     boxPut("country", user_map["country"]);
-    boxPut("address", user_map["address"]);
     boxPut("points", user_map["points"]);
     boxPut("gender", user_map["gender"]);
     boxPut("city", user_map["city"]);
@@ -644,6 +607,12 @@ class HomeProviderFunctions extends ChangeNotifier {
 
     // =========== Saves admin settings to Hive
 
+    boxPut("merchant_commission_per_transaction",
+        app_settings["merchant_commission_per_transaction"]);
+    boxPut("enable_card_payments_for_deposits",
+        app_settings["enable_card_payments_for_deposits"]);
+    boxPut("enable_instant_payments_for_deposits",
+        app_settings["enable_instant_payments_for_deposits"]);
     boxPut("jayben_secondary_customer_support_hotline",
         app_settings["jayben_secondary_customer_support_hotline"]);
     boxPut("default_transaction_visibility",
@@ -684,14 +653,12 @@ class HomeProviderFunctions extends ChangeNotifier {
         app_settings["local_wire_transfer_withdraw_fee_in_usd"]);
     boxPut("show_app_wide_top_20_nas_accounts",
         app_settings["show_app_wide_top_20_nas_accounts"]);
-
-    print(
-        "show_app_wide_top_20_nas_accounts: ${app_settings["show_app_wide_top_20_nas_accounts"]}");
+    boxPut("enable_timeline_feed", app_settings["enable_timeline_feed"]);
 
     // precaches user's profileimage
     await cacheImage(box("profile_image_url"));
 
-    // initializes dynmaic links
+    profile_image_url = user_map["profile_image_url"];
 
     notifyListeners();
 
@@ -759,8 +726,6 @@ class HomeProviderFunctions extends ChangeNotifier {
       "get_home_saving_accounts",
       {},
     );
-
-    print(res["data"]);
 
     top_20_shared_nas_accounts = res["data"]["data"]["top_20_nas_accounts"];
     my_shared_nas_accounts = res["data"]["data"]["shared_nas_acocounts"];
@@ -1095,14 +1060,14 @@ class QRScannerProviderFunctions extends ChangeNotifier {
   Future<List<dynamic>> getReceiverDetailsFromVendorCode(
       String user_code) async {
     // vendorCode is another word UserCode
-    Map<String, dynamic> res = await callGeneralFunction(
-        "get_limited_user_row_from_usercode", {"user_code": user_code});
+    Map<String, dynamic> res =
+        await callGeneralFunction("get_limited_user_row_from_usercode", {
+      "user_code": user_code,
+    });
 
-    print(res["data"]);
+    Map merchant_map = res["data"]["data"];
 
-    Map merchant_map = res["data"].data;
-
-    bool is_error = res["data"].status == "failed";
+    bool is_error = res["data"]["status"] == "failed";
 
     return !is_error ? [true, merchant_map] : [false, null];
   }
@@ -1136,7 +1101,7 @@ class QRScannerProviderFunctions extends ChangeNotifier {
       }
     });
 
-    print(res["data"].data);
+    print(res["data"]["data"]);
   }
 }
 
@@ -1336,14 +1301,12 @@ class SavingsProviderFunctions extends ChangeNotifier {
       "create_shared_no_access_savings_account",
       {
         "request_type": "create_shared_no_access_savings_account",
-        "account_name": [box("user_id")],
+        "account_name": account_info["account_name"],
         "number_of_days": 1,
       },
     );
 
-    String response = res["data"].data.status;
-
-    return response == "success";
+    return res["data"]["status"] == "success";
   }
 
   // gets a list of user rows that have the username
@@ -1397,19 +1360,26 @@ class SavingsProviderFunctions extends ChangeNotifier {
       },
     );
 
-    Map response = res["data"].data.data;
+    Map response = res["data"]["data"];
 
     return response.isEmpty;
   }
 
   // 1). Calculates number of minutes to extend account
   // 2). Updates the shared nas account's details (new number of minutes & the name)
-  Future<void> updateExistingSharedNasAccName(
+  Future<bool> updateExistingSharedNasAccName(
       Map account_info, Map changes_info) async {
     // updates the shared nas account row
-    await supabase.from("shared_no_access_savings_accounts").update({
-      "account_name": changes_info["account_name"],
-    }).eq("account_id", account_info["account_id"]);
+    Map<String, dynamic> res = await callGeneralFunction(
+      "update_nas_account_name",
+      {
+        "new_account_name": changes_info["new_account_name"],
+        "request_type": "update_nas_account_name",
+        "account_id": account_info["account_id"],
+      },
+    );
+
+    return res["data"]["status"] == "success";
   }
 
   // =================== Join Shared NAS account functions
@@ -1495,11 +1465,11 @@ class SavingsProviderFunctions extends ChangeNotifier {
 
 // converted to RLS
 class AuthProviderFunctions extends ChangeNotifier {
-  IpAddress ipAddress = IpAddress(type: RequestType.text);
   CountdownTimerController? countdownController;
   bool show_login_password = false;
   final picker = ImagePicker();
   String verificationId = "";
+  String jayben_email = "";
   String buildVersion = "";
   PackageInfo? packageInfo;
   File? profileImageFile;
@@ -1513,6 +1483,7 @@ class AuthProviderFunctions extends ChangeNotifier {
   String returnTOS() => tos;
   bool returnIsTimeUp() => timeUp;
   bool returnIsLoading() => isLoading;
+  String returnJaybenEmail() => jayben_email;
   String returnBuildVersion() => buildVersion;
   File? returnProfileImageFile() => profileImageFile;
   bool returnShowLoginPassword() => show_login_password;
@@ -1590,7 +1561,7 @@ class AuthProviderFunctions extends ChangeNotifier {
     Map<String, dynamic> res = await callGeneralFunction(
         "check_if_user_has_money_in_system_before_deletion", {});
 
-    return res["data"].status == "success";
+    return res["data"]["status"] == "success";
   }
 
   // changes the email address used for the account
@@ -1612,7 +1583,7 @@ class AuthProviderFunctions extends ChangeNotifier {
       // final user = userCredential.user;
 
       // // updates the email in their auth record
-      // await user?.updateEmail(email).then((value) => message = "Success");
+      // await user?.updateEmail(email).then((value) => message = "success");
 
       // // updates the user's email in their user document
       // await _fire.collection("Users").doc(box("user_id")).update({
@@ -1644,7 +1615,9 @@ class AuthProviderFunctions extends ChangeNotifier {
 
   // updates the user's current device ip address
   Future<bool> updateDeviceIDAndIPAddress() async {
-    dynamic ip_address = await ipAddress.getIpAddress();
+    // dynamic ip_address = await ipAddress.getIpAddress();
+
+    final ip_address = await Ipify.ipv4();
 
     String? device_id;
 
@@ -1882,7 +1855,7 @@ class AuthProviderFunctions extends ChangeNotifier {
         await getCurrencyDetails(userInfo["selected_country_iso_code"]);
 
     // gets the device's ip address
-    dynamic ip_address = await ipAddress.getIpAddress();
+    final ip_address = await Ipify.ipv4();
 
     // creates the user's account row
     Map<String, dynamic> res =
@@ -1942,6 +1915,10 @@ class AuthProviderFunctions extends ChangeNotifier {
     print('Running on ${iosInfo.utsname.machine}');
 
     return iosInfo.utsname.machine;
+  }
+
+  Future<void> signOut() async {
+    await supabase.auth.signOut();
   }
 
   // creates a 6 digit pin
@@ -2074,6 +2051,41 @@ class AuthProviderFunctions extends ChangeNotifier {
     return res["data"]["data"]["email"];
   }
 
+  // gets the app's contact us info
+  Future<void> getContactUsDetails() async {
+    // gets this user's account record row
+    Map<String, dynamic> res =
+        await callGeneralFunction("get_contact_us_details", {});
+
+    Map app_settings = res["data"]["data"];
+
+    boxPut("currency", app_settings["currency"]);
+    boxPut("jayben_secondary_customer_support_hotline",
+        app_settings["jayben_secondary_customer_support_hotline"]);
+    boxPut("agent_payments_withdraw_fee_percent",
+        app_settings["agent_payments_withdraw_fee_percent"]);
+    boxPut("jayben_primary_customer_support_email_address",
+        app_settings["jayben_primary_customer_support_email_address"]);
+    boxPut("customer_support_whatsapp_phone_number",
+        app_settings["customer_support_whatsapp_phone_number"]);
+    boxPut("intl_wire_transfer_withdraw_fee_in_usd",
+        app_settings["intl_wire_transfer_withdraw_fee_in_usd"]);
+    boxPut("general_withdraw_amount_limit",
+        app_settings["general_withdraw_amount_limit"]);
+    boxPut("transaction_fee_percentage_to_merchants",
+        app_settings["transaction_fee_percentage_to_merchants"]);
+    boxPut("minimum_savings_deposit_amount",
+        app_settings["minimum_savings_deposit_amount"].toString());
+    boxPut("jayben_primary_customer_support_hotline",
+        app_settings["jayben_primary_customer_support_hotline"]);
+    boxPut("user_referral_commission_percentage",
+        app_settings["user_referral_commission_percentage"]);
+    boxPut("local_wire_transfer_withdraw_fee_in_usd",
+        app_settings["local_wire_transfer_withdraw_fee_in_usd"]);
+
+    notifyListeners();
+  }
+
   // converts a regular email to a reducted version
   Future<void> processResetEmail() async {
     // DocumentSnapshot ds =
@@ -2093,11 +2105,11 @@ class AuthProviderFunctions extends ChangeNotifier {
   // gets terms anf conditions
   Future<void> getTOS() async {
     Map<String, dynamic> res =
-        await callGeneralFunction("get_terms_of_service", {
-      "kind_of_tos_to_get": "default",
-    });
+        await callGeneralFunction("get_terms_of_service", {});
 
-    tos = res["data"]["data"]["content"];
+    tos = res["data"]["data"]["terms_of_service"];
+
+    jayben_email = res["data"]["data"]["jayben_primary_customer_support_email"];
 
     notifyListeners();
   }
@@ -2645,7 +2657,7 @@ class WithdrawProviderFunctions extends ChangeNotifier {
 // converted to RLS
 class ReferralProviderFunctions extends ChangeNotifier {
   List<dynamic>? referral_commissions;
-  int number_of_people_referred = 0;
+  int? number_of_people_referred;
   bool is_loading = false;
   int current_index = 0;
 
@@ -2653,7 +2665,7 @@ class ReferralProviderFunctions extends ChangeNotifier {
 
   bool returnIsLoading() => is_loading;
   int returnCurrentIndex() => current_index;
-  int returnNumberOfPeopleReferred() => number_of_people_referred;
+  int? returnNumberOfPeopleReferred() => number_of_people_referred;
   List<dynamic>? returnReferralCommissions() => referral_commissions;
 
   // ==================== setters
@@ -2673,7 +2685,7 @@ class ReferralProviderFunctions extends ChangeNotifier {
     Map<String, dynamic> res = await callGeneralFunction(
       "get_my_referral_commissions",
       {
-        "get_number_of_people_user_referred": false,
+        "get_number_of_people_user_referred": true,
         "number_of_rows_to_query": "all",
       },
     );
@@ -2687,7 +2699,7 @@ class ReferralProviderFunctions extends ChangeNotifier {
     referral_commissions = commissions_rows;
 
     number_of_people_referred =
-        res["data"]["data"]["people_user_has_referred_count"];
+        res["data"]["data"]["people_user_has_referred_count"] ?? 0;
 
     notifyListeners();
 
@@ -5574,6 +5586,73 @@ class NfcProviderFunctions extends ChangeNotifier {
     });
   }
 
+  // creates a database record of the tag being registered
+  Future<bool> createTagRecord(
+    BuildContext context,
+    String tag_serial_number,
+    String pin_code,
+  ) async {
+    Map<String, dynamic> res = await callGeneralFunction(
+      "register_nfc_tag",
+      {
+        "tag_serial_number": tag_serial_number,
+        "decrypted_pin_code": pin_code,
+      },
+    );
+
+    return res["data"]["status"] == "success";
+  }
+
+  // checks if the user has any tags registered
+  Future<void> getTags() async {
+    Map<String, dynamic> res =
+        await callGeneralFunction("get_my_registered_tags", {
+      "get_tag_transactions_also": true,
+    });
+
+    list_of_registered_tags = res["data"]["data"]["tags"];
+
+    if (list_of_registered_tags!.isNotEmpty) {
+      list_of_registered_tags!.add(list_of_registered_tags![0]);
+    }
+
+    list_of_registered_tags_transactions = res["data"]["data"]["transactions"];
+
+    notifyListeners();
+  }
+
+  // gets the transactions for only one tag
+  Future<List<dynamic>> getSingleTagsTransactions(String tag_id) async {
+    Map<String, dynamic> res =
+        await callGeneralFunction("get_single_tag_transactions", {
+      "tag_id": tag_id,
+    });
+
+    return res["data"]["data"];
+  }
+
+  // checks if the user has any tags registered
+  Future<void> checkIfUserHasTagsRegistered() async {
+    Map<String, dynamic> res = await callGeneralFunction(
+      "check_if_user_has_tags_registered",
+      {},
+    );
+
+    has_tags_registered = res["data"]["data"]["has_tags"];
+
+    notifyListeners();
+  }
+
+  // checks if a tag has already been registered in the database
+  Future<bool> checkIfTagExists(String tag_serial_number) async {
+    Map<String, dynamic> res =
+        await callGeneralFunction("check_if_tag_exists", {
+      "tag_serial_number": tag_serial_number,
+    });
+
+    return res["data"]["data"]["exists"];
+  }
+
   // writes an NFC tag
   Future<void> onNFCTagWrite(BuildContext context, NfcTag tag) async {
     Ndef? ndef = Ndef.from(tag);
@@ -5599,7 +5678,8 @@ class NfcProviderFunctions extends ChangeNotifier {
     }
 
     NdefMessage text_to_write_to_tag = NdefMessage([
-      NdefRecord.createText(box("user_code")),
+      NdefRecord.createText(
+          "${box("user_code")}@@${box("first_name")}@@${box("last_name")}@@${"Personal Account"}"),
     ]);
 
     try {
@@ -5632,71 +5712,6 @@ class NfcProviderFunctions extends ChangeNotifier {
     current_nfc_listener_state = "read";
   }
 
-  // creates a database record of the tag being registered
-  Future<bool> createTagRecord(
-    BuildContext context,
-    String tag_serial_number,
-    String pin_code,
-  ) async {
-    Map<String, dynamic> res = await callGeneralFunction(
-      "register_nfc_tag",
-      {
-        "tag_serial_number": tag_serial_number,
-        "decrypted_pin_code": pin_code,
-      },
-    );
-
-    return res["data"].data.staus == "Success";
-  }
-
-  // checks if the user has any tags registered
-  Future<void> getTags() async {
-    Map<String, dynamic> res = await callGeneralFunction(
-        "get_my_registered_tags", {"get_tag_transactions_also": true});
-
-    list_of_registered_tags = res["data"];
-
-    if (list_of_registered_tags!.isNotEmpty) {
-      list_of_registered_tags!.add(list_of_registered_tags![0]);
-    }
-
-    list_of_registered_tags_transactions = res["data"].data.data.transactions;
-
-    notifyListeners();
-  }
-
-  // gets the transactions for only one tag
-  Future<List<dynamic>> getSingleTagsTransactions(String tag_id) async {
-    Map<String, dynamic> res =
-        await callGeneralFunction("get_single_tag_transactions", {
-      "tag_id": tag_id,
-    });
-
-    return res["data"].data.data;
-  }
-
-  // checks if the user has any tags registered
-  Future<void> checkIfUserHasTagsRegistered() async {
-    Map<String, dynamic> res = await callGeneralFunction(
-      "check_if_user_has_tags_registered",
-      {},
-    );
-
-    has_tags_registered = res["data"].data;
-
-    notifyListeners();
-  }
-
-  // checks if a tag has already been registered in the database
-  Future<bool> checkIfTagExists(String tag_serial_number) async {
-    Map<String, dynamic> res = await callGeneralFunction(
-      "check_if_tag_exists",
-      {"tag_serial_number": tag_serial_number},
-    );
-
-    return res["data"].data.data.exists;
-  }
-
   // reads an NFC tag
   Future<void> onNFCTagRead(BuildContext context, NfcTag tag) async {
     Ndef? tag_data = Ndef.from(tag);
@@ -5706,39 +5721,57 @@ class NfcProviderFunctions extends ChangeNotifier {
     final NdefRecord record = tag_data.cachedMessage!.records[0];
 
     final languageCodeLength = record.payload.first;
+
     final textBytes = record.payload.sublist(1 + languageCodeLength);
 
-    String user_code = utf8.decode(textBytes);
+    String receivers_information = utf8.decode(textBytes);
 
     notifyListeners();
 
-    QRScannerProviderFunctions prov =
-        context.read<QRScannerProviderFunctions>();
-
     if (tag_data == null) return;
 
-    // gets the receiver's user details from user code imbedded in the QR Code
-    List<dynamic> details =
-        await prov.getReceiverDetailsFromVendorCode(user_code);
-    // returns a boolean validity value - element [0]
-    // returns a user document - element [1]
+    List<String> info = receivers_information.split("@@");
 
-    if (details[1].get("UserID") == box("user_id")) {
-      showSnackBar(context, "You can't scan yourself. Scan another NFC Tag.",
-          color: Colors.grey[600]!);
+    // if (details[1]["user_id"] == box("user_id")) {
+    //   showSnackBar(context, "You can't scan yourself. Scan another NFC Tag.",
+    //       color: Colors.grey[600]!);
 
-      return;
-    }
+    //   return;
+    // }
 
     changePage(
       context,
-      SendMoneyByQRCode(
+      TapToPayPage(
         paymentInfo: {
-          "receiverDoc": details[1],
-          "scan_type": "NFC",
+          "receiver_map": {
+            "full_names": "${info[1]} ${info[2]}",
+            "type_of_receiver_account": info[3],
+            "user_code": info[0]
+          },
         },
       ),
     );
+  }
+
+  // sends a payment via NFC
+  Future<void> initateNFCPayment(Map paymentInfo) async {
+    Map<String, dynamic> res =
+        await callGeneralFunction("send_money_via_nfc_tag", {
+      "transaction_details": {
+        "amount_plus_transaction_fee": paymentInfo['amount_plus_transaction_fee'],
+        "receivers_account_type": paymentInfo['account_type'],
+        "receivers_full_names": paymentInfo['full_names'],
+        "receivers_user_code": paymentInfo['user_code'],
+        "payment_means": paymentInfo['payment_means'],
+        "amount": paymentInfo['amount'],
+      },
+      "media_details": {
+        "comment": paymentInfo['comment'],
+        "privacy": paymentInfo['privacy']
+      },
+    });
+
+    print(res["data"]["data"]);
   }
 }
 
@@ -6174,6 +6207,10 @@ dynamic boxDelete(String key_name) {
 
 dynamic boxClear() {
   Hive.box("user_information").clear();
+}
+
+dynamic boxClose() {
+  Hive.box("user_information").close();
 }
 
 // Shows bottom card

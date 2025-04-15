@@ -1,9 +1,5 @@
 // ignore_for_file: non_constant_identifier_names
 
-import 'dart:io';
-
-import 'package:jayben/Home/elements/savings/elements/make_donation_to_shared_nas_acc_card.dart';
-import 'package:jayben/Home/elements/savings/elements/join_shared_nas_account_card.dart';
 import 'package:jayben/Home/components/home_page_widgets.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
 import 'package:jayben/Home/elements/drawer/drawer.dart';
@@ -14,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'dart:io';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -29,41 +26,22 @@ class _HomePageState extends State<HomePage>
 
   @override
   void initState() {
-    // FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
-    //   if (!mounted) return;
+    super.initState();
+    initNfcReader();
+    onPageLoad();
+  }
 
-    //   List<String> split_id_list =
-    //       dynamicLinkData.link.queryParameters["id"].toString().split("_");
-
-    //   /// if the link has no type
-    //   if (split_id_list.length == 1) {
-    //     // show the join nas account card
-    //     showBottomCard(
-    //       context,
-    //       JoinSharedNasAccountCard(
-    //         account_id: split_id_list[0],
-    //       ),
-    //     );
-    //   } else if (split_id_list.length != 1) {
-    //     /// if the link has type donation
-    //     if (split_id_list[1] == "donation") {
-    //       // show make a donation to nas account card
-    //       showBottomCard(
-    //         context,
-    //         DonateToSharedNasAccountCard(
-    //           account_id: split_id_list[0],
-    //         ),
-    //       );
-    //     }
-    //   }
-    // }).onError((error) {
-    //   showSnackBar(context, "An error ocurred trying to open link");
-    // });
-
+  Future<void> initNfcReader() async {
     if (Platform.isAndroid) {
       NfcProviderFunctions nfc_prov = context.read<NfcProviderFunctions>();
 
-      NfcManager.instance.startSession(onDiscovered: (NfcTag tag) async {
+      bool isAvailable = await NfcManager.instance.isAvailable();
+
+      if (!isAvailable) return;
+
+      NfcManager.instance.startSession(onDiscovered: (NfcTag? tag) async {
+        if (tag == null) return;
+
         try {
           // if the app is in "read nfc tag" mode
           if (nfc_prov.returnCurrentNfcListenerState() == "read") {
@@ -75,14 +53,12 @@ class _HomePageState extends State<HomePage>
           }
         } on Exception catch (e) {
           showSnackBar(context, e.toString());
+          print(e.toString());
         }
 
         // NfcManager.instance.stopSession();
       });
     }
-
-    super.initState();
-    onPageLoad();
   }
 
   Future<void> onPageLoad() async {
@@ -94,31 +70,6 @@ class _HomePageState extends State<HomePage>
 
       return;
     }
-
-    // if (widget.initialLink != null) {
-    //   final Uri deepLink = widget.initialLink!.link;
-    //   // Example of using the dynamic link to push the user to a different screen
-
-    //   List<String> list = deepLink.queryParameters["id"].toString().split("_");
-
-    //   if (list.length == 1) {
-    //     showBottomCard(
-    //       context,
-    //       JoinSharedNasAccountCard(
-    //         account_id: list[0],
-    //       ),
-    //     );
-    //   } else if (list.length != 1) {
-    //     if (list[1] == "donation") {
-    //       showBottomCard(
-    //         context,
-    //         DonateToSharedNasAccountCard(
-    //           account_id: list[0],
-    //         ),
-    //       );
-    //     }
-    //   }
-    // }
 
     HomeProviderFunctions prov = context.read<HomeProviderFunctions>();
 

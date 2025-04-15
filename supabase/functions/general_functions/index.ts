@@ -26,6 +26,7 @@ serve(async (req: Request) => {
     "check_if_account_username_exists",
     "check_if_referral_code_exists",
     "alert_admins_about_new_signup",
+    "get_contact_us_details",
     "get_encrypted_password",
     "get_terms_of_service",
     "send_reset_password",
@@ -262,6 +263,7 @@ serve(async (req: Request) => {
         data_to_return_in_response = await get_all_users_transactions(
           supabaseClient,
           req,
+          body,
         );
         break;
 
@@ -269,6 +271,7 @@ serve(async (req: Request) => {
         data_to_return_in_response = await get_users_home_page_transactions(
           supabaseClient,
           req,
+          body,
         );
         break;
 
@@ -332,7 +335,7 @@ serve(async (req: Request) => {
         data_to_return_in_response = await get_home_saving_accounts(
           supabaseClient,
           req,
-          body
+          body,
         );
         break;
 
@@ -426,6 +429,13 @@ serve(async (req: Request) => {
         );
         break;
 
+      case "update_nas_account_name":
+        data_to_return_in_response = await update_nas_account_name(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
       // ====================== Purchase Airtime
 
       case "purchase_airtime":
@@ -446,7 +456,25 @@ serve(async (req: Request) => {
         );
         break;
 
+      // ====================== Prelogin Functions
+
+      case "get_contact_us_details":
+        data_to_return_in_response = await get_contact_us_details(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
+
       // ====================== NFC Functions
+
+      case "send_money_via_nfc_tag":
+        data_to_return_in_response = await send_money_via_nfc_tag(
+          supabaseClient,
+          req,
+          body,
+        );
+        break;
 
       case "register_nfc_tag":
         data_to_return_in_response = await register_nfc_tag(
@@ -484,6 +512,7 @@ serve(async (req: Request) => {
         data_to_return_in_response = await check_if_user_has_tags_registered(
           supabaseClient,
           req,
+          body,
         );
         break;
 
@@ -560,8 +589,6 @@ const get_auth_user_id = async (
   const { data } = await _supabaseClient.auth.getUser(token);
 
   const user = data.user;
-
-  console.log("The user's information from the DB is: ", user);
 
   if (user != null) {
     return user.id;
@@ -648,7 +675,7 @@ const delete_user_account = async (
     */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // gets the user's user account row
   const user_account_row = await _supabaseClient.from("users").select().eq(
@@ -682,44 +709,47 @@ const check_if_user_has_money_in_system_before_deletion = async (
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status_code": 400,
-      "status": "failed",
-      "data": null,
-    };
-  } else {
-    // gets the user's user account row
-    const user_account_row = await _supabaseClient.from("users").select().eq(
-      "user_id",
-      user_id,
-    );
+  // gets the user's user account row
+  const user_account_row = await _supabaseClient.from("users").select().eq(
+    "user_id",
+    user_id,
+  );
 
-    const savings_accounts = await _supabaseClient.from(
-      "shared_no_access_savings_accounts",
-    )
-      .select()
-      .eq("is_active", true)
-      .neq("balance", 0)
-      .contains("user_ids_able_to_view_accounts", [`${user_id}`]);
+  const savings_accounts = await _supabaseClient.from(
+    "shared_no_access_savings_accounts",
+  )
+    .select()
+    .eq("is_active", true)
+    .neq("balance", 0)
+    .contains("user_ids_able_to_view_accounts", [`${user_id}`]);
 
-    const active_funded_nas_accs = savings_accounts["data"];
+  const active_funded_nas_accs = savings_accounts["data"];
 
-    const account_row = user_account_row["data"][0];
+  const wallet_balance = user_account_row["data"][0]["balance"];
 
+  if (wallet_balance > 0 || active_funded_nas_accs.length > 0) {
     return {
       "data": {
-        "active_funded_nas_accs": active_funded_nas_accs,
-        "user_account_row": account_row,
+        "num_of_active_funded_nas_accs": active_funded_nas_accs.length,
+        "user_account_account_balance": wallet_balance,
       },
       "message": "User has money in the system",
       "status": "success",
       "status_code": 200,
     };
   }
+
+  return {
+    "message": "User has no money in the system",
+    "data": {
+      "active_funded_nas_accs": null,
+      "user_account_row": null,
+    },
+    "status": "success",
+    "status_code": 200,
+  };
 };
 
 // ============================================================ Encryption Functions
@@ -819,32 +849,28 @@ const create_pin_code = async (
     }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  } else {
-    const user_account_row = await _supabaseClient.from("users").update({
-      "pin_code": _body["decrypted_pin_code"],
-    }).eq(
-      "user_id",
-      user_id,
-    );
+  const encrypted_pin_code = await encrypt(
+    _body["decrypted_pin_code"],
+    `${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY_BASE_64")}`,
+  );
 
-    return {
-      "message": "successfully updated the user's pin code",
-      "status": "success",
-      "status_code": 200,
-      "data": {
-        "user_account_row": user_account_row["data"][0],
-      },
-    };
-  }
+  const user_account_row = await _supabaseClient.from("users").update({
+    "pin_code": encrypted_pin_code,
+  }).eq(
+    "user_id",
+    user_id,
+  );
+
+  return {
+    "message": "successfully updated the user's pin code",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "user_account_row": user_account_row["data"][0],
+    },
+  };
 };
 
 const check_if_pin_code_is_correct = async (
@@ -860,52 +886,39 @@ const check_if_pin_code_is_correct = async (
   }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // TODO add code to add rate limits here to prevent bruteforce attacks
 
-  if (user_id == null) {
+  // Get user's account row
+  const user_account_row = await _supabaseClient.from("users").select().eq(
+    "user_id",
+    user_id,
+  );
+
+  const user = user_account_row["data"][0];
+
+  // Get user's decrypted pin code
+  const decrypted_pin_code = await decrypt(
+    user["pin_code"],
+    `${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY_BASE_64")}`,
+  );
+
+  if (_body["pin_code"] == decrypted_pin_code) {
     return {
-      "message": "Please login first",
+      "message": "Correct pin code",
+      "status": "success",
+      "status_code": 200,
+      "data": null,
+    };
+  } else {
+    return {
+      "message": "Incorrect pin code",
       "status": "failed",
       "status_code": 400,
       "data": null,
     };
-  } else {
-    // Get user's account row
-    const user_account_row = await _supabaseClient.from("users").select().eq(
-      "user_id",
-      user_id,
-    );
-
-    const user = user_account_row["data"][0];
-
-    // Get user's decrypted pin code
-    const decrypted_pin_code = _decrypt_pin_code(_supabaseClient, user, _req);
-
-    if (_body["pin_code"] == decrypted_pin_code) {
-      return {
-        "message": "Correct pin code",
-        "status": "success",
-        "status_code": 200,
-        "data": null,
-      };
-    } else {
-      return {
-        "message": "Incorrect pin code",
-        "status": "failed",
-        "status_code": 400,
-        "data": null,
-      };
-    }
   }
-};
-
-const _decrypt_pin_code = async (
-  _supabaseClient: any,
-  _user: any,
-  _req: Request,
-): Promise<any> => {
 };
 
 const change_pin_code = async (
@@ -922,51 +935,47 @@ const change_pin_code = async (
   }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
-  if (user_id == null) {
+  // Get user's current pin code
+  const user_account_row = await _supabaseClient.from("users")
+    .select()
+    .eq("user_id", user_id);
+
+  const user = user_account_row["data"][0];
+
+  // Get user's decrypted pin code
+  const decrypted_pin_code = await decrypt(
+    user["pin_code"],
+    `${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY_BASE_64")}`,
+  );
+
+  if (_body["old_pin_code"] != decrypted_pin_code) {
     return {
-      "message": "Please login first",
+      "message": "Incorrect old pin code",
       "status": "failed",
       "status_code": 400,
       "data": null,
     };
   } else {
-    // Get user's current pin code
-    const user_account_row = await _supabaseClient.from("users")
-      .select()
-      .eq("user_id", user_id);
-
-    const user = user_account_row["data"][0];
-
-    const decrypted_pin_code = _decrypt_pin_code(
-      _supabaseClient,
-      user,
-      _req,
+    const encrypted_pin_code = await encrypt(
+      _body["new_pin_code"],
+      `${Deno.env.get("ACCOUNT_LOGIN_ENCRYPTION_KEY_BASE_64")}`,
     );
 
-    if (_body["old_pin_code"] != decrypted_pin_code) {
-      return {
-        "message": "Incorrect old pin code",
-        "status": "failed",
-        "status_code": 400,
-        "data": null,
-      };
-    } else {
-      // Update to new pin code
-      await _supabaseClient.from("users")
-        .update({
-          "pin_code": _body["new_pin_code"],
-        })
-        .eq("user_id", user_id);
+    // Update to new pin code
+    await _supabaseClient.from("users")
+      .update({
+        "pin_code": encrypted_pin_code,
+      })
+      .eq("user_id", user_id);
 
-      return {
-        "message": "PIN code changed successfully",
-        "status": "success",
-        "status_code": 200,
-        "data": null,
-      };
-    }
+    return {
+      "message": "PIN code changed successfully",
+      "status": "success",
+      "status_code": 200,
+      "data": null,
+    };
   }
 };
 
@@ -983,58 +992,58 @@ const reset_pin_code = async (
     }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
-  if (user_id == null) {
+  const user_account = await _supabaseClient.from("users").select().eq(
+    "user_id",
+    user_id,
+  );
+
+  const user = user_account["data"][0];
+
+  // generate new temporary pin code
+  const temporary_pin_code = await generate_temporary_pin_code();
+
+  // sends sms or email to user
+  const result = await send_temporary_pin_code_to_user(
+    _supabaseClient,
+    temporary_pin_code,
+    user["email_address"],
+    `${user["first_name"]} ${user["last_name"]}`,
+  );
+
+  if (result.status == "success") {
+    // update user's pin code
+    await _supabaseClient.from("users").update({
+      "pin_code": temporary_pin_code,
+    }).eq("user_id", user_id);
+
     return {
-      "message": "Please login first",
+      "message": "PIN code reset successfully",
+      "status": "success",
+      "status_code": 200,
+    };
+  } else {
+    return {
+      "message": "PIN code reset failed",
       "status": "failed",
       "status_code": 400,
       "data": null,
     };
-  } else {
-    // generate new temporary pin code
-    const temporary_pin_code = await generate_temporary_pin_code(
-      _supabaseClient,
-    );
-
-    // sends sms or email to user
-    const result = await send_temporary_pin_code_to_user(
-      _supabaseClient,
-      temporary_pin_code,
-    );
-
-    if (result.status == "success") {
-      // update user's pin code
-      await _supabaseClient.from("users").update({
-        "pin_code": temporary_pin_code,
-      }).eq("user_id", user_id);
-
-      return {
-        "message": "PIN code reset successfully",
-        "status": "success",
-        "status_code": 200,
-      };
-    } else {
-      return {
-        "message": "PIN code reset failed",
-        "status": "failed",
-        "status_code": 400,
-        "data": null,
-      };
-    }
   }
 };
 
-const generate_temporary_pin_code = async (
-  _supabaseClient: any,
-): Promise<any> => {
-  return "1234";
+const generate_temporary_pin_code = async (): Promise<any> => {
+  // Generate random 5 digit number between 10000-99999
+  const tempPin = Math.floor(Math.random() * (99999 - 10000 + 1)) + 10000;
+  return tempPin.toString();
 };
 
 const send_temporary_pin_code_to_user = async (
   _supabaseClient: any,
   _temporary_pin_code: any,
+  _email_to_send_pin_code_to: any,
+  _full_names: any,
 ): Promise<any> => {
   // TODO add functionality to send temporary PIN via sms or email
 
@@ -1052,11 +1061,11 @@ const send_temporary_pin_code_to_user = async (
           "service_id": "your_service_id",
           "template_id": "your_template_id",
           "template_params": {
-            "to_email": "recipient@email.com",
-            "from_name": "Company Name",
-            "from_email": "company@email.com",
+            "to_email": _email_to_send_pin_code_to,
+            "from_name": "Jayben Pay Limited ZM",
+            "from_email": "Jaybenenterprise@gmail.com",
             "user_subject": "Your temporary PIN",
-            "to_name": "User Name",
+            "to_name": _full_names,
             "message": `Your temporary PIN is: ${_temporary_pin_code}`,
           },
         }),
@@ -1072,13 +1081,6 @@ const send_temporary_pin_code_to_user = async (
       "data": null,
     };
   }).catch(console.error);
-
-  // return {
-  //   "message": "PIN code sent successfully",
-  //   "status": "success",
-  //   "status_code": 200,
-  //   "data": null,
-  // };
 };
 
 // ============================================================ Home Class Functions
@@ -1113,10 +1115,6 @@ const get_user_account = async (
       .eq("record_name", "---- App Wide Settings ---")
       .eq("country", "Zambia");
 
-    console.log(user_id);
-
-    console.log(settings_data);
-
     return {
       "message": "successfully got the user's account row &&&&",
       "status": "success",
@@ -1142,16 +1140,17 @@ const get_user_account = async (
 const get_all_users_transactions = async (
   _supabaseClient: any,
   _req: Request,
+  _body: any,
 ): Promise<any> => {
   /*
     body preview
     {
       "request_type": "get_all_users_transactions",
+      "user_id": string
     }
   */
 
-  // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   const res = await _supabaseClient.from("transactions").select()
     .eq(
@@ -1162,8 +1161,8 @@ const get_all_users_transactions = async (
   return {
     "message": "successfully got the user's transactions",
     "status": "success",
-    "status_code": 200,
     "data": res["data"],
+    "status_code": 200,
   };
 };
 
@@ -1171,6 +1170,7 @@ const get_all_users_transactions = async (
 const get_users_home_page_transactions = async (
   _supabaseClient: any,
   _req: Request,
+  _body: any,
 ): Promise<any> => {
   /*
   body preview
@@ -1180,7 +1180,7 @@ const get_users_home_page_transactions = async (
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   let transactions_to_return = [];
 
@@ -1270,7 +1270,7 @@ const update_profile_image_url = async (
     */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // updates the user's user account row
   await _supabaseClient.from("users").update({
@@ -1368,7 +1368,7 @@ const update_device_id_and_ip_address = async (
     */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // updates the user's user account row
   await _supabaseClient.from("users").update({
@@ -1404,7 +1404,7 @@ const update_last_time_seen_and_build_version = async (
     */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // updates the user's user account row
   await _supabaseClient.from("users").update({
@@ -1439,7 +1439,7 @@ const update_user_notification_token = async (
     */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // gets the user's user account row
   await _supabaseClient.from("users").update({
@@ -1535,7 +1535,7 @@ const update_show_update_alert = async (
     */
 
   // gets the user's id from the request
-  // const user_id = await get_auth_user_id(_req, _supabaseClient);
+  // const user_id = _body["user_id"];
 
   // updates the user's user account row
   await _supabaseClient.from("users").update({
@@ -1570,7 +1570,7 @@ const check_if_app_is_upto_date = async (
     */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   const app_wide_settings = await _supabaseClient.from(
     "app_wide_settings_private",
@@ -1627,7 +1627,7 @@ const upvote_an_existing_feedback_submission = async (
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   if (user_id == null) {
     return {
@@ -1725,7 +1725,7 @@ const create_a_feedback_submission = async (
   const details = _body.submission_details;
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   if (user_id == null) {
     return {
@@ -1777,56 +1777,6 @@ const create_a_feedback_submission = async (
       "data": null,
     };
   }
-};
-
-const get_terms_of_service = async (
-  _supabaseClient: any,
-  _body: any,
-  _req: Request,
-): Promise<any> => {
-  /*
-    body preview
-    {
-      "request_type": "get_terms_of_service",
-      "kind_of_tos_to_get": string
-    }
-  */
-
-  fetch(
-    new Request(
-      "https://us-central1-jayben-de41c.cloudfunctions.net/auth/getTOS",
-      {
-        method: "POST",
-        headers: {
-          "origin": "http://localhost",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({}),
-      },
-    ),
-  ).then((response) => response.json()).then(async (data) => {
-    console.log("The plain data is: ", data);
-
-    return {
-      "message": "PIN code sent successfully",
-      "status": "success",
-      "status_code": 200,
-      "data": {
-        "content": data,
-      },
-    };
-  }).catch((error) => {
-    console.log("Error fetching terms of service:", error);
-
-    return {
-      "message": "Failed to get terms of service",
-      "status": "failed",
-      "status_code": 400,
-      "data": {
-        "content": "Not available, please contact Jayben support",
-      },
-    };
-  });
 };
 // ============================================================ Payment Functions
 
@@ -1905,7 +1855,7 @@ const send_money_p2p = async (
     "default_privacy_post_to_timeline_setting"
   ];
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   if (user_id == null) {
     return {
@@ -2096,7 +2046,7 @@ const send_money_with_time_limit = async (
     }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   if (user_id == null) {
     return {
@@ -2237,7 +2187,7 @@ const withdraw_funds = async (
     }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // Get user's account details
   const user_result = await _supabaseClient
@@ -2451,7 +2401,7 @@ const purchase_airtime = async (
     }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   if (user_id == null) {
     return {
@@ -2698,8 +2648,9 @@ const complete_airtime_purchase_via_points = async (
 const getFeedTransactions = async (
   _supabaseClient: any,
   _req: Request,
+  _body: any,
 ): Promise<any> => {
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   try {
     const feed = await _supabaseClient
@@ -2730,8 +2681,9 @@ const getFeedTransactions = async (
 const getMyFeedTransactions = async (
   _supabaseClient: any,
   _req: Request,
+  _body: any,
 ): Promise<any> => {
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   try {
     const myFeed = await _supabaseClient
@@ -2764,7 +2716,7 @@ const likePost = async (
   _req: Request,
   _body: any,
 ): Promise<any> => {
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
   const post_info = _body.post_info;
 
   if (!user_id) {
@@ -2846,7 +2798,7 @@ const unlikePost = async (
   _req: Request,
   _body: any,
 ): Promise<any> => {
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
   const post_info = _body.post_info;
 
   if (!user_id) {
@@ -2915,7 +2867,7 @@ const blockUser = async (
   _req: Request,
   _body: any,
 ): Promise<any> => {
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
   const user_to_block = _body.user_to_block;
 
   if (!user_id) {
@@ -2978,7 +2930,7 @@ const reportPost = async (
   _req: Request,
   _body: any,
 ): Promise<any> => {
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
   const report_info = _body.report_info;
   const post_info = _body.post_info;
 
@@ -3040,7 +2992,7 @@ const deletePost = async (
   _req: Request,
   _body: any,
 ): Promise<any> => {
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
   const post_id = _body.post_id;
 
   if (!user_id) {
@@ -3133,7 +3085,7 @@ const create_user_account_record = async (
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // encrypts the user's account login password
   const encrypted_password = await encrypt(
@@ -3403,7 +3355,7 @@ const get_users_email_address = async (
     }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   if (user_id == null) {
     return {
@@ -3427,6 +3379,105 @@ const get_users_email_address = async (
       },
     };
   }
+};
+
+const get_contact_us_details = async (
+  _supabaseClient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+    body preview
+    {
+      "request_type": "get_contact_us_details",
+      "user_id": string
+    }
+  */
+
+  const settings_data = await _supabaseClient.from(
+    "appwide_admin_settings_private",
+  )
+    .select()
+    .eq("record_name", "---- App Wide Settings ---")
+    .eq("country", "Zambia");
+
+  console.log(settings_data);
+
+  const contents = settings_data["data"][0]["record_contents"];
+
+  return {
+    "message": "Contact details retrieved successfully",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "jayben_primary_customer_support_email_address":
+        contents["jayben_primary_customer_support_email_address"],
+      "jayben_secondary_customer_support_hotline":
+        contents["jayben_secondary_customer_support_hotline"],
+      "minimum_savings_deposit_amount":
+        contents["minimum_savings_deposit_amount"].toString(),
+      "customer_support_whatsapp_phone_number":
+        contents["customer_support_whatsapp_phone_number"],
+      "intl_wire_transfer_withdraw_fee_in_usd":
+        contents["intl_wire_transfer_withdraw_fee_in_usd"],
+      "general_withdraw_amount_limit":
+        contents["general_withdraw_amount_limit"],
+      "transaction_fee_percentage_to_merchants":
+        contents["transaction_fee_percentage_to_merchants"],
+      "jayben_primary_customer_support_hotline":
+        contents["jayben_primary_customer_support_hotline"],
+      "local_wire_transfer_withdraw_fee_in_usd":
+        contents["local_wire_transfer_withdraw_fee_in_usd"],
+      "user_referral_commission_percentage":
+        contents["user_referral_commission_percentage"],
+      "agent_payments_withdraw_fee_percent":
+        contents["agent_payments_withdraw_fee_percent"],
+      "currency": "ZMW",
+    },
+  };
+};
+
+const get_terms_of_service = async (
+  _supabaseCLient: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+  body preview
+  {
+    "request_type": "get_terms_of_service",
+  }
+  */
+
+  const terms_and_conditions_row = await _supabaseCLient.from(
+    "appwide_admin_settings_private",
+  ).select().eq("record_name", "---- Terms Of Service ----").eq(
+    "country",
+    "Zambia",
+  );
+
+  const appwide_admin_settings = await _supabaseCLient.from(
+    "appwide_admin_settings_private",
+  ).select().eq(
+    "record_name",
+    "---- App Wide Settings ---",
+  ).eq("country", "Zambia");
+
+  const contents = terms_and_conditions_row["data"][0]["record_contents"];
+
+  const email = appwide_admin_settings["data"][0]["record_contents"][
+    "jayben_primary_customer_support_email_address"
+  ];
+
+  return {
+    "message": "Terms of service retrieved successfully",
+    "status": "success",
+    "status_code": 200,
+    "data": {
+      "jayben_primary_customer_support_email": email,
+      "terms_of_service": contents["current_eula"],
+    },
+  };
 };
 
 // ============================================================ Referrals Functions
@@ -3510,11 +3561,15 @@ const register_nfc_tag = async (
       }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
-  if (user_id == null) {
+  const existing_nfc_tags = await _supabaseClient.from("nfc_tags").select()
+    .eq("user_id", user_id)
+    .eq("tag_serial_number", _body.tag_serial_number);
+
+  if (existing_nfc_tags.data.length != 0) {
     return {
-      "message": "Please login first",
+      "message": "Tag already registered",
       "status": "failed",
       "status_code": 400,
       "data": null,
@@ -3629,16 +3684,7 @@ const get_my_registered_tags = async (
       }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
-
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  }
+  const user_id = _body["user_id"];
 
   // gets the user's registered nfc tags
   const registered_tags = await _supabaseClient
@@ -3649,17 +3695,19 @@ const get_my_registered_tags = async (
     .order("created_at", { ascending: false });
 
   if (_body["get_tag_transactions_also"]) {
-    const tags_transactions = await _get_all_tags_transactions(
-      _supabaseClient,
-      registered_tags.data,
-    );
+    // gets the transactions for ALL the NFC tags for the user
+    const transactions_for_all_tags = await _supabaseClient.from(
+      "nfc_tag_transactions",
+    ).select().eq("user_id", user_id).order("created_at", {
+      ascending: false,
+    });
 
     return {
       "message": "Tags retrieved successfully",
       "status": "success",
       "status_code": 200,
       "data": {
-        "transactions": tags_transactions,
+        "transactions": transactions_for_all_tags.data,
         "tags": registered_tags.data,
       },
     };
@@ -3676,22 +3724,6 @@ const get_my_registered_tags = async (
   }
 };
 
-// gets transactions for all tags
-const _get_all_tags_transactions = async (
-  _supabaseClient: any,
-  tags: any[],
-): Promise<any[]> => {
-  const operations = tags.map((tag) =>
-    _supabaseClient
-      .from("nfc_tag_transactions")
-      .select()
-      .eq("tag_id", tag.tag_id)
-      .order("created_at", { ascending: false })
-  );
-
-  return await Promise.all(operations);
-};
-
 // gets transactions for a single tag
 const get_single_tag_transactions = async (
   _supabaseClient: any,
@@ -3706,16 +3738,7 @@ const get_single_tag_transactions = async (
       }
     */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
-
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  }
+  const user_id = _body["user_id"];
 
   // gets the transactions for a specific nfc tag
   const result = await _supabaseClient
@@ -3737,6 +3760,7 @@ const get_single_tag_transactions = async (
 const check_if_user_has_tags_registered = async (
   _supabaseClient: any,
   _req: Request,
+  _body: any,
 ): Promise<any> => {
   /*
       body preview
@@ -3745,16 +3769,7 @@ const check_if_user_has_tags_registered = async (
       }
     */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
-
-  if (user_id == null) {
-    return {
-      "message": "Please login first",
-      "status": "failed",
-      "status_code": 400,
-      "data": null,
-    };
-  }
+  const user_id = _body["user_id"];
 
   const results = await _supabaseClient
     .from("nfc_tags")
@@ -3800,6 +3815,444 @@ const check_if_tag_exists = async (
   };
 };
 
+// moves money from the sender to the receiver
+const send_money_via_nfc_tag = async (
+  _supabaseClient: any,
+  _req: any,
+  _body: any,
+): Promise<any> => {
+  /*
+    body preview
+    {
+      "transaction_details": {
+        "amount_plus_transaction_fee": num/float,
+        "receivers_account_type": string,
+        "receivers_full_names": string,
+        "receivers_user_code": string,
+        "payment_means": string,
+        "amount": num/float,
+      },
+      "request_type": "send_money_via_nfc_tag",
+      "media_details": json[],
+      "user_id": string
+    }
+  */
+
+  // gets the user's id from the request
+  const user_id = _body["user_id"];
+
+  // gets the sender's user account row
+  const sender_rows = await _supabaseClient.from("users").select()
+    .eq(
+      "user_id",
+      user_id,
+    );
+
+  // gets the receiver's user account row
+  const receiver_rows = await _supabaseClient.from("users").select()
+    .eq(
+      "user_code",
+      _body["user_code"].toString().toLowerCase(),
+    );
+
+  if (receiver_rows["data"].length == 0) {
+    return {
+      "message": "Receiver not found",
+      "status": "failed",
+      "status_code": 400,
+      "data": null,
+    };
+  }
+
+  if (_body["account_type"] == "Merchant Account") {
+    const res = await send_money_via_nfc_to_merchant(_supabaseClient, {
+      "sender_row": sender_rows["data"][0],
+      "receiver_row": receiver_rows["data"][0],
+      ..._body,
+    });
+
+    return res;
+  } else if (_body["account_type"] == "Personal Account") {
+    const amount_minus_fee = _body["transaction_details"]["amount"];
+
+    const amount_plus_fee =
+      _body["transaction_details"]["amount_plus_transaction_fee"];
+
+    const sender_row = sender_rows["data"][0];
+
+    const receiver_row = receiver_rows["data"][0];
+
+    const sender_transaction_id = crypto.randomUUID();
+
+    const receiver_transaction_id = crypto.randomUUID();
+
+    // converts the amount being sent to the receiver's currency
+    const converted_amount = await convert_currency(_supabaseClient, {
+      "from_currency": sender_row["currency"],
+      "to_currency": receiver_row["currency"],
+      "amount_to_convert": amount_minus_fee,
+    });
+
+    const receiver_wallet_bal_after_transaction = receiver_row["balance"] +
+      converted_amount;
+
+    const sender_wallet_bal_after_transaction = sender_row["balance"] -
+      amount_plus_fee;
+
+    // creates a revenue record
+    // creates a record for the receiver
+    // creates a record for the sender
+    // debits the sender's balance
+    // credits the receiver's number
+    // sends notifications
+    await Promise.all([
+      _supabaseClient.from("revenue_records").insert({
+        "amount": amount_plus_fee,
+        "monetized_transaction_details": {
+          "receiver_transaction_id": receiver_transaction_id,
+          "transaction_type": "Personal to Personal Payment",
+          "sender_transaction_id": sender_transaction_id,
+          "method": "NFC",
+        },
+        "currency_symbol": sender_row["currency_symbol"],
+        "currency": sender_row["currency"],
+        "source_user_id": user_id,
+        "status": "completed",
+      }),
+      _supabaseClient.from("transactions").insert({
+        "transaction_fee_details": {
+          "transaction_total_fee_currency": receiver_row["currency"],
+          "transaction_international_bank_tranfer_fee": null,
+          "transcation_bank_transfer_fee_currency": null,
+          "transaction_local_bank_tranfer_fee": null,
+          "transaction_total_fee_percentage": null,
+          "transaction_fee_amount": 0,
+        },
+        "p2p_sender_details": {
+          "senders_wallet_balance_after_transaction":
+            sender_wallet_bal_after_transaction,
+          "full_names": `${sender_row["first_name"]} ${
+            sender_row["last_name"]
+          }`,
+          "senders_wallet_balance_before_transaction": sender_row["balance"],
+          "phone_number": sender_row["phone_number"],
+          "user_id": user_id,
+        },
+        "description": `From ${sender_row["first_name"]} ${
+          sender_row["last_name"]
+        }`,
+        "wallet_balance_details": {
+          "wallet_balance_after_transaction":
+            receiver_wallet_bal_after_transaction,
+          "wallet_balance_before_transaction": receiver_row["balance"],
+          "wallet_balances_difference": converted_amount,
+        },
+        "full_names": `${receiver_row["first_name"]} ${
+          receiver_row["last_name"]
+        }`,
+        "user_is_verified": receiver_row["account_kyc_is_verified"],
+        "currency_symbol": receiver_row["currency_symbol"],
+        "transaction_id": receiver_transaction_id,
+        "currency": receiver_row["currency"],
+        "user_id": receiver_row["user_id"],
+        "country": receiver_row["country"],
+        "savings_account_details": null,
+        "transaction_type": "Transfer",
+        "p2p_recipient_details": null,
+        "sent_received": "Received",
+        "method": "Wallet transfer",
+        "withdrawal_details": null,
+        "amount": converted_amount,
+        "deposit_details": null,
+        "number_of_replies": 0,
+        "status": "Completed",
+        "attended_to": false,
+        "number_of_likes": 0,
+        "number_of_views": 0,
+        "is_public": false,
+        "comment": "",
+      }),
+      _supabaseClient.from("transactions").insert({
+        "p2p_recipient_details": {
+          "recipient_wallet_balance_after_transaction":
+            receiver_wallet_bal_after_transaction,
+          "full_names": `${receiver_row["first_name"]} ${
+            receiver_row["last_name"]
+          }`,
+          "recipient_wallet_balance_before_transaction":
+            receiver_row["balance"],
+          "user_id": receiver_row["user_id"],
+          "phone_number": receiver_row["phone_number"],
+        },
+        "description": `To ${receiver_row["first_name"]} ${
+          receiver_row["last_name"]
+        }`,
+        "wallet_balance_details": {
+          "wallet_balance_after_transaction":
+            sender_wallet_bal_after_transaction,
+          "wallet_balance_before_transaction": sender_row["balance"],
+          "wallet_balances_difference": amount_plus_fee,
+        },
+        "full_names": `${sender_row["first_name"]} ${sender_row["last_name"]}`,
+        "user_is_verified": sender_row["account_kyc_is_verified"],
+        "currency_symbol": sender_row["currency_symbol"],
+        "transaction_id": sender_transaction_id,
+        "currency": sender_row["currency"],
+        "country": sender_row["country"],
+        "savings_account_details": null,
+        "transaction_fee_details": null,
+        "transaction_type": "Transfer",
+        "method": "Wallet transfer",
+        "withdrawal_details": null,
+        "p2p_sender_details": null,
+        "amount": amount_minus_fee,
+        "deposit_details": null,
+        "sent_received": "Sent",
+        "number_of_replies": 0,
+        "status": "Completed",
+        "number_of_views": 0,
+        "number_of_likes": 0,
+        "attended_to": false,
+        "is_public": false,
+        "user_id": user_id,
+        "comment": "",
+      }),
+      _supabaseClient.from("users").update({
+        "balance": receiver_wallet_bal_after_transaction,
+      }).eq("user_id", receiver_row["user_id"]),
+      _supabaseClient.from("users").update({
+        "balance": sender_wallet_bal_after_transaction,
+      }).eq("user_id", user_id),
+      _supabaseClient.rpc("send_notifications_via_firebase", {
+        body: `You have sent ${
+          sender_row["currency_symbol"]
+        }${amount_minus_fee} to ${receiver_row["first_name"]} ${
+          receiver_row["last_name"]
+        }`,
+        notification_tokens: [
+          sender_row["notification_token"],
+        ],
+        title: "Payment Sent ✅",
+      }),
+      _supabaseClient.rpc("send_notifications_via_firebase", {
+        body: `You have received ${receiver_row["currency_symbol"]}${
+          converted_amount.toFixed(2)
+        } from ${sender_row["first_name"]} ${sender_row["last_name"]}`,
+        notification_tokens: [
+          receiver_row["notification_token"],
+        ],
+        title: "Payment Received 💰",
+      }),
+    ]);
+  }
+};
+
+const send_money_via_nfc_to_merchant = async (
+  _supabaseClient: any,
+  _body: any,
+): Promise<any> => {
+  /*
+  body preview
+  {
+    "transaction_details": {
+        "amount_plus_transaction_fee": num/float,
+        "receivers_account_type": string,
+        "receivers_full_names": string,
+        "receivers_user_code": string,
+        "payment_means": string,
+        "amount": num/float,
+      },
+    "request_type": "send_money_via_nfc_tag",
+    "media_details": json[],
+    "receiver_row": map,
+    "sender_row": map,
+    "user_id": string
+  }
+  */
+
+  const user_id = _body["user_id"];
+
+  const appwide_settings = await _supabaseClient.from(
+    "appwide_admin_settings_private",
+  ).select()
+    .eq("record_name", "---- App Wide Settings ---")
+    .eq("country", "Zambia");
+
+  const appwide_settings_contents =
+    appwide_settings["data"][0]["record_contents"];
+
+  const amount_minus_fee = _body["transaction_details"]["amount"];
+
+  const amount_plus_fee = amount_minus_fee +
+    appwide_settings_contents["transaction_fee_percentage_to_merchants"];
+
+  const sender_row = _body["sender_row"];
+
+  const receiver_row = _body["receiver_row"];
+
+  const sender_transaction_id = crypto.randomUUID();
+
+  const receiver_transaction_id = crypto.randomUUID();
+
+  // converts the amount being sent to the receiver's currency
+  const converted_amount = await convert_currency(_supabaseClient, {
+    "from_currency": sender_row["currency"],
+    "to_currency": receiver_row["currency"],
+    "amount_to_convert": amount_minus_fee,
+  });
+
+  const receiver_wallet_bal_after_transaction = receiver_row["balance"] +
+    converted_amount;
+
+  const sender_wallet_bal_after_transaction = sender_row["balance"] -
+    amount_plus_fee;
+
+  // creates a revenue record
+  // creates a record for the receiver
+  // creates a record for the sender
+  // debits the sender's balance
+  // credits the receiver's number
+  // sends notifications
+  await Promise.all([
+    _supabaseClient.from("revenue_records").insert({
+      "monetized_transaction_details": {
+        "receiver_transaction_id": receiver_transaction_id,
+        "sender_transaction_id": sender_transaction_id,
+        "transaction_type": "Merchant Payment",
+        "method": "NFC",
+      },
+      "currency_symbol": sender_row["currency_symbol"],
+      "currency": sender_row["currency"],
+      "amount": amount_plus_fee,
+      "source_user_id": user_id,
+      "status": "completed",
+    }),
+    _supabaseClient.from("transactions").insert({
+      "transaction_fee_details": {
+        "transaction_total_fee_currency": receiver_row["currency"],
+        "transaction_international_bank_tranfer_fee": null,
+        "transcation_bank_transfer_fee_currency": null,
+        "transaction_local_bank_tranfer_fee": null,
+        "transaction_fee_amount": amount_plus_fee,
+        "transaction_total_fee_percentage": null,
+      },
+      "p2p_sender_details": {
+        "senders_wallet_balance_after_transaction":
+          sender_wallet_bal_after_transaction,
+        "full_names": `${sender_row["first_name"]} ${sender_row["last_name"]}`,
+        "senders_wallet_balance_before_transaction": sender_row["balance"],
+        "phone_number": sender_row["phone_number"],
+        "user_id": user_id,
+      },
+      "description": `From ${sender_row["first_name"]} ${
+        sender_row["last_name"]
+      }`,
+      "wallet_balance_details": {
+        "wallet_balance_after_transaction":
+          receiver_wallet_bal_after_transaction,
+        "wallet_balance_before_transaction": receiver_row["balance"],
+        "wallet_balances_difference": converted_amount,
+      },
+      "full_names": _body["transaction_details"]["receivers_full_names"],
+      "user_is_verified": receiver_row["account_kyc_is_verified"],
+      "currency_symbol": receiver_row["currency_symbol"],
+      "transaction_id": receiver_transaction_id,
+      "currency": receiver_row["currency"],
+      "user_id": receiver_row["user_id"],
+      "country": receiver_row["country"],
+      "savings_account_details": null,
+      "transaction_type": "Transfer",
+      "p2p_recipient_details": null,
+      "sent_received": "Received",
+      "method": "Wallet transfer",
+      "withdrawal_details": null,
+      "amount": converted_amount,
+      "deposit_details": null,
+      "number_of_replies": 0,
+      "status": "Completed",
+      "attended_to": false,
+      "number_of_likes": 0,
+      "number_of_views": 0,
+      "is_public": false,
+      "comment": "",
+    }),
+    _supabaseClient.from("transactions").insert({
+      "p2p_recipient_details": {
+        "recipient_wallet_balance_after_transaction":
+          receiver_wallet_bal_after_transaction,
+        "full_names": _body["transaction_details"]["receivers_full_names"],
+        "recipient_wallet_balance_before_transaction": receiver_row["balance"],
+        "user_id": _body["transaction_details"]["receiver_user_id"],
+        "phone_number": receiver_row["phone_number"],
+      },
+      "description": `To ${receiver_row["first_name"]} ${
+        receiver_row["last_name"]
+      }`,
+      "wallet_balance_details": {
+        "wallet_balance_after_transaction": sender_wallet_bal_after_transaction,
+        "wallet_balance_before_transaction": sender_row["balance"],
+        "wallet_balances_difference": amount_plus_fee,
+      },
+      "full_names": `${sender_row["first_name"]} ${sender_row["last_name"]}`,
+      "user_is_verified": sender_row["account_kyc_is_verified"],
+      "currency_symbol": sender_row["currency_symbol"],
+      "transaction_id": sender_transaction_id,
+      "currency": sender_row["currency"],
+      "country": sender_row["country"],
+      "savings_account_details": null,
+      "transaction_fee_details": null,
+      "transaction_type": "Transfer",
+      "method": "Wallet transfer",
+      "withdrawal_details": null,
+      "p2p_sender_details": null,
+      "amount": amount_minus_fee,
+      "deposit_details": null,
+      "sent_received": "Sent",
+      "number_of_replies": 0,
+      "status": "Completed",
+      "number_of_views": 0,
+      "number_of_likes": 0,
+      "attended_to": false,
+      "is_public": false,
+      "user_id": user_id,
+      "comment": "",
+    }),
+    _supabaseClient.from("users").update({
+      "balance": receiver_wallet_bal_after_transaction,
+    }).eq("user_id", receiver_row["user_id"]),
+    _supabaseClient.from("users").update({
+      "balance": sender_wallet_bal_after_transaction,
+    }).eq("user_id", user_id),
+    _supabaseClient.rpc("send_notifications_via_firebase", {
+      body: `You have sent ${
+        sender_row["currency_symbol"]
+      }${amount_minus_fee} to ${
+        _body["transaction_details"]["receivers_full_names"]
+      }`,
+      notification_tokens: [
+        sender_row["notification_token"],
+      ],
+      title: "Payment Sent ✅",
+    }),
+    _supabaseClient.rpc("send_notifications_via_firebase", {
+      body: `You have received ${receiver_row["currency_symbol"]}${
+        converted_amount.toFixed(2)
+      } from ${sender_row["first_name"]} ${sender_row["last_name"]}`,
+      notification_tokens: [
+        receiver_row["notification_token"],
+      ],
+      title: "Payment Received 💰",
+    }),
+  ]);
+
+  return {
+    "message": "Payment completed successfully",
+    "status": "success",
+    "status_code": 200,
+    "data": null,
+  };
+};
+
 // ============================================================ KYC Functions
 
 const get_my_kyc_verification_records = async (
@@ -3816,7 +4269,7 @@ const get_my_kyc_verification_records = async (
   }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   if (user_id == null) {
     return {
@@ -3871,9 +4324,6 @@ const get_limited_user_row_from_usercode = async (
     const account_map = res["data"][0];
 
     return {
-      "code": 200,
-      "staus": "success",
-      "message": "query successful",
       "data": {
         "account_kyc_is_verified": account_map["account_kyc_is_verified"],
         "account_is_on_hold": account_map["account_is_on_hold"],
@@ -3885,6 +4335,9 @@ const get_limited_user_row_from_usercode = async (
         "country": account_map["country"],
         "user_id": account_map["user_id"],
       },
+      "message": "query successful",
+      "status_code": 200,
+      "staus": "success",
     };
   } else {
     return {
@@ -3963,7 +4416,7 @@ const send_money_via_qr_code = async (
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // gets the sender's user account row
   const sender_rows = await _supabaseClient.from("users").select()
@@ -5210,7 +5663,7 @@ const get_my_shared_nas_account_transactions = async (
   */
 
   // gets the user's id from the request
-  const user_id = await get_auth_user_id(_req, _supabaseClient);
+  const user_id = _body["user_id"];
 
   // gets a record of the savings account
   const accounts = await _supabaseClient
@@ -5468,6 +5921,56 @@ const join_shared_nas_account = async (
   };
 };
 
+const update_nas_account_name = async (
+  _supabase: any,
+  _req: Request,
+  _body: any,
+): Promise<any> => {
+  /*
+    _body preview
+    {
+      "request_type": "update_nas_account_name",
+      "new_account_name": string,
+      "account_id": string,
+    }
+  */
+
+  const user_id = _body["user_id"];
+
+  const account_rows = await _supabase
+    .from("shared_no_access_savings_accounts")
+    .select()
+    .eq("account_id", _body["account_id"]);
+
+  const account_info = account_rows["data"][0];
+
+  const account_members_user_ids =
+    account_info["user_ids_able_to_view_accounts"];
+
+  if (account_members_user_ids.includes(user_id) == false) {
+    return {
+      message: "Unauthorized access",
+      status: "failed",
+      status_code: 401,
+      data: [],
+    };
+  }
+
+  await _supabase
+    .from("shared_no_access_savings_accounts")
+    .update({
+      account_name: _body["new_account_name"],
+    })
+    .eq("account_id", _body["account_id"]);
+
+  return {
+    message: "Successfully updated account name",
+    status: "success",
+    status_code: 200,
+    data: null,
+  };
+};
+
 const extend_shared_nas_account_days = async (
   _supabase: any,
   _req: Request,
@@ -5482,7 +5985,7 @@ const extend_shared_nas_account_days = async (
     }
   */
 
-  const user_id = await get_auth_user_id(_req, _supabase);
+  const user_id = _body["user_id"];
 
   // gets the account row
   const account_row = await _supabase
@@ -5496,79 +5999,79 @@ const extend_shared_nas_account_days = async (
     account_info["user_ids_able_to_view_accounts"];
 
   // only the account members can extend the account
-  if (account_members_user_ids.includes(user_id)) {
-    const days_to_extend = _body["days_to_extend"];
-
-    const days_to_extend_by_in_minutes = parseFloat(days_to_extend.toString()) *
-      24 * 60;
-
-    // calculates the new number of minutes left
-    const number_of_minutes_left = account_info["number_of_minutes_left"] +
-      days_to_extend_by_in_minutes;
-
-    // calcs the new total number of days
-    const total_number_of_days =
-      parseInt(account_info["total_days_for_account"].toString()) +
-      parseInt(days_to_extend.toString());
-
-    // converts days to minutes
-    const total_minutes_for_account = total_number_of_days * 24 * 60;
-
-    // holds the current expiration date
-    const expiration_date = new Date(account_info["expiration_date_and_time"]);
-
-    // holds the new expiration date (current expiration date + number of days to extend)
-    const new_expiration_date = new Date(
-      expiration_date.getTime() + days_to_extend * 24 * 60 * 60 * 1000,
-    );
-
-    // updates the shared nas account row
-    await _supabase
-      .from("shared_no_access_savings_accounts")
-      .update({
-        expiration_date_and_time: new_expiration_date.toISOString(),
-        total_minutes_for_account: total_minutes_for_account,
-        number_of_minutes_left: number_of_minutes_left,
-        total_days_for_account: total_number_of_days,
-      })
-      .eq("account_id", account_info["account_id"]);
-
-    // calcs the current days left before the extension
-    const current_days_left =
-      parseInt(account_info["number_of_minutes_left"].toString()) / (24 * 60);
-
-    // creates a record showing that the user had made an extension
-    await _supabase
-      .from("nas_account_extensions")
-      .insert({
-        minutes_left_before_extension: account_info["number_of_minutes_left"],
-        total_days_before_extension: account_info["total_days_for_account"],
-        minutes_left_after_extension: number_of_minutes_left,
-        total_days_after_extension: total_number_of_days,
-        days_left_before_extension: current_days_left,
-        account_map_before_extension: account_info,
-        account_type: account_info["account_type"],
-        account_name: account_info["account_name"],
-        account_balance: account_info["balance"],
-        account_id: account_info["account_id"],
-        days_extended_by: days_to_extend,
-        user_id: user_id, // Get user_id from request
-      });
-
-    return {
-      message: "Successfully extended account",
-      status: "success",
-      status_code: 200,
-      data: [],
-    };
-  } else {
+  if (account_members_user_ids.includes(user_id) == false) {
     return {
       message: "Unauthorized access",
       status: "failed",
       status_code: 401,
-      data: [],
+      data: null,
     };
   }
+
+  const days_to_extend = _body["days_to_extend"];
+
+  const days_to_extend_by_in_minutes = parseFloat(days_to_extend.toString()) *
+    24 * 60;
+
+  // calculates the new number of minutes left
+  const number_of_minutes_left = account_info["number_of_minutes_left"] +
+    days_to_extend_by_in_minutes;
+
+  // calcs the new total number of days
+  const total_number_of_days =
+    parseInt(account_info["total_days_for_account"].toString()) +
+    parseInt(days_to_extend.toString());
+
+  // converts days to minutes
+  const total_minutes_for_account = total_number_of_days * 24 * 60;
+
+  // holds the current expiration date
+  const expiration_date = new Date(account_info["expiration_date_and_time"]);
+
+  // holds the new expiration date (current expiration date + number of days to extend)
+  const new_expiration_date = new Date(
+    expiration_date.getTime() + days_to_extend * 24 * 60 * 60 * 1000,
+  );
+
+  // updates the shared nas account row
+  await _supabase
+    .from("shared_no_access_savings_accounts")
+    .update({
+      expiration_date_and_time: new_expiration_date.toISOString(),
+      total_minutes_for_account: total_minutes_for_account,
+      number_of_minutes_left: number_of_minutes_left,
+      total_days_for_account: total_number_of_days,
+    })
+    .eq("account_id", account_info["account_id"]);
+
+  // calcs the current days left before the extension
+  const current_days_left =
+    parseInt(account_info["number_of_minutes_left"].toString()) / (24 * 60);
+
+  // creates a record showing that the user had made an extension
+  await _supabase
+    .from("nas_account_extensions")
+    .insert({
+      minutes_left_before_extension: account_info["number_of_minutes_left"],
+      total_days_before_extension: account_info["total_days_for_account"],
+      minutes_left_after_extension: number_of_minutes_left,
+      total_days_after_extension: total_number_of_days,
+      days_left_before_extension: current_days_left,
+      account_map_before_extension: account_info,
+      account_type: account_info["account_type"],
+      account_name: account_info["account_name"],
+      account_balance: account_info["balance"],
+      account_id: account_info["account_id"],
+      days_extended_by: days_to_extend,
+      user_id: user_id, // Get user_id from request
+    });
+
+  return {
+    message: "Successfully extended account",
+    status: "success",
+    status_code: 200,
+    data: null,
+  };
 };
 
 const donate_to_shared_nas_account = async (

@@ -15,6 +15,8 @@ class PreLoginPage extends StatefulWidget {
 class _PreLoginPageState extends State<PreLoginPage> {
   @override
   void initState() {
+    // context.read<AuthProviderFunctions>().getContactUsDetails();
+    // context.read<AuthProviderFunctions>().getTOS();
     super.initState();
     hideKeyboard();
   }

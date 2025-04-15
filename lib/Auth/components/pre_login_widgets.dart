@@ -114,11 +114,11 @@ Widget contactUsButton(BuildContext context) {
       onTap: () async {
         changePage(context, const HelpPage());
 
-        context.read<HomeProviderFunctions>().toggleIsLoading();
+        context.read<AuthProviderFunctions>().toggleIsLoading();
 
-        await context.read<HomeProviderFunctions>().getContactUsDetails();
+        await context.read<AuthProviderFunctions>().getContactUsDetails();
 
-        context.read<HomeProviderFunctions>().toggleIsLoading();
+        context.read<AuthProviderFunctions>().toggleIsLoading();
       },
       child: SizedBox(
         child: Text(

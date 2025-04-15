@@ -75,8 +75,8 @@ class _SendMoneyByQRCodeState extends State<SendMoneyByQRCode> {
                     ),
                     hGap(10),
                     Text(
-                      "Name: ${widget.paymentInfo['receiverDoc'].get("FirstName")} "
-                      "${widget.paymentInfo['receiverDoc'].get("LastName")}",
+                      "Name: ${widget.paymentInfo['receiver_map']["first_name"]} "
+                      "${widget.paymentInfo['receiver_map']["last_name"]}",
                       maxLines: 1,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.ubuntu(
@@ -186,6 +186,7 @@ class _SendMoneyByQRCodeState extends State<SendMoneyByQRCode> {
 
             if (value.returnAmountString().isEmpty) {
               showSnackBar(context, "Enter an amount to pay");
+              
               return;
             }
 

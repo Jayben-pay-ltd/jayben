@@ -73,13 +73,13 @@ Widget profileBody(BuildContext context, File? image, Function() getImage,
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.only(top: 70, bottom: 130),
           shrinkWrap: true,
-            children: [
+          children: [
             profileImageWidget(image, getImage),
             const SizedBox(height: 10),
             Divider(color: Colors.grey[300], thickness: 0.5),
             const SizedBox(height: 15),
             textField(context, "@${box("username_searchable")}",
-              "Username (also your referral code)", true),
+                "Username (also your referral code)", true),
             const SizedBox(height: 30),
             textField(context, box("phone_number"), "Phone Number", true),
             const SizedBox(height: 30),
@@ -254,7 +254,7 @@ Widget uploadProgressLoadingPage(BuildContext context) {
   });
 }
 
-Widget textField(BuildContext context, hintText, labelText, readOnly) {
+Widget textField(BuildContext context, String? hintText, labelText, readOnly) {
   return Container(
     width: width(context),
     alignment: Alignment.center,
@@ -300,7 +300,11 @@ Widget textField(BuildContext context, hintText, labelText, readOnly) {
                 fontWeight: FontWeight.w300,
               ),
               decoration: InputDecoration(
-                hintText: hintText.isEmpty ? "Empty" : hintText,
+                hintText: hintText == null
+                    ? "Empty"
+                    : hintText.isEmpty
+                        ? "Empty"
+                        : hintText,
                 isDense: true,
                 filled: true,
                 fillColor: Colors.grey[200],

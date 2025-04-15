@@ -35,64 +35,72 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<UserProviderFunctions>(builder: (_, value, child) {
-      return value.returnIsLoading()
-          ? uploadProgressLoadingPage(context)
-          : Scaffold(
-              backgroundColor: Colors.white,
-              floatingActionButton: ["Agent"].contains(box("account_type"))
-                  ? nothing()
-                  : FloatingActionButton.extended(
-                      onPressed: () =>
-                          changePage(context, const UserQRCodePage()),
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.qr_code),
-                          wGap(10),
-                          Text(
-                            "My QR Code",
-                            style: googleStyle(
-                              weight: FontWeight.w400,
-                              color: Colors.white,
-                              size: 15,
+    return Consumer2<UserProviderFunctions, HomeProviderFunctions>(
+      builder: (_, value, value2, child) {
+        return value.returnIsLoading()
+            ? uploadProgressLoadingPage(context)
+            : Scaffold(
+                backgroundColor: Colors.white,
+                floatingActionButton: ["Agent"].contains(box("account_type"))
+                    ? nothing()
+                    : FloatingActionButton.extended(
+                        onPressed: () =>
+                            changePage(context, const UserQRCodePage()),
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.qr_code),
+                            wGap(10),
+                            Text(
+                              "My QR Code",
+                              style: googleStyle(
+                                weight: FontWeight.w400,
+                                color: Colors.white,
+                                size: 15,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        backgroundColor: Colors.black,
                       ),
-                      backgroundColor: Colors.black,
-                    ),
-              body: SafeArea(
-                bottom: false,
-                child: profileBody(
-                  context,
-                  image,
-                  getImage,
-                  () async {
-                    if (value.returnIsLoading()) return;
+                body: SafeArea(
+                  bottom: false,
+                  child: profileBody(
+                    context,
+                    image,
+                    getImage,
+                    () async {
+                      if (value.returnIsLoading()) return;
 
-                    if (image == null) {
-                      showSnackBar(context, "No changes made");
+                      if (image == null) {
+                        showSnackBar(context, "No changes made");
 
-                      return;
-                    }
+                        return;
+                      }
 
-                    value.toggleIsLoading();
+                      value.toggleIsLoading();
 
-                    // uploads the profile image
-                    await value.updateProfileImage(image);
+                      // uploads the profile image
+                      String? new_image_url =
+                          await value.updateProfileImage(image);
 
-                    showSnackBar(context, "Profile saved");
+                      if (new_image_url == null) {
+                        showSnackBar(context, "Failed to update");
+                        return;
+                      }
 
-                    image = null;
+                      value2.updateProfilePhotoLocally(new_image_url!);
 
-                    value.toggleIsLoading();
+                      showSnackBar(context, "Profile saved");
 
-                    // changePage(context, const HomePage(), type: "pr");
-                  },
+                      image = null;
+
+                      value.toggleIsLoading();
+                    },
+                  ),
                 ),
-              ),
-            );
-    });
+              );
+      },
+    );
   }
 }

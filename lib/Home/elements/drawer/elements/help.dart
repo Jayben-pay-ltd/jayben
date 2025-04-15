@@ -1,9 +1,6 @@
 // ignore_for_file: non_constant_identifier_names
-import 'package:jayben/Auth/elements/forgot_password_page.dart';
-import 'package:jayben/Home/elements/drawer/elements/Profile.dart';
-import 'package:jayben/Home/elements/drawer/elements/contact_us.dart';
-import 'package:jayben/Home/elements/drawer/elements/kyc_verification.dart';
 import 'package:jayben/Home/elements/drawer/elements/terms_and_conditions_page.dart';
+import 'package:jayben/Home/elements/drawer/elements/contact_us.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'components/ProfileWidgets.dart';
@@ -47,14 +44,16 @@ class _HelpPageState extends State<HelpPage> {
                 child: Column(
                   children: [
                     ListTile(
-                        leading: const Icon(Icons.call),
-                        onTap: () => changePage(context, const ContactUsPage()),
-                        title: const Text("Contact Us")),
+                      leading: const Icon(Icons.call),
+                      onTap: () => changePage(context, const ContactUsPage()),
+                      title: const Text("Contact Us"),
+                    ),
                     ListTile(
-                        leading: const Icon(Icons.privacy_tip),
-                        onTap: () =>
-                            changePage(context, const TermsAndConditionsPage()),
-                        title: const Text("Privacy Policy")),
+                      leading: const Icon(Icons.privacy_tip),
+                      onTap: () =>
+                          changePage(context, const TermsAndConditionsPage()),
+                      title: const Text("Privacy Policy"),
+                    ),
                   ],
                 ),
               ),
@@ -96,7 +95,7 @@ class _HelpPageState extends State<HelpPage> {
               style: GoogleFonts.ubuntu(
                 color: const Color.fromARGB(255, 54, 54, 54),
                 fontWeight: FontWeight.bold,
-                fontSize: 30,
+                fontSize: 25,
               ),
             ),
             const Spacer(),

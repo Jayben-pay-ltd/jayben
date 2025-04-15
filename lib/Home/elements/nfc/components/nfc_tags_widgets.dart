@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-
 Widget tagsBody(BuildContext context) {
   return SizedBox(
     width: width(context),
@@ -106,7 +105,7 @@ Widget body(BuildContext context) {
                       hGap(10),
                       viewMoreMoreTransactionsTopWidget(context),
                       hGap(20),
-                      const NfcTransactionTile()
+                      const NfcTransactionTile(),
                     ],
                   ),
                 ],
@@ -119,8 +118,12 @@ Widget body(BuildContext context) {
 Widget cardPreviewWidget(BuildContext context) {
   return Consumer<NfcProviderFunctions>(
     builder: (_, value, child) {
-      Map current_tag_map =
-          value.returnListOfTags()![value.returnCurrentCardIndex()];
+      Map? current_tag_map;
+
+      if (value.returnListOfTags()!.isNotEmpty) {
+        current_tag_map =
+            value.returnListOfTags()![value.returnCurrentCardIndex()];
+      }
       return Container(
         width: width(context),
         color: Colors.grey[200],
@@ -128,13 +131,17 @@ Widget cardPreviewWidget(BuildContext context) {
         padding: const EdgeInsets.only(top: 20, bottom: 25),
         child: Column(
           children: [
-            SizedBox(
+            Container(
+              alignment: Alignment.center,
               height: height(context) * 0.25,
               child: value.returnListOfTags()!.isEmpty
                   ? Text(
                       "No cards linked yet",
                       textAlign: TextAlign.center,
-                      style: googleStyle(),
+                      style: googleStyle(
+                          weight: FontWeight.w100,
+                          color: Colors.grey[700]!,
+                          size: 15),
                     )
                   : tagTile(
                       context,
@@ -150,7 +157,7 @@ Widget cardPreviewWidget(BuildContext context) {
   );
 }
 
-Widget optionsRowWidget(BuildContext context, Map tag_info) {
+Widget optionsRowWidget(BuildContext context, Map? tag_info) {
   return Container(
     width: width(context),
     alignment: Alignment.center,
@@ -167,29 +174,37 @@ Widget optionsRowWidget(BuildContext context, Map tag_info) {
 }
 
 Widget minimalListButton(String text, IconData icon) {
-  return Container(
-    width: 150,
-    height: 40,
-    alignment: Alignment.center,
-    decoration: minimalistButtonDeco(),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: Colors.black87,
-          size: 18,
+  return Consumer<NfcProviderFunctions>(builder: (_, value, child) {
+    return GestureDetector(
+      onTap: () {
+        if (value.returnListOfTags()!.isEmpty) {
+          showSnackBar(_, "You have no linked cards");
+          return;
+        }
+      },
+      child: Container(
+        width: 150,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: minimalistButtonDeco(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: Colors.black87,
+              size: 18,
+            ),
+            wGap(5),
+            Text(
+              text,
+              style: googleStyle(weight: FontWeight.w400, size: 15),
+            ),
+          ],
         ),
-        wGap(5),
-        Text(
-          text,
-          style: googleStyle(
-            weight: FontWeight.w400,
-            size: 15),
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  });
 }
 
 Widget cardSelectorWidget(BuildContext context) {
@@ -197,8 +212,8 @@ Widget cardSelectorWidget(BuildContext context) {
     return value.returnListOfTags()!.length < 2
         ? nothing()
         : Padding(
-          padding: const EdgeInsets.only(top: 20.0),
-          child: Stack(
+            padding: const EdgeInsets.only(top: 20.0),
+            child: Stack(
               children: [
                 Container(
                   height: 21,
@@ -215,7 +230,8 @@ Widget cardSelectorWidget(BuildContext context) {
                             backgroundColor: value.returnCurrentCardIndex() == i
                                 ? Colors.black
                                 : Colors.black26,
-                            radius: value.returnCurrentCardIndex() == i ? 6 : 4.5,
+                            radius:
+                                value.returnCurrentCardIndex() == i ? 6 : 4.5,
                           ),
                         )
                     ],
@@ -230,7 +246,7 @@ Widget cardSelectorWidget(BuildContext context) {
                             if (value.returnCurrentCardIndex() == 0) {
                               return;
                             }
-        
+
                             value.changeCurrentCardIndex(
                                 value.returnCurrentCardIndex() - 1);
                           },
@@ -256,7 +272,7 @@ Widget cardSelectorWidget(BuildContext context) {
                                 value.returnListOfTags()!.length - 1) {
                               return;
                             }
-        
+
                             value.changeCurrentCardIndex(
                                 value.returnCurrentCardIndex() + 1);
                           },
@@ -276,7 +292,7 @@ Widget cardSelectorWidget(BuildContext context) {
                       ),
               ],
             ),
-        );
+          );
   });
 }
 
@@ -316,7 +332,7 @@ Widget viewMoreMoreTransactionsTopWidget(BuildContext context) {
   );
 }
 
-Widget tagTile(BuildContext context, Map tag_info) {
+Widget tagTile(BuildContext context, Map? tag_info) {
   return Stack(
     children: [
       Container(
@@ -325,7 +341,7 @@ Widget tagTile(BuildContext context, Map tag_info) {
         alignment: Alignment.center,
         child: Text.rich(
           TextSpan(
-            text: tag_info["currency"],
+            text: tag_info!["currency"],
             children: [
               TextSpan(
                 text: tag_info["balance"] == 0
@@ -373,7 +389,7 @@ Widget tagTile(BuildContext context, Map tag_info) {
         bottom: 15,
         left: 15,
         child: Text(
-          tag_info["tag_name"].toUpperCase(),
+          tag_info!["tag_name"].toUpperCase(),
           style: googleStyle(
             weight: FontWeight.w400,
             color: Colors.white,
@@ -414,44 +430,62 @@ Widget tagTile(BuildContext context, Map tag_info) {
 Widget addCardFloatingWidget(BuildContext context) {
   return Positioned(
     bottom: 50,
-    child: GestureDetector(
-      onTap: () => showCupertinoModalPopup(
-        builder: (_) => const CreatePinBottomCard(),
-        context: context,
-      ),
-      child: Container(
-        width: width(context),
-        alignment: Alignment.center,
-        child: Container(
-          height: 50,
-          decoration: customDecor(),
-          alignment: Alignment.center,
-          width: width(context) * 0.8,
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: SizedBox(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  "More card settings",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey[800]!,
-                    fontSize: 15,
+    child: Consumer<NfcProviderFunctions>(builder: (_, value, child) {
+      return value.returnListOfTags() == null
+          ? nothing()
+          : GestureDetector(
+              onTap: () {
+                if (value.returnListOfTags()!.isEmpty) {
+                  showCupertinoModalPopup(
+                    builder: (_) => const CreatePinBottomCard(),
+                    context: context,
+                  );
+                  return;
+                }
+
+                showCupertinoModalPopup(
+                  builder: (_) => const CreatePinBottomCard(),
+                  context: context,
+                );
+              },
+              child: Container(
+                width: width(context),
+                alignment: Alignment.center,
+                child: Container(
+                  height: 50,
+                  decoration: customDecor(),
+                  alignment: Alignment.center,
+                  width: width(context) * 0.8,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          value.returnListOfTags()!.isEmpty
+                              ? "CREATE A NEW CARD"
+                              : "More card settings",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w400,
+                            color: Colors.grey[800]!,
+                            fontSize: 15,
+                          ),
+                        ),
+                        wGap(10),
+                        Icon(
+                          value.returnListOfTags()!.isEmpty
+                              ? Icons.fiber_new_rounded
+                              : Icons.settings,
+                          color: Colors.green[400]!,
+                          size: 30,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                wGap(10),
-                Icon(
-                  Icons.settings,
-                  color: Colors.green[400]!,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
+              ),
+            );
+    }),
   );
 }
 

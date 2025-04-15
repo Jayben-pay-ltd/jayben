@@ -11,7 +11,7 @@ class ContactUsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<HomeProviderFunctions>(
+    return Consumer<AuthProviderFunctions>(
       builder: (_, value, child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: SystemUiOverlayStyle.dark,

@@ -24,12 +24,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
-    // if (box("enable_six_digit_pin") != null) {
-    //   enable_six_digit_pin = box("enable_six_digit_pin");
-    // } else {
-    //   boxPut("enable_six_digit_pin", true);
-    //   enable_six_digit_pin = true;
-    // }
+    context.read<AuthProviderFunctions>().getBuildVersion();
     super.initState();
   }
 
@@ -119,15 +114,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       onTap: () async {
-                        // await _auth.signOut();
+                        await context.read<AuthProviderFunctions>().signOut();
 
                         if (box("user_id") == null) return;
 
                         changePage(context, const PreLoginPage(), type: "pr");
 
-                        boxDelete("is_logged_in");
-
-                        boxDelete("user_id");
+                        boxClear();
 
                         showSnackBar(context, "You have been Logged Out",
                             color: Colors.grey[700]!);
@@ -159,7 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          "Jayben Technologies Zambia Limited",
+                          "Jayben Pay Limted Zambia @ 2025",
                           textAlign: TextAlign.center,
                           style: GoogleFonts.ubuntu(
                             color: Colors.black,

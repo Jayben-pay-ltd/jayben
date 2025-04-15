@@ -17,128 +17,146 @@ class NfcTransactionTile extends StatelessWidget {
     return Consumer<NfcProviderFunctions>(
       builder: (_, value, child) {
         int current_card_index = value.returnCurrentCardIndex();
-        return value.returnListOfTagTransactions()![current_card_index] != null
-            ? MediaQuery.removePadding(
-                removeTop: true,
-                context: context,
-                removeBottom: true,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  addRepaintBoundaries: true,
-                  scrollDirection: Axis.vertical,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: value.returnListOfTagTransactions()![current_card_index]!.length,
-                  padding: const EdgeInsets.only(bottom: 20, top: 10),
-                  itemBuilder: (_, index) {
-                    Map ds = value.returnListOfTagTransactions()![current_card_index]![index];
-                    var amount = double.parse(ds['amount'].toString());
-                    return GestureDetector(
-                      onTap: () async => showBottomCard(
-                          context, transactionDetailsDialogue(context, ds)),
-                      child: Container(
-                        width: width(context),
-                        color: Colors.grey[100]!,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 15, horizontal: 20),
-                        margin: const EdgeInsets.symmetric(vertical: 0.5),
-                        child: Row(
-                          children: [
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  "${ds["transaction_type"]}",
-                                  style: GoogleFonts.ubuntu(
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black,
-                                    fontSize: 19,
-                                  ),
-                                ),
-                                hGap(5),
-                                Text(
-                                  timeago.format(
-                                      DateTime.parse(ds["created_at"])
-                                          .toUtc()
-                                          .toLocal()),
-                                  textAlign: TextAlign.left,
-                                  maxLines: 1,
-                                  style: GoogleFonts.ubuntu(
-                                    fontWeight: FontWeight.w300,
-                                    color: Colors.grey[800],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text.rich(
-                                  TextSpan(
-                                    text: ds["sent_received"] == "Sent"
-                                        ? "- ${ds["currency"]} "
-                                        : "+ ${ds["currency"]} ",
-                                    children: [
-                                      TextSpan(
-                                        text: amount < 100000.0
-                                            ? amount.toStringAsFixed(2)
-                                            : (amount >= 100000.0 &&
-                                                    amount < 1000000.0
-                                                ? "${amount.toStringAsFixed(2)[0]}${amount.toStringAsFixed(2)[1]}${amount.toStringAsFixed(2)[2]}k"
-                                                : (amount > 1000000.0 &&
-                                                        amount < 10000000.0
-                                                    ? "${amount.toStringAsFixed(2)[0]}.${amount.toStringAsFixed(2)[1]}${amount.toStringAsFixed(2)[2]} M"
-                                                    : (amount > 10000000.0 &&
-                                                            amount < 100000000.0
-                                                        ? "${amount.toStringAsFixed(2)[0]}${amount.toStringAsFixed(2)[1]}.${amount.toStringAsFixed(2)[2]}${amount.toStringAsFixed(2)[3]} M"
-                                                        : "${amount.toStringAsFixed(2)[0]}${amount.toStringAsFixed(2)[1]}${amount.toStringAsFixed(2)[2]}.${amount.toStringAsFixed(2)[3]}${amount.toStringAsFixed(2)[4]} M"))),
-                                        style: GoogleFonts.ubuntu(
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.black,
-                                          fontSize: 23,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                  style: GoogleFonts.ubuntu(
-                                    fontWeight: FontWeight.w400,
-                                    color: Colors.black54,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                ds["transaction_type"] != "Withdrawal"
-                                    ? nothing()
-                                    : ds["status"] == "Completed"
-                                        ? nothing()
-                                        : Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 5.0),
-                                            child: Text(
-                                              "${ds["status"]}",
-                                              style: GoogleFonts.ubuntu(
-                                                fontWeight: FontWeight.w400,
-                                                color: ds["status"] == "Pending"
-                                                    ? Colors.orange[700]
-                                                    : ds["status"] ==
-                                                            "Completed"
-                                                        ? Colors.green
-                                                        : Colors.red[300],
-                                                fontSize: 13,
-                                              ),
-                                            ),
+        return value.returnListOfTagTransactions() == null
+            ? nothing()
+            : value.returnListOfTagTransactions()!.isEmpty
+                ? nothing()
+                : value.returnListOfTagTransactions()![current_card_index] !=
+                        null
+                    ? MediaQuery.removePadding(
+                        removeTop: true,
+                        context: context,
+                        removeBottom: true,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          addRepaintBoundaries: true,
+                          scrollDirection: Axis.vertical,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: value
+                              .returnListOfTagTransactions()![
+                                  current_card_index]!
+                              .length,
+                          padding: const EdgeInsets.only(bottom: 20, top: 10),
+                          itemBuilder: (_, index) {
+                            Map ds = value.returnListOfTagTransactions()![
+                                current_card_index]![index];
+                            var amount = double.parse(ds['amount'].toString());
+                            return GestureDetector(
+                              onTap: () async => showBottomCard(context,
+                                  transactionDetailsDialogue(context, ds)),
+                              child: Container(
+                                width: width(context),
+                                color: Colors.grey[100]!,
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 15, horizontal: 20),
+                                margin:
+                                    const EdgeInsets.symmetric(vertical: 0.5),
+                                child: Row(
+                                  children: [
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "${ds["transaction_type"]}",
+                                          style: GoogleFonts.ubuntu(
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black,
+                                            fontSize: 19,
                                           ),
-                              ],
-                            ),
-                          ],
+                                        ),
+                                        hGap(5),
+                                        Text(
+                                          timeago.format(
+                                              DateTime.parse(ds["created_at"])
+                                                  .toUtc()
+                                                  .toLocal()),
+                                          textAlign: TextAlign.left,
+                                          maxLines: 1,
+                                          style: GoogleFonts.ubuntu(
+                                            fontWeight: FontWeight.w300,
+                                            color: Colors.grey[800],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Spacer(),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Text.rich(
+                                          TextSpan(
+                                            text: ds["sent_received"] == "Sent"
+                                                ? "- ${ds["currency"]} "
+                                                : "+ ${ds["currency"]} ",
+                                            children: [
+                                              TextSpan(
+                                                text: amount < 100000.0
+                                                    ? amount.toStringAsFixed(2)
+                                                    : (amount >= 100000.0 &&
+                                                            amount < 1000000.0
+                                                        ? "${amount.toStringAsFixed(2)[0]}${amount.toStringAsFixed(2)[1]}${amount.toStringAsFixed(2)[2]}k"
+                                                        : (amount > 1000000.0 &&
+                                                                amount <
+                                                                    10000000.0
+                                                            ? "${amount.toStringAsFixed(2)[0]}.${amount.toStringAsFixed(2)[1]}${amount.toStringAsFixed(2)[2]} M"
+                                                            : (amount > 10000000.0 &&
+                                                                    amount <
+                                                                        100000000.0
+                                                                ? "${amount.toStringAsFixed(2)[0]}${amount.toStringAsFixed(2)[1]}.${amount.toStringAsFixed(2)[2]}${amount.toStringAsFixed(2)[3]} M"
+                                                                : "${amount.toStringAsFixed(2)[0]}${amount.toStringAsFixed(2)[1]}${amount.toStringAsFixed(2)[2]}.${amount.toStringAsFixed(2)[3]}${amount.toStringAsFixed(2)[4]} M"))),
+                                                style: GoogleFonts.ubuntu(
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black,
+                                                  fontSize: 23,
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                          style: GoogleFonts.ubuntu(
+                                            fontWeight: FontWeight.w400,
+                                            color: Colors.black54,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                        ds["transaction_type"] != "Withdrawal"
+                                            ? nothing()
+                                            : ds["status"] == "Completed"
+                                                ? nothing()
+                                                : Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 5.0),
+                                                    child: Text(
+                                                      "${ds["status"]}",
+                                                      style: GoogleFonts.ubuntu(
+                                                        fontWeight:
+                                                            FontWeight.w400,
+                                                        color: ds["status"] ==
+                                                                "Pending"
+                                                            ? Colors.orange[700]
+                                                            : ds["status"] ==
+                                                                    "Completed"
+                                                                ? Colors.green
+                                                                : Colors
+                                                                    .red[300],
+                                                        fontSize: 13,
+                                                      ),
+                                                    ),
+                                                  ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    );
-                  },
-                ),
-              )
-            : nothing();
+                      )
+                    : nothing();
       },
     );
   }

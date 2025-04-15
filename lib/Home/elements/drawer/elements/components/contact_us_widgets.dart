@@ -226,11 +226,11 @@ Widget contactWidget(BuildContext context) {
             ),
             onPressed: () async {
               if (value.returnCurrentContactType() == "WhatsApp") {
-                final _url = Uri.parse(
+                Uri url = Uri.parse(
                     "https://wa.me/${box("customer_support_whatsapp_phone_number").replaceAll("+", "")}");
-                if (!await launchUrl(_url,
+                if (!await launchUrl(url,
                     mode: LaunchMode.externalApplication)) {
-                  showSnackBar(context, 'Could not open $_url');
+                  showSnackBar(context, 'Could not open $url');
                 }
                 return;
               }

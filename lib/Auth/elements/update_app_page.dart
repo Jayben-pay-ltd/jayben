@@ -152,7 +152,7 @@ class _UpdateAppPageState extends State<UpdateAppPage>
                         SizedBox(
                           width: width(context),
                           child: Text(
-                            "Jayben Technologies Zambia @ 2024",
+                            "Jayben Pay Limited Zambia @ 2025",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.ubuntu(
                               fontWeight: FontWeight.w300,

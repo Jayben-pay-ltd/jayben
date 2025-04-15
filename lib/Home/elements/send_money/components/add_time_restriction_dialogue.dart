@@ -128,8 +128,8 @@ class _AddTimeRestrictionDialogueState
                                   context,
                                   SendMoneyReceiptPage(
                                     receiver_names:
-                                        "${widget.paymentInfo['receiverDoc'].get("FirstName")} "
-                                        "${widget.paymentInfo['receiverDoc'].get("LastName")}",
+                                        "${widget.paymentInfo['receiver_map']["first_name"]} "
+                                        "${widget.paymentInfo['receiver_map']["LastName"]}",
                                     amount: widget.paymentInfo["amount"],
                                   ),
                                   type: "pr");

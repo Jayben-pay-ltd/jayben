@@ -133,8 +133,8 @@ class _EditExistinNasAccountNameDialogueState
 
                             // creates the no access sav acc
                             await value.updateExistingSharedNasAccName(
-                                widget.account_map, {
-                              "account_name": savingsAccountNameController.text,
+                               widget.account_map, {
+                              "new_account_name": savingsAccountNameController.text,
                             });
 
                             value.toggleIsLoading();

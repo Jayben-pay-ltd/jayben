@@ -45,8 +45,8 @@ class _PaymentConfirmationQrState extends State<PaymentConfirmationQr> {
   @override
   Widget build(BuildContext context) {
     String receiverFullNames =
-        "${widget.paymentInfo["receiverDoc"].get("FirstName")} "
-        "${widget.paymentInfo["receiverDoc"].get("LastName")}";
+        "${widget.paymentInfo["receiver_map"]["first_name"]} "
+        "${widget.paymentInfo["receiver_map"]["last_name"]}";
     return Consumer<QRScannerProviderFunctions>(
       builder: (_, value, child) {
         return AnnotatedRegion<SystemUiOverlayStyle>(
