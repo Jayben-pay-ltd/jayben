@@ -5672,6 +5672,7 @@ class NfcProviderFunctions extends ChangeNotifier {
     bool tag_exists = await checkIfTagExists(tag_serial_number);
 
     if (tag_exists) {
+      goBack(context);
       showSnackBar(
           context, "This tag is already registered. Please try another tag.");
       return;
@@ -5685,6 +5686,8 @@ class NfcProviderFunctions extends ChangeNotifier {
     try {
       await ndef.write(text_to_write_to_tag);
     } catch (e) {
+      goBack(context);
+
       showSnackBar(context, e.toString());
       return;
     }
@@ -5696,6 +5699,8 @@ class NfcProviderFunctions extends ChangeNotifier {
         await createTagRecord(context, tag_serial_number, pin_code);
 
     if (!is_created) {
+      goBack(context);
+
       showSnackBar(context, 'Failed to link card. Please try again.',
           color: Colors.green);
       return;

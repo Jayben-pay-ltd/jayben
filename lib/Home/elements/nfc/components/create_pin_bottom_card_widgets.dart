@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously, non_constant_identifier_names
-import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:jayben/Utilities/provider_functions.dart';
 import 'package:jayben/Home/elements/nfc/tag_write.dart';
 import 'package:jayben/Utilities/general_widgets.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:jayben/Utilities/constants.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';

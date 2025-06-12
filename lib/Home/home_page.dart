@@ -138,7 +138,7 @@ class _HomePageState extends State<HomePage>
       case AppLifecycleState.resumed:
         // this resumes the user's last seen update loop
         _timer = Timer.periodic(const Duration(minutes: 1),
-            (timer) async => await prov.updateUserLastSeen());
+            (_) async => await prov.updateUserLastSeen());
         break;
       case AppLifecycleState.inactive:
         break;
